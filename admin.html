@@ -328,7 +328,11 @@ function renderUsers() {
       </td>
       <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${u.created_at?.slice(0,10)}</td>
       <td>
-        ${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('${u.id}','${u.full_name||u.email}')">Remove</button>`:'<span style="font-size:11px;color:var(--text3)">You</span>'}
+        ${u.id!==currentUser.id?`
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="btn btn-sm" style="font-size:11px;padding:3px 8px" onclick="sendPasswordReset('${u.email}','${(u.full_name||u.email).replace(/'/g,"\\'")}')">Reset PWD</button>
+            <button class="btn btn-danger btn-sm" style="font-size:11px;padding:3px 8px" onclick="confirmDelete('${u.id}','${(u.full_name||u.email).replace(/'/g,"\\'")}')">Remove</button>
+          </div>`:'<span style="font-size:11px;color:var(--text3)">You</span>'}
       </td>
     </tr>
   `).join('');
@@ -342,12 +346,45 @@ async function setRole(uid, role) {
 }
 
 async function confirmDelete(uid, name) {
-  if (!confirm('Remove '+name+' from ServiceDesk? They will no longer be able to log in.')) return;
-  // Note: this removes their profile — actual auth deletion requires service_role key
-  const {error} = await db.from('profiles').delete().eq('id',uid);
-  if (error) { toast('Error: '+error.message); return; }
-  await loadUsers();
-  toast('User removed');
+  if (!confirm('Remove ' + name + ' from ServiceDesk?\n\nThis will:\n• Prevent them from logging in\n• Remove their profile\n\nTheir tickets will be kept for records.')) return;
+  try {
+    // Step 1: Call Edge Function to delete from auth.users (requires service_role)
+    const { error: fnErr } = await db.functions.invoke('delete-user', { body: { user_id: uid } });
+    if (fnErr) {
+      // Edge function not deployed yet — fall back to profile-only removal
+      // User can no longer see their data but auth account remains
+      const { error: profileErr } = await db.from('profiles').delete().eq('id', uid);
+      if (profileErr) { toast('Error: ' + profileErr.message); return; }
+      toast('Profile removed. Note: deploy delete-user Edge Function to fully remove auth account.');
+      await loadUsers(); return;
+    }
+    // Step 2: Profile is deleted by CASCADE from auth.users automatically
+    await loadUsers();
+    toast(name + ' removed successfully');
+  } catch(e) {
+    // Fallback: just remove profile
+    const { error } = await db.from('profiles').delete().eq('id', uid);
+    if (error) { toast('Error: ' + error.message); return; }
+    await loadUsers();
+    toast('Profile removed (auth account may still exist)');
+  }
+}
+
+async function sendPasswordReset(email, name) {
+  if (!confirm('Send password reset email to ' + name + ' (' + email + ')?')) return;
+  // Call the admin API via Edge Function to send reset email
+  try {
+    const { error } = await db.functions.invoke('admin-reset-password', { body: { email } });
+    if (error) throw error;
+    toast('Reset email sent to ' + email);
+  } catch(e) {
+    // Fallback: use Supabase client resetPasswordForEmail
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: BASE_URL + 'index.html'
+    });
+    if (error) { toast('Error: ' + error.message); return; }
+    toast('Reset email sent to ' + email);
+  }
 }
 
 // ── Tickets ────────────────────────────────────────────────────
