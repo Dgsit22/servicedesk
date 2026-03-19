@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
-:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06)}
+:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06);--pending-bg:#f5f3ff;--pending-text:#5b21b6}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 .shell{display:flex;height:100vh;overflow:hidden}
@@ -82,6 +82,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
 .b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
 .b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
+.b-pending_approval{background:#f5f3ff;color:#5b21b6}
 .b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
 .detail-panel{position:absolute;right:0;top:0;height:100%;width:480px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
 .detail-panel.open{transform:translateX(0)}
@@ -321,7 +322,8 @@ function renderList() {
   const sort=document.getElementById('sort-sel')?.value||'date-desc';
   let list=allTickets.filter(t=>{
     if(currentFilter==='critical') return t.priority==='critical';
-    if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
+    if(currentFilter==='pending_approval') return t.status==='pending_approval';
+  if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
     if(currentFilter!=='all') return t.status===currentFilter;
     return true;
   }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q));
@@ -397,11 +399,19 @@ async function openPanel(uid) {
 }
 
 async function quickStatus(s) {
+  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+  const {data:comment_latest} = await db.from('comments').select('body').eq('ticket_id',selectedId).order('created_at',{ascending:false}).limit(1).single().catch(()=>({data:null}));
   await db.from('tickets').update({status:s,updated_at:new Date().toISOString()}).eq('id',selectedId);
+  // Email requester about status change
+  try {
+    await db.functions.invoke('send-notification',{body:{
+      type:'status_changed', ticket_no:t.ticket_no, title:t.title,
+      new_status:s, requester_email:t.creator?.email, requester_name:t.creator?.full_name,
+      technician_name:currentProfile.full_name, comment:comment_latest?.body||null
+    }});
+  } catch(e){}
   toast('Status → '+statusLabel(s));
-  await loadTickets();
-  openPanel(selectedId);
-  renderList();
+  await loadTickets(); openPanel(selectedId); renderList();
 }
 
 async function saveUpdate() {
@@ -410,11 +420,19 @@ async function saveUpdate() {
   const updates={updated_at:new Date().toISOString()};
   if(assignId!==undefined) updates.assigned_to=assignId||null;
   await db.from('tickets').update(updates).eq('id',selectedId);
-  if(comment) await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment});
+  if(comment) {
+    await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment});
+    // Email requester about comment
+    const {data:t2} = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+    try { await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); } catch(e){}
+  }
+  if(assignId) {
+    const {data:tech} = await db.from('profiles').select('full_name,email').eq('id',assignId).single();
+    const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
+    try { await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); } catch(e){}
+  }
   toast('Ticket updated');
-  await loadTickets();
-  openPanel(selectedId);
-  renderList();
+  await loadTickets(); openPanel(selectedId); renderList();
   if(document.getElementById('view-dashboard').classList.contains('active')) renderDash();
 }
 
@@ -425,8 +443,28 @@ function statusBadge(s){return`<span class="badge b-${s}" style="border:none">${
 function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
 function pDot(p){return{critical:'#a61e1e',high:'#8a4500',medium:'#1e40af',low:'#14532d'}[p]||'#aaa';}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
+function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pending Approval'};return m[s]||cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
+
+async function approveHardware(uid) {
+  const reason = prompt('Approval note (optional):') || '';
+  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'open',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  // Notify requester of approval
+  try { await db.functions.invoke('send-notification',{body:{type:'hardware_approved',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); } catch(e){}
+  toast('Hardware request approved — IT can now process it');
+  await loadTickets(); openPanel(uid); renderList();
+}
+
+async function rejectHardware(uid) {
+  const reason = prompt('Reason for rejection (required):');
+  if(!reason) return;
+  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'closed',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  try { await db.functions.invoke('send-notification',{body:{type:'hardware_rejected',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); } catch(e){}
+  toast('Hardware request rejected — requester notified');
+  await loadTickets(); openPanel(uid); renderList();
+}
 
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
 ['tickets','mine'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
