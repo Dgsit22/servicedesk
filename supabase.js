@@ -4,8 +4,8 @@
 //          Supabase Dashboard → Project Settings → API
 // ─────────────────────────────────────────────────────────────
 
-const SUPABASE_URL  = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON = 'YOUR_ANON_PUBLIC_KEY';
+const SUPABASE_URL  = 'https://rxuofhrgrwefslbnuaka.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4dW9maHJncndlZnNsYm51YWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjU5NjcsImV4cCI6MjA4OTQwMTk2N30.iokvau5uyqGukV7kVmeZC6UeYqRnqz-WJ2eRSNhJmxw';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -30,4 +30,4 @@ async function signOut() {
 }
 
 // Base URL for redirects – change to your GitHub Pages URL
-const BASE_URL = 'https://YOUR_USERNAME.github.io/servicedesk/';
+const BASE_URL = 'https://dgsit22.github.io/servicedesk/';
