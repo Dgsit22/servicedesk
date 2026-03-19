@@ -173,6 +173,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div><div class="topbar-title">User Management</div><div class="topbar-sub" id="user-count-label">Loading…</div></div>
         <input class="search-input" id="user-search" placeholder="Search users…" oninput="renderUsers()">
         <button class="btn" onclick="loadUsers()">&#8635; Refresh</button>
+        <button class="btn btn-primary" onclick="showCreateUser()">+ Create User</button>
       </div>
       <div style="flex:1;overflow-y:auto">
         <table class="data-table" style="width:100%;background:var(--surface)">
@@ -219,6 +220,65 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         </div>
       </div>
     </div>
+  <!-- Create User Modal -->
+  <div id="cu-overlay" style="display:none;position:fixed;inset:0;background:rgba(28,27,25,.4);z-index:50;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border-radius:14px;border:1px solid var(--border);width:100%;max-width:460px;margin:20px;box-shadow:0 8px 40px rgba(0,0,0,.15);overflow:hidden">
+      <div style="padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:600">Create New User</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">User will receive a welcome email with login instructions</div>
+        </div>
+        <button onclick="hideCreateUser()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3);padding:4px 8px;border-radius:6px">&#10005;</button>
+      </div>
+      <div style="padding:20px 22px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Full Name <span style="color:var(--critical-text)">*</span></label>
+            <input id="cu-name" type="text" placeholder="e.g. Priya Sharma" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Work Email <span style="color:var(--critical-text)">*</span></label>
+            <input id="cu-email" type="email" placeholder="user@digiclarity.in" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Role <span style="color:var(--critical-text)">*</span></label>
+            <select id="cu-role" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+              <option value="employee">Employee</option>
+              <option value="technician">Technician</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Department</label>
+            <select id="cu-dept" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+              <option value="">Select…</option>
+              <option>Engineering</option><option>Marketing</option><option>Finance</option>
+              <option>HR</option><option>Operations</option><option>Management</option>
+              <option>IT</option><option>Sales</option><option>Other</option>
+            </select>
+          </div>
+          <div style="grid-column:span 2;display:flex;flex-direction:column;gap:5px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Temporary Password <span style="color:var(--critical-text)">*</span></label>
+            <div style="display:flex;gap:8px">
+              <input id="cu-pass" type="text" placeholder="Min. 8 characters" style="flex:1;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Mono',monospace;outline:none">
+              <button onclick="generatePassword()" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text2);white-space:nowrap">Generate</button>
+            </div>
+            <div style="font-size:11px;color:var(--text3)">Share this password with the user — they can change it after logging in via Forgot Password</div>
+          </div>
+        </div>
+        <div id="cu-err" style="display:none;margin-top:12px;padding:8px 12px;background:#fff8f8;border:1px solid #ffc9c9;border-radius:var(--radius-sm);font-size:12px;color:var(--critical-text)"></div>
+        <div id="cu-ok" style="display:none;margin-top:12px;padding:8px 12px;background:var(--low-bg);border:1px solid var(--low-border);border-radius:var(--radius-sm);font-size:12px;color:var(--low-text)"></div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="btn btn-primary" id="cu-btn" onclick="createUser()" style="flex:1">
+            <span id="cu-btn-text">Create User</span>
+            <span id="cu-btn-spin" style="display:none">Creating…</span>
+          </button>
+          <button class="btn" onclick="hideCreateUser()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -420,6 +480,94 @@ function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ── Create User ───────────────────────────────────────────────
+function showCreateUser() {
+  const overlay = document.getElementById('cu-overlay');
+  overlay.style.display = 'flex';
+  // Clear form
+  ['cu-name','cu-email','cu-pass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cu-role').value = 'employee';
+  document.getElementById('cu-dept').value = '';
+  document.getElementById('cu-err').style.display = 'none';
+  document.getElementById('cu-ok').style.display = 'none';
+  document.getElementById('cu-btn').disabled = false;
+  document.getElementById('cu-btn-text').style.display = '';
+  document.getElementById('cu-btn-spin').style.display = 'none';
+  // Auto-generate a password
+  generatePassword();
+}
+
+function hideCreateUser() {
+  document.getElementById('cu-overlay').style.display = 'none';
+}
+
+function generatePassword() {
+  // Generate a strong readable password
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+  let pwd = '';
+  for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('cu-pass').value = pwd;
+}
+
+async function createUser() {
+  const name  = document.getElementById('cu-name').value.trim();
+  const email = document.getElementById('cu-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('cu-pass').value.trim();
+  const role  = document.getElementById('cu-role').value;
+  const dept  = document.getElementById('cu-dept').value;
+  const errEl = document.getElementById('cu-err');
+  const okEl  = document.getElementById('cu-ok');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+
+  // Validate
+  if (!name)  { errEl.textContent = 'Please enter the full name.'; errEl.style.display=''; return; }
+  if (!email) { errEl.textContent = 'Please enter a work email.'; errEl.style.display=''; return; }
+  if (!email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display=''; return; }
+  if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display=''; return; }
+
+  document.getElementById('cu-btn').disabled = true;
+  document.getElementById('cu-btn-text').style.display = 'none';
+  document.getElementById('cu-btn-spin').style.display = '';
+
+  try {
+    // Call the create-user Edge Function (uses service_role to bypass email confirmation)
+    const { data, error } = await db.functions.invoke('create-user', {
+      body: { email, password: pass, full_name: name, role, department: dept }
+    });
+
+    if (error) throw new Error(error.message || 'Failed to create user');
+    if (data?.error) throw new Error(data.error);
+
+    okEl.innerHTML = `✓ User <strong>${name}</strong> created successfully!<br>
+      Email: <strong>${email}</strong><br>
+      Temp password: <code style="font-family:monospace;background:#f0fdf4;padding:2px 6px;border-radius:4px">${pass}</code><br>
+      <span style="font-size:11px;color:#6b6860">Share these credentials with the user. They can reset their password after first login.</span>`;
+    okEl.style.display = '';
+
+    // Refresh user list
+    await loadUsers();
+
+    // Keep modal open so admin can copy the credentials
+    document.getElementById('cu-btn').disabled = false;
+    document.getElementById('cu-btn-text').textContent = 'Create Another';
+    document.getElementById('cu-btn-text').style.display = '';
+    document.getElementById('cu-btn-spin').style.display = 'none';
+
+  } catch(err) {
+    errEl.textContent = err.message || 'Failed to create user. Please try again.';
+    errEl.style.display = '';
+    document.getElementById('cu-btn').disabled = false;
+    document.getElementById('cu-btn-text').style.display = '';
+    document.getElementById('cu-btn-spin').style.display = 'none';
+  }
+}
+
+// Close modal when clicking outside
+document.getElementById('cu-overlay').addEventListener('click', function(e) {
+  if (e.target === this) hideCreateUser();
+});
 
 document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
 ['users','tickets','settings'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
