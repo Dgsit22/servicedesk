@@ -54,7 +54,7 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
   </div>
   <div class="domain-badge">
     <svg viewBox="0 0 16 16"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm-.75 2.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6a.75.75 0 100-1.5.75.75 0 000 1.5z"/></svg>
-    Restricted to @digiclarity.com &amp; @clarityrcm.com
+    Restricted to @digiclarity.in &amp; @clarityrcm.com
   </div>
 
   <div class="tab-row">
@@ -74,7 +74,7 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
   <div id="form-login">
     <div class="fg">
       <label>Work Email</label>
-      <input id="l-email" type="email" placeholder="you@digiclarity.com" autocomplete="email" oninput="validateDomain('l-email','l-domain-hint')">
+      <input id="l-email" type="email" placeholder="you@digiclarity.in" autocomplete="email" oninput="validateDomain('l-email','l-domain-hint')">
       <span class="hint" id="l-domain-hint"></span>
     </div>
     <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
@@ -89,7 +89,7 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
     <div class="fg"><label>Full Name</label><input id="s-name" type="text" placeholder="e.g. Priya Sharma"></div>
     <div class="fg">
       <label>Work Email</label>
-      <input id="s-email" type="email" placeholder="you@digiclarity.com" autocomplete="email" oninput="validateDomain('s-email','s-domain-hint')">
+      <input id="s-email" type="email" placeholder="you@digiclarity.in" autocomplete="email" oninput="validateDomain('s-email','s-domain-hint')">
       <span class="hint" id="s-domain-hint"></span>
     </div>
     <div class="fg"><label>Password</label><input id="s-pass" type="password" placeholder="Min. 8 characters" autocomplete="new-password"></div>
@@ -112,7 +112,7 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
 
 <script>
 // ── Allowed domains ────────────────────────────────────────────
-const ALLOWED_DOMAINS = ['digiclarity.com', 'clarityrcm.com'];
+const ALLOWED_DOMAINS = ['digiclarity.in', 'clarityrcm.com'];
 
 function getAllowedDomain(email) {
   const domain = email.split('@')[1]?.toLowerCase();
@@ -154,7 +154,7 @@ window.addEventListener('load', async () => {
     if (!getAllowedDomain(email)) {
       await db.auth.signOut();
       const errEl = document.getElementById('google-err');
-      errEl.textContent = 'Access denied. Only @digiclarity.com and @clarityrcm.com email addresses are permitted.';
+      errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses are permitted.';
       errEl.style.display = '';
       return;
     }
@@ -180,7 +180,7 @@ async function emailLogin() {
   errEl.style.display = 'none';
   if (!email || !pass) { errEl.textContent='Please enter your email and password.'; errEl.style.display=''; return; }
   if (!getAllowedDomain(email)) {
-    errEl.textContent = 'Access denied. Only @digiclarity.com and @clarityrcm.com email addresses are permitted.';
+    errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses are permitted.';
     errEl.style.display = ''; return;
   }
   setLoading('l', true);
@@ -202,7 +202,7 @@ async function emailSignup() {
   if (!name)  { errEl.textContent='Please enter your full name.'; errEl.style.display=''; return; }
   if (!email) { errEl.textContent='Please enter your work email.'; errEl.style.display=''; return; }
   if (!getAllowedDomain(email)) {
-    errEl.textContent = 'Access denied. Only @digiclarity.com and @clarityrcm.com email addresses can sign up.';
+    errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses can sign up.';
     errEl.style.display = ''; return;
   }
   if (pass.length < 8) { errEl.textContent='Password must be at least 8 characters.'; errEl.style.display=''; return; }
