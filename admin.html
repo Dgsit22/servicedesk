@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ServiceDesk — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<style>
+:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sb-brand{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-brand-name{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.sb-brand-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.sb-nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
+.sb-nav-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px 4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s,color .12s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--accent-light);color:var(--accent-text);font-weight:500}
+.sb-footer{padding:12px 14px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:30px;height:30px;border-radius:50%;background:#ede9fe;color:#5b21b6;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-user-name{font-size:12px;font-weight:500}
+.sb-user-role{font-size:10px;color:var(--text3)}
+.signout-btn{margin-top:6px;padding:5px 10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text3);font-family:inherit;width:100%;text-align:left;transition:all .12s}
+.signout-btn:hover{background:var(--surface2);color:var(--text)}
+.view{display:none;flex-direction:column;height:100%;animation:fadeIn .18s ease}
+.view.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;font-weight:400}
+.btn{padding:7px 15px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#1648c0}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-danger{background:var(--critical-bg);color:var(--critical-text);border-color:var(--critical-border)}
+.btn-danger:hover{background:#fdd}
+.scroll-area{flex:1;overflow-y:auto;padding:22px 24px}
+.dash-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.metric-card .m-val{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace}
+.metric-card .m-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:13px;font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%}
+.b-critical{background:var(--critical-bg);color:var(--critical-text);border:1px solid var(--critical-border)}.b-critical::before{background:var(--critical-text)}
+.b-high{background:var(--high-bg);color:var(--high-text);border:1px solid var(--high-border)}.b-high::before{background:var(--high-text)}
+.b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
+.b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
+.b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
+.b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
+.role-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px}
+.role-admin{background:#ede9fe;color:#5b21b6}
+.role-technician{background:var(--low-bg);color:var(--low-text)}
+.role-employee{background:var(--surface3);color:var(--text2)}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface2);text-align:left;white-space:nowrap}
+.data-table td{padding:10px 16px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface2)}
+.volume-bar{display:flex;align-items:center;gap:8px}
+.vb-track{flex:1;height:5px;background:var(--surface3);border-radius:5px;overflow:hidden}
+.vb-fill{height:100%;background:var(--accent);border-radius:5px}
+.vb-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);min-width:20px}
+.sla-ring{display:flex;align-items:center;justify-content:center;gap:20px;padding:24px;flex-wrap:wrap}
+.sla-stat{text-align:center}
+.sla-stat .sla-val{font-size:24px;font-weight:600;font-family:'DM Mono',monospace}
+.sla-stat .sla-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.sla-divider{width:1px;height:36px;background:var(--border)}
+.toggle-wrap{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.toggle-wrap:last-child{border-bottom:none}
+.toggle-label{flex:1;font-size:12px}
+.toggle-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle-slider::after{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider::after{transform:translateX(16px)}
+.search-input{padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .12s;width:220px}
+.search-input:focus{border-color:var(--accent);background:var(--surface)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#1c1b19;color:#fff;padding:9px 20px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-name">&#9632; ServiceDesk</div>
+      <div class="sb-brand-sub">Admin Panel</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-nav-label">Admin</div>
+      <button class="nav-btn active" id="nav-overview" onclick="show('overview')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>
+        Overview
+      </button>
+      <button class="nav-btn" id="nav-users" onclick="show('users')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 0110 0H3z"/></svg>
+        User Management
+      </button>
+      <button class="nav-btn" id="nav-tickets" onclick="show('tickets')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
+        All Tickets
+      </button>
+      <button class="nav-btn" id="nav-settings" onclick="show('settings')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a4 4 0 100 8A4 4 0 008 4zm0 1.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM13.9 8.5a6 6 0 01-.6 2.5l1.3.8a7.5 7.5 0 000-6.6l-1.3.8a6 6 0 01.6 2.5zM2.1 8.5a6 6 0 00.6 2.5l-1.3.8a7.5 7.5 0 010-6.6l1.3.8a6 6 0 00-.6 2.5z"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-avatar">A</div>
+        <div>
+          <div class="sb-user-name" id="sb-name">Loading…</div>
+          <div class="sb-user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="signout-btn" onclick="signOut()">&#8594; Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- OVERVIEW -->
+    <div class="view active" id="view-overview">
+      <div class="topbar">
+        <div><div class="topbar-title">Admin Overview</div><div class="topbar-sub">System-wide statistics and health</div></div>
+        <button class="btn" onclick="loadAll()">&#8635; Refresh</button>
+        <button class="btn btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div class="scroll-area">
+        <div class="dash-metrics" id="dash-metrics"><div class="loading">Loading…</div></div>
+        <div class="admin-grid">
+          <div class="card">
+            <div class="card-header"><h3>Tickets by Category</h3></div>
+            <table class="data-table" id="cat-table"></table>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>SLA Overview</h3></div>
+            <div class="sla-ring" id="sla-stats"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Open by Priority</h3></div>
+            <table class="data-table" id="prio-table"></table>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Technician Workload</h3></div>
+            <table class="data-table" id="tech-table"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USER MANAGEMENT -->
+    <div class="view" id="view-users">
+      <div class="topbar">
+        <div><div class="topbar-title">User Management</div><div class="topbar-sub" id="user-count-label">Loading…</div></div>
+        <input class="search-input" id="user-search" placeholder="Search users…" oninput="renderUsers()">
+        <button class="btn" onclick="loadUsers()">&#8635; Refresh</button>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        <table class="data-table" style="width:100%;background:var(--surface)">
+          <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="user-list"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALL TICKETS -->
+    <div class="view" id="view-tickets">
+      <div class="topbar">
+        <div><div class="topbar-title">All Tickets</div><div class="topbar-sub" id="ticket-count-label">Loading…</div></div>
+        <input class="search-input" id="ticket-search" placeholder="Search tickets…" oninput="renderTickets()">
+        <button class="btn btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        <table class="data-table" style="width:100%;background:var(--surface)" id="ticket-full-table">
+          <thead><tr><th>ID</th><th>Title</th><th>Requester</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th></tr></thead>
+          <tbody id="ticket-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="topbar">
+        <div><div class="topbar-title">Settings</div><div class="topbar-sub">Notification and system preferences</div></div>
+      </div>
+      <div class="scroll-area">
+        <div style="max-width:560px">
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header"><h3>Notifications</h3></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>Email on new critical ticket</div><div class="toggle-sub">Instantly alert IT team when critical tickets arrive</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>Email when ticket is assigned</div><div class="toggle-sub">Notify technician and requester on assignment</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>SLA breach alerts</div><div class="toggle-sub">Notify admin when a ticket misses SLA</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>CSAT survey on close</div><div class="toggle-sub">Send 1-question satisfaction survey to requester</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Assignment</h3></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>Auto-assign by category</div><div class="toggle-sub">Round-robin assignment to available technicians</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+            <div class="toggle-wrap"><div class="toggle-label"><div>Allow employees to reassign</div><div class="toggle-sub">Let employees request a different technician</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser=null, allUsers=[], allTickets=[];
+
+// ── Auth guard ─────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  const session = await getSession();
+  if (!session) { location.href='index.html'; return; }
+  currentUser = session.user;
+  const profile = await getProfile(currentUser.id);
+  if (!profile || profile.role !== 'admin') { location.href='index.html'; return; }
+  const initials=(profile.full_name||'A').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('sb-avatar').textContent=initials;
+  document.getElementById('sb-name').textContent=profile.full_name||profile.email;
+  await loadAll();
+});
+
+async function loadAll() {
+  await Promise.all([loadUsers(), loadTickets_()]);
+  renderOverview();
+}
+
+async function loadUsers() {
+  const {data} = await db.from('profiles').select('*').order('created_at',{ascending:false});
+  allUsers = data||[];
+  document.getElementById('user-count-label').textContent=allUsers.length+' users';
+  renderUsers();
+}
+
+async function loadTickets_() {
+  const {data} = await db.from('tickets')
+    .select(`*, creator:profiles!created_by(full_name,email), assignee:profiles!assigned_to(full_name)`)
+    .order('created_at',{ascending:false});
+  allTickets = (data||[]).map(t=>({...t,id:t.ticket_no,uid:t.id}));
+}
+
+// ── Navigation ─────────────────────────────────────────────────
+function show(v) {
+  ['overview','users','tickets','settings'].forEach(x=>{document.getElementById('view-'+x).style.display='none';});
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).style.cssText='display:flex;flex-direction:column;height:100%';
+  document.getElementById('nav-'+v).classList.add('active');
+  if(v==='tickets') renderTickets();
+}
+
+// ── Overview ───────────────────────────────────────────────────
+function renderOverview() {
+  const total=allTickets.length, open=allTickets.filter(t=>t.status==='open').length,
+    inp=allTickets.filter(t=>t.status==='inprogress').length, res=allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Tickets</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--closed-text)">${res}</div><div class="m-lbl">Resolved</div></div>
+  `;
+  // Category
+  const cats={};allTickets.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
+  const maxC=Math.max(...Object.values(cats),1);
+  document.getElementById('cat-table').innerHTML=`<tr><th>Category</th><th>Volume</th><th>#</th></tr>`+
+    Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td><div class="volume-bar"><div class="vb-track"><div class="vb-fill" style="width:${Math.round(n/maxC*100)}%"></div></div></div></td><td class="vb-num">${n}</td></tr>`).join('');
+  // Priority
+  const prios={critical:0,high:0,medium:0,low:0};
+  allTickets.filter(t=>t.status==='open'||t.status==='inprogress').forEach(t=>prios[t.priority]++);
+  const totP=Object.values(prios).reduce((a,b)=>a+b,0)||1;
+  document.getElementById('prio-table').innerHTML=`<tr><th>Priority</th><th>Open</th><th>%</th></tr>`+
+    Object.entries(prios).map(([p,n])=>`<tr><td>${prioBadge(p)}</td><td style="font-family:'DM Mono',monospace;font-weight:600">${n}</td><td style="color:var(--text3);font-size:11px">${Math.round(n/totP*100)}%</td></tr>`).join('');
+  // SLA
+  const rate=total?Math.round(res/total*100):0;
+  document.getElementById('sla-stats').innerHTML=`
+    <div class="sla-stat"><div class="sla-val" style="color:var(--closed-text)">${rate}%</div><div class="sla-lbl">Resolution Rate</div></div>
+    <div class="sla-divider"></div>
+    <div class="sla-stat"><div class="sla-val" style="color:var(--open-text)">${open}</div><div class="sla-lbl">Open</div></div>
+    <div class="sla-divider"></div>
+    <div class="sla-stat"><div class="sla-val" style="color:var(--inprog-text)">${inp}</div><div class="sla-lbl">In Progress</div></div>
+    <div class="sla-divider"></div>
+    <div class="sla-stat"><div class="sla-val">${allUsers.length}</div><div class="sla-lbl">Total Users</div></div>
+  `;
+  // Technician workload
+  const techWork={};
+  allTickets.filter(t=>t.assigned_to).forEach(t=>{
+    const name=t.assignee?.full_name||t.assigned_to;
+    techWork[name]=(techWork[name]||0)+1;
+  });
+  const maxT=Math.max(...Object.values(techWork),1);
+  document.getElementById('tech-table').innerHTML=`<tr><th>Technician</th><th>Assigned</th><th>#</th></tr>`+
+    (Object.keys(techWork).length?Object.entries(techWork).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`<tr><td>${n}</td><td><div class="volume-bar"><div class="vb-track"><div class="vb-fill" style="width:${Math.round(c/maxT*100)}%"></div></div></div></td><td class="vb-num">${c}</td></tr>`).join(''):'<tr><td colspan="3" style="color:var(--text3);font-style:italic;padding:12px 16px">No assignments yet</td></tr>');
+}
+
+// ── User Management ────────────────────────────────────────────
+function renderUsers() {
+  const q=(document.getElementById('user-search')?.value||'').toLowerCase();
+  const list=allUsers.filter(u=>!q||u.full_name?.toLowerCase().includes(q)||u.email?.toLowerCase().includes(q)||(u.department||'').toLowerCase().includes(q));
+  document.getElementById('user-list').innerHTML=list.map(u=>`
+    <tr>
+      <td><div style="font-weight:500">${u.full_name||'—'}</div></td>
+      <td style="color:var(--text2)">${u.email}</td>
+      <td style="color:var(--text2)">${u.department||'—'}</td>
+      <td>
+        <select onchange="setRole('${u.id}',this.value)" style="padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;outline:none">
+          <option value="employee"${u.role==='employee'?' selected':''}>Employee</option>
+          <option value="technician"${u.role==='technician'?' selected':''}>Technician</option>
+          <option value="admin"${u.role==='admin'?' selected':''}>Admin</option>
+        </select>
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${u.created_at?.slice(0,10)}</td>
+      <td>
+        ${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="confirmDelete('${u.id}','${u.full_name||u.email}')">Remove</button>`:'<span style="font-size:11px;color:var(--text3)">You</span>'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function setRole(uid, role) {
+  const {error} = await db.from('profiles').update({role}).eq('id',uid);
+  if (error) { toast('Error: '+error.message); return; }
+  await loadUsers();
+  toast('Role updated to '+cap(role));
+}
+
+async function confirmDelete(uid, name) {
+  if (!confirm('Remove '+name+' from ServiceDesk? They will no longer be able to log in.')) return;
+  // Note: this removes their profile — actual auth deletion requires service_role key
+  const {error} = await db.from('profiles').delete().eq('id',uid);
+  if (error) { toast('Error: '+error.message); return; }
+  await loadUsers();
+  toast('User removed');
+}
+
+// ── Tickets ────────────────────────────────────────────────────
+function renderTickets() {
+  const q=(document.getElementById('ticket-search')?.value||'').toLowerCase();
+  const list=allTickets.filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q));
+  document.getElementById('ticket-count-label').textContent=list.length+' tickets';
+  document.getElementById('ticket-list').innerHTML=list.map(t=>`
+    <tr>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${t.id}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${t.title}</td>
+      <td>${t.creator?.full_name||'—'}</td>
+      <td>${tagBadge(t.category)}</td>
+      <td>${prioBadge(t.priority)}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td style="color:var(--text2)">${t.assignee?.full_name||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${t.created_at?.slice(0,10)}</td>
+    </tr>
+  `).join('');
+}
+
+function exportCSV() {
+  const hdr=['ID','Title','Requester','Email','Category','Priority','Status','Assignee','Created','Updated'];
+  const rows=allTickets.map(t=>[t.id,t.title,t.creator?.full_name||'',t.creator?.email||'',t.category,t.priority,t.status,t.assignee?.full_name||'',t.created_at?.slice(0,16),t.updated_at?.slice(0,16)].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv=[hdr.join(','),...rows].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='tickets-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV exported ('+allTickets.length+' tickets)');
+}
+
+function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}
+function statusBadge(s){return`<span class="badge b-${s}" style="border:none">${statusLabel(s)}</span>`;}
+function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+
+document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
+['users','tickets','settings'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
+</script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ServiceDesk — My Tickets</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<style>
+:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sb-brand{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-brand-name{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.sb-brand-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.sb-nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
+.sb-nav-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px 4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s,color .12s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--accent-light);color:var(--accent-text);font-weight:500}
+.nav-badge{margin-left:auto;background:var(--accent-light);color:var(--accent-text);font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace;display:none}
+.sb-footer{padding:12px 14px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-user-name{font-size:12px;font-weight:500}
+.sb-user-role{font-size:10px;color:var(--text3)}
+.signout-btn{margin-top:6px;padding:5px 10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text3);font-family:inherit;width:100%;text-align:left;transition:all .12s}
+.signout-btn:hover{background:var(--surface2);color:var(--text)}
+.view{display:none;flex-direction:column;height:100%;animation:fadeIn .18s ease}
+.view.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;font-weight:400}
+.btn{padding:7px 15px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#1648c0;border-color:#1648c0}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--surface2)}
+.scroll-area{flex:1;overflow-y:auto;padding:22px 24px}
+/* Dashboard */
+.dash-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.metric-card .m-val{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace}
+.metric-card .m-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:13px;font-weight:600}
+/* Filters */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.search-wrap{position:relative;flex:1;max-width:260px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .12s}
+.search-input:focus{border-color:var(--accent);background:var(--surface)}
+.filter-chip{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:500;transition:all .12s}
+.filter-chip:hover{color:var(--text);border-color:var(--border2)}
+.filter-chip.on{background:var(--accent-light);color:var(--accent-text);border-color:var(--medium-border);font-weight:600}
+.filter-sep{width:1px;height:20px;background:var(--border)}
+/* Ticket table */
+.tt-head{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 80px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.tt-head span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.tt-row{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 80px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;align-items:center;background:var(--surface)}
+.tt-row:last-child{border-bottom:none}
+.tt-row:hover{background:var(--surface2)}
+.tt-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);font-weight:500}
+.tt-info{overflow:hidden}
+.tt-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.tt-sub{font-size:11px;color:var(--text3)}
+.tt-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%}
+.b-critical{background:var(--critical-bg);color:var(--critical-text);border:1px solid var(--critical-border)}.b-critical::before{background:var(--critical-text)}
+.b-high{background:var(--high-bg);color:var(--high-text);border:1px solid var(--high-border)}.b-high::before{background:var(--high-text)}
+.b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
+.b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
+.b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
+.b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
+/* Form */
+.form-wrap{max-width:640px}
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+.form-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:span 2}
+.fg label{font-size:12px;font-weight:500;color:var(--text2)}
+.fg label span{color:var(--critical-text)}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .12s,background .12s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.fg textarea{resize:vertical;line-height:1.6}
+.priority-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.p-opt{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:center;transition:all .12s}
+.p-opt:hover{border-color:var(--border2);background:var(--surface2)}
+.p-opt.sel-critical{border-color:var(--critical-text);background:var(--critical-bg)}.p-opt.sel-high{border-color:var(--high-text);background:var(--high-bg)}.p-opt.sel-medium{border-color:var(--medium-text);background:var(--medium-bg)}.p-opt.sel-low{border-color:var(--low-text);background:var(--low-bg)}
+.p-opt-label{font-size:11px;font-weight:600;margin-top:5px}.p-opt-desc{font-size:10px;color:var(--text3);margin-top:2px}.p-opt-icon{font-size:18px}
+.form-actions{display:flex;gap:10px;align-items:center}
+.char-count{font-size:11px;color:var(--text3);margin-top:3px}
+/* Detail panel */
+.detail-panel{position:absolute;right:0;top:0;height:100%;width:460px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
+.detail-panel.open{transform:translateX(0)}
+.dp-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
+.dp-header-info{flex:1;overflow:hidden}
+.dp-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px}
+.dp-title{font-size:14px;font-weight:600;line-height:1.3}
+.dp-body{flex:1;overflow-y:auto}
+.dp-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.dp-section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.dp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.dp-row:last-child{border:none}
+.dp-row-label{color:var(--text3)}
+.dp-row-val{font-weight:500;text-align:right}
+.dp-desc{font-size:12px;color:var(--text2);line-height:1.7}
+.comment-item{padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;border-left:2px solid var(--accent)}
+.comment-item:last-child{margin-bottom:0}
+.comment-meta{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:'DM Mono',monospace}
+.comment-text{font-size:12px;color:var(--text);line-height:1.6}
+.dp-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0}
+.dp-footer textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;transition:border .12s}
+.dp-footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.dp-footer-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+/* Overlay */
+.overlay{position:absolute;inset:0;background:rgba(28,27,25,.25);z-index:15;display:none}
+.overlay.show{display:block}
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#1c1b19;color:#fff;padding:9px 20px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{padding:60px 20px;text-align:center;background:var(--surface)}
+.empty-icon{font-size:32px;margin-bottom:10px}
+.empty-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--text3)}
+.loading{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-name">&#9632; ServiceDesk</div>
+      <div class="sb-brand-sub">IT Help Portal</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-nav-label">My Portal</div>
+      <button class="nav-btn active" id="nav-dashboard" onclick="show('dashboard')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" id="nav-tickets" onclick="show('tickets')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
+        My Tickets
+        <span class="nav-badge" id="open-badge">0</span>
+      </button>
+      <button class="nav-btn" id="nav-new" onclick="show('new')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
+        New Request
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-avatar">?</div>
+        <div>
+          <div class="sb-user-name" id="sb-name">Loading…</div>
+          <div class="sb-user-role" id="sb-dept">Employee</div>
+        </div>
+      </div>
+      <button class="signout-btn" onclick="signOut()">&#8594; Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div><div class="topbar-title">My Dashboard</div><div class="topbar-sub">Your IT service request overview</div></div>
+        <button class="btn btn-primary" onclick="show('new')">+ New Request</button>
+      </div>
+      <div class="scroll-area">
+        <div class="dash-metrics" id="dash-metrics"><div class="loading">Loading…</div></div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Requests</h3><button class="btn btn-ghost btn-sm" onclick="show('tickets')">View all &rarr;</button></div>
+          <div id="dash-recent"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TICKETS -->
+    <div class="view" id="view-tickets">
+      <div class="topbar">
+        <div><div class="topbar-title">My Tickets</div><div class="topbar-sub" id="ticket-count-label">All requests</div></div>
+        <button class="btn btn-primary" onclick="show('new')">+ New Request</button>
+      </div>
+      <div class="filter-row">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
+          <input class="search-input" id="search-inp" placeholder="Search tickets…" oninput="renderList()">
+        </div>
+        <div class="filter-sep"></div>
+        <button class="filter-chip on" id="fc-all" onclick="setFilter('all')">All</button>
+        <button class="filter-chip" id="fc-open" onclick="setFilter('open')">Open</button>
+        <button class="filter-chip" id="fc-inprogress" onclick="setFilter('inprogress')">In Progress</button>
+        <button class="filter-chip" id="fc-closed" onclick="setFilter('closed')">Closed</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;background:var(--surface)">
+        <div class="tt-head"><span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Date</span></div>
+        <div id="ticket-list"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- NEW TICKET -->
+    <div class="view" id="view-new">
+      <div class="topbar">
+        <div><div class="topbar-title">Submit a Request</div><div class="topbar-sub">Tell us what's wrong — we'll get right on it</div></div>
+        <button class="btn btn-ghost" onclick="show('tickets')">&larr; Back</button>
+      </div>
+      <div class="scroll-area">
+        <div class="form-wrap">
+          <div class="form-section">
+            <div class="form-section-title">Your Information</div>
+            <div class="form-grid-2">
+              <div class="fg"><label>Full Name <span>*</span></label><input id="f-name" type="text" placeholder="Your name" readonly></div>
+              <div class="fg"><label>Email</label><input id="f-email" type="email" placeholder="Your email" readonly></div>
+              <div class="fg"><label>Department</label><input id="f-dept-display" type="text" placeholder="Your department" readonly></div>
+              <div class="fg"><label>Phone (optional)</label><input id="f-phone" type="tel" placeholder="+91 98000 00000"></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Issue Details</div>
+            <div class="form-grid-2">
+              <div class="fg full"><label>Subject <span>*</span></label><input id="f-title" type="text" placeholder="Short description of the issue"></div>
+              <div class="fg"><label>Category <span>*</span></label>
+                <select id="f-cat"><option>Hardware</option><option>Software</option><option>Network / VPN</option><option>Access &amp; Permissions</option><option>Email / Calendar</option><option>Printer / Scanner</option><option>Phone / Mobile</option><option>Other</option></select>
+              </div>
+              <div class="fg"><label>Affected Asset (optional)</label><input id="f-asset" type="text" placeholder="e.g. LAPTOP-042"></div>
+              <div class="fg full"><label>Description <span>*</span></label>
+                <textarea id="f-desc" rows="5" placeholder="Describe the problem in detail. Include error messages, when it started, and what you have already tried." oninput="updateCharCount(this,'desc-count',1200)"></textarea>
+                <div class="char-count" id="desc-count">0 / 1200 characters</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Priority Level</div>
+            <div class="priority-picker">
+              <div class="p-opt" id="popt-low" onclick="selectPriority('low')"><div class="p-opt-icon">🟢</div><div class="p-opt-label" style="color:var(--low-text)">Low</div><div class="p-opt-desc">Minor inconvenience</div></div>
+              <div class="p-opt sel-medium" id="popt-medium" onclick="selectPriority('medium')"><div class="p-opt-icon">🔵</div><div class="p-opt-label" style="color:var(--medium-text)">Medium</div><div class="p-opt-desc">Work is impacted</div></div>
+              <div class="p-opt" id="popt-high" onclick="selectPriority('high')"><div class="p-opt-icon">🟡</div><div class="p-opt-label" style="color:var(--high-text)">High</div><div class="p-opt-desc">Blocking work</div></div>
+              <div class="p-opt" id="popt-critical" onclick="selectPriority('critical')"><div class="p-opt-icon">🔴</div><div class="p-opt-label" style="color:var(--critical-text)">Critical</div><div class="p-opt-desc">System / team down</div></div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="submit-btn" onclick="submitTicket()">&#10148; Submit Request</button>
+            <button class="btn" onclick="clearForm()">Clear</button>
+            <span id="form-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closePanel()"></div>
+    <div class="detail-panel" id="detail-panel">
+      <div class="dp-header">
+        <div class="dp-header-info"><div class="dp-id" id="dp-id">TKT-000</div><div class="dp-title" id="dp-title">—</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="closePanel()">&#10005;</button>
+      </div>
+      <div class="dp-body" id="dp-body"></div>
+      <div class="dp-footer" id="dp-footer"></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null, currentProfile = null;
+let allTickets = [], currentFilter = 'all', selectedId = null, selectedPriority = 'medium';
+const PORD = {critical:0,high:1,medium:2,low:3};
+
+// ── Auth guard ────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  const session = await getSession();
+  if (!session) { location.href = 'index.html'; return; }
+  currentUser = session.user;
+  currentProfile = await getProfile(currentUser.id);
+  if (!currentProfile || currentProfile.role !== 'employee') {
+    // Redirect to correct portal if wrong role
+    if (currentProfile?.role === 'admin') location.href = 'admin.html';
+    else if (currentProfile?.role === 'technician') location.href = 'technician.html';
+    else location.href = 'index.html';
+    return;
+  }
+  // Populate sidebar & form
+  const initials = (currentProfile.full_name || 'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('sb-name').textContent = currentProfile.full_name || currentProfile.email;
+  document.getElementById('sb-dept').textContent = currentProfile.department || 'Employee';
+  document.getElementById('f-name').value = currentProfile.full_name || '';
+  document.getElementById('f-email').value = currentProfile.email || '';
+  document.getElementById('f-dept-display').value = currentProfile.department || '';
+  await loadTickets();
+  renderDash();
+});
+
+// ── Load tickets (RLS auto-filters to this user only) ─────────
+async function loadTickets() {
+  const { data, error } = await db.from('tickets')
+    .select(`ticket_no, id, title, category, priority, status, created_at, updated_at,
+             assignee:profiles!assigned_to(full_name),
+             comments(id)`)
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+  allTickets = (data || []).map(t => ({
+    ...t, id: t.ticket_no, uid: t.id,
+    assignee_name: t.assignee?.full_name || '',
+    comment_count: t.comments?.length || 0
+  }));
+  const open = allTickets.filter(t=>t.status==='open'||t.status==='inprogress').length;
+  const badge = document.getElementById('open-badge');
+  badge.textContent = open; badge.style.display = open > 0 ? '' : 'none';
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function show(v) {
+  ['dashboard','tickets','new'].forEach(x => { document.getElementById('view-'+x).style.display='none'; });
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).style.display='flex';
+  document.getElementById('view-'+v).style.flexDirection='column';
+  document.getElementById('nav-'+v).classList.add('active');
+  closePanel();
+  if (v==='dashboard') renderDash();
+  if (v==='tickets') renderList();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function renderDash() {
+  const total = allTickets.length;
+  const open = allTickets.filter(t=>t.status==='open').length;
+  const inp = allTickets.filter(t=>t.status==='inprogress').length;
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Requests</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
+  `;
+  const recent = allTickets.slice(0,6);
+  document.getElementById('dash-recent').innerHTML = recent.length ? recent.map(t=>`
+    <div class="activity-item" style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
+      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
+      <div style="flex:1;overflow:hidden">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.id} — ${t.title}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)}</div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
+    </div>
+  `).join('') : '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Submit your first request</div></div>';
+}
+
+// ── Ticket List ───────────────────────────────────────────────
+function setFilter(f) {
+  currentFilter = f;
+  ['all','open','inprogress','closed'].forEach(k => document.getElementById('fc-'+k).classList.toggle('on',k===f));
+  renderList();
+}
+
+function renderList() {
+  const q = (document.getElementById('search-inp').value||'').toLowerCase();
+  let list = allTickets.filter(t => {
+    if (currentFilter==='closed') return t.status==='closed'||t.status==='resolved';
+    if (currentFilter!=='all') return t.status===currentFilter;
+    return true;
+  }).filter(t => !q || t.title?.toLowerCase().includes(q) || t.id?.toLowerCase().includes(q) || t.category?.toLowerCase().includes(q));
+  document.getElementById('ticket-count-label').textContent = list.length + ' request' + (list.length!==1?'s':'');
+  if (!list.length) {
+    document.getElementById('ticket-list').innerHTML = '<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters or submit a new request</div></div>';
+    return;
+  }
+  document.getElementById('ticket-list').innerHTML = list.map(t=>`
+    <div class="tt-row" onclick="openPanel('${t.uid}')">
+      <span class="tt-id">${t.id}</span>
+      <div class="tt-info"><div class="tt-title">${t.title}</div><div class="tt-sub">${t.assignee_name ? 'Assigned: '+t.assignee_name : 'Unassigned'}</div></div>
+      <div>${tagBadge(t.category)}</div>
+      <div>${prioBadge(t.priority)}</div>
+      <div>${statusBadge(t.status)}</div>
+      <span class="tt-date">${t.created_at?.slice(0,10)}</span>
+    </div>
+  `).join('');
+}
+
+// ── Detail Panel ──────────────────────────────────────────────
+async function openPanel(uid) {
+  selectedId = uid;
+  const { data: t } = await db.from('tickets')
+    .select(`*, assignee:profiles!assigned_to(full_name, email), comments(id,body,created_at,author:profiles!author_id(full_name))`)
+    .eq('id', uid).single();
+  if (!t) return;
+  document.getElementById('dp-id').textContent = t.ticket_no;
+  document.getElementById('dp-title').textContent = t.title;
+  document.getElementById('dp-body').innerHTML = `
+    <div class="dp-section">
+      <div class="dp-section-title">Status & Priority</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${statusBadge(t.status)} ${tagBadge(t.category)}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Details</div>
+      <div class="dp-row"><span class="dp-row-label">Ticket ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.ticket_no}</span></div>
+      <div class="dp-row"><span class="dp-row-label">Category</span><span class="dp-row-val">${t.category}</span></div>
+      ${t.asset_tag?`<div class="dp-row"><span class="dp-row-label">Asset</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.asset_tag}</span></div>`:''}
+      <div class="dp-row"><span class="dp-row-label">Assigned to</span><span class="dp-row-val">${t.assignee?.full_name||'<em style="color:var(--text3);font-style:italic">Unassigned</em>'}</span></div>
+      <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
+      <div class="dp-row"><span class="dp-row-label">Last updated</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.updated_at?.slice(0,16).replace('T',' ')}</span></div>
+    </div>
+    <div class="dp-section"><div class="dp-section-title">Description</div><div class="dp-desc">${t.description}</div></div>
+    ${t.comments?.length ? `<div class="dp-section"><div class="dp-section-title">Updates (${t.comments.length})</div>${t.comments.map(c=>`<div class="comment-item"><div class="comment-meta">${c.author?.full_name||'IT Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="comment-text">${c.body}</div></div>`).join('')}</div>` : ''}
+  `;
+  document.getElementById('dp-footer').innerHTML = `
+    <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Add a comment</div>
+    <textarea id="dp-comment" rows="2" placeholder="Ask a question or add more info…"></textarea>
+    <div class="dp-footer-row">
+      <button class="btn btn-primary btn-sm" onclick="addComment()">Send</button>
+    </div>
+  `;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+async function addComment() {
+  const body = document.getElementById('dp-comment').value.trim();
+  if (!body) return;
+  await db.from('comments').insert({ ticket_id: selectedId, author_id: currentUser.id, body });
+  toast('Comment added');
+  openPanel(selectedId);
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  selectedId = null;
+}
+
+// ── New Ticket ────────────────────────────────────────────────
+function selectPriority(p) {
+  selectedPriority = p;
+  ['low','medium','high','critical'].forEach(x => {
+    document.getElementById('popt-'+x).className = 'p-opt'+(x===p?' sel-'+p:'');
+  });
+}
+function updateCharCount(el,cId,max){document.getElementById(cId).textContent=el.value.length+' / '+max+' characters';}
+function clearForm(){
+  ['f-title','f-desc','f-asset','f-phone'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value='';});
+  selectPriority('medium');
+  document.getElementById('form-err').style.display='none';
+  document.getElementById('desc-count').textContent='0 / 1200 characters';
+}
+
+async function submitTicket() {
+  const title = document.getElementById('f-title').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  const errEl = document.getElementById('form-err');
+  errEl.style.display='none';
+  if (!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
+  if (!desc){errEl.textContent='Please describe the issue.';errEl.style.display='';return;}
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+  const { data, error } = await db.from('tickets').insert({
+    title, description: desc,
+    category: document.getElementById('f-cat').value,
+    priority: selectedPriority,
+    created_by: currentUser.id,
+    department: currentProfile.department,
+    asset_tag: document.getElementById('f-asset').value.trim()
+  }).select('ticket_no').single();
+  btn.disabled=false; btn.textContent='↪ Submit Request';
+  if (error){errEl.textContent=error.message;errEl.style.display='';return;}
+  toast('Request '+data.ticket_no+' submitted!');
+  clearForm();
+  await loadTickets();
+  show('tickets');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}
+function statusBadge(s){return`<span class="badge b-${s}" style="border:none">${statusLabel(s)}</span>`;}
+function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
+function pDot(p){return{critical:'#a61e1e',high:'#8a4500',medium:'#1e40af',low:'#14532d'}[p]||'#aaa';}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
+
+// Initialise view
+document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
+['tickets','new'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
+</script>
+</body>
+</html>
