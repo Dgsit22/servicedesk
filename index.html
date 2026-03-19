@@ -57,6 +57,7 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
     Restricted to @digiclarity.in &amp; @clarityrcm.com
   </div>
 
+  <div id="panel-main">
   <div class="tab-row">
     <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
     <button class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
@@ -77,7 +78,12 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
       <input id="l-email" type="email" placeholder="you@digiclarity.in" autocomplete="email" oninput="validateDomain('l-email','l-domain-hint')">
       <span class="hint" id="l-domain-hint"></span>
     </div>
-    <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="fg">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>Password</span>
+          <a href="#" onclick="showForgot();return false;" style="font-size:11px;color:var(--accent);text-decoration:none;font-weight:400">Forgot password?</a>
+        </label>
+        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     <p class="err" id="l-err"></p>
     <button class="btn btn-primary" id="l-btn" onclick="emailLogin()" style="margin-top:4px">
       <span id="l-text">Sign In</span><div class="spinner" id="l-spin"></div>
@@ -110,7 +116,106 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
   </div>
 </div>
 
+  </div><!-- end panel-main -->
+
+  <!-- ── FORGOT PASSWORD PANEL ─────────────────── -->
+  <div id="panel-forgot" style="display:none">
+    <button onclick="showLogin()" style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:inherit;padding:0">
+      &#8592; Back to sign in
+    </button>
+    <div style="margin-bottom:18px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:5px">Reset your password</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5">Enter your work email and we will send you a link to reset your password.</div>
+    </div>
+    <div class="fg">
+      <label>Work Email</label>
+      <input id="r-email" type="email" placeholder="you@digiclarity.in" oninput="validateDomain('r-email','r-hint')">
+      <span class="hint" id="r-hint"></span>
+    </div>
+    <p class="err" id="r-err"></p>
+    <p class="ok" id="r-ok"></p>
+    <button class="btn btn-primary" id="r-btn" onclick="sendReset()">
+      <span id="r-text">Send Reset Link</span><div class="spinner" id="r-spin"></div>
+    </button>
+  </div>
+
+  <!-- ── NEW PASSWORD PANEL (after clicking email link) ── -->
+  <div id="panel-update" style="display:none">
+    <div style="margin-bottom:18px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:5px">Set new password</div>
+      <div style="font-size:12px;color:var(--text3)">Enter and confirm your new password below.</div>
+    </div>
+    <div class="fg"><label>New Password</label><input id="u-pass" type="password" placeholder="Min. 8 characters"></div>
+    <div class="fg"><label>Confirm Password</label><input id="u-confirm" type="password" placeholder="Repeat new password"></div>
+    <p class="err" id="u-err"></p>
+    <p class="ok" id="u-ok"></p>
+    <button class="btn btn-primary" id="u-btn" onclick="updatePassword()">
+      <span id="u-text">Update Password</span><div class="spinner" id="u-spin"></div>
+    </button>
+  </div>
+
+</div>
+
 <script>
+// ── Panel switching ───────────────────────────────────────────
+function showForgot() {
+  document.getElementById('panel-main').style.display='none';
+  document.getElementById('panel-forgot').style.display='';
+  document.getElementById('panel-update').style.display='none';
+}
+function showLogin() {
+  document.getElementById('panel-main').style.display='';
+  document.getElementById('panel-forgot').style.display='none';
+  document.getElementById('panel-update').style.display='none';
+}
+function showUpdate() {
+  document.getElementById('panel-main').style.display='none';
+  document.getElementById('panel-forgot').style.display='none';
+  document.getElementById('panel-update').style.display='';
+}
+
+// ── Forgot password — send reset email ────────────────────────
+async function sendReset() {
+  const email = document.getElementById('r-email').value.trim();
+  const errEl = document.getElementById('r-err');
+  const okEl  = document.getElementById('r-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if (!email) { errEl.textContent='Please enter your email.'; errEl.style.display=''; return; }
+  if (!getAllowedDomain(email)) {
+    errEl.textContent='Only @digiclarity.in and @clarityrcm.com are permitted.';
+    errEl.style.display=''; return;
+  }
+  setLoading('r', true);
+  // Supabase sends a magic link — user clicks it, lands back on index.html with #type=recovery in URL
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: BASE_URL + 'index.html'
+  });
+  setLoading('r', false);
+  if (error) { errEl.textContent=error.message; errEl.style.display=''; return; }
+  okEl.textContent='✓ Reset link sent! Check your inbox (and spam folder). Click the link in the email to set a new password.';
+  okEl.style.display='';
+  document.getElementById('r-btn').disabled=true;
+}
+
+// ── Update password (user landed back after clicking reset link) ─
+async function updatePassword() {
+  const pass    = document.getElementById('u-pass').value;
+  const confirm = document.getElementById('u-confirm').value;
+  const errEl   = document.getElementById('u-err');
+  const okEl    = document.getElementById('u-ok');
+  errEl.style.display='none'; okEl.style.display='none';
+  if (pass.length < 8)  { errEl.textContent='Password must be at least 8 characters.'; errEl.style.display=''; return; }
+  if (pass !== confirm) { errEl.textContent='Passwords do not match.'; errEl.style.display=''; return; }
+  setLoading('u', true);
+  const { error } = await db.auth.updateUser({ password: pass });
+  setLoading('u', false);
+  if (error) { errEl.textContent=error.message; errEl.style.display=''; return; }
+  okEl.textContent='✓ Password updated! Redirecting to sign in…';
+  okEl.style.display='';
+  await db.auth.signOut();
+  setTimeout(()=>{ showLogin(); }, 2000);
+}
+
 // ── Allowed domains ────────────────────────────────────────────
 const ALLOWED_DOMAINS = ['digiclarity.in', 'clarityrcm.com'];
 
@@ -131,7 +236,7 @@ function validateDomain(inputId, hintId) {
     input.classList.remove('invalid');
   } else {
     hint.style.color = 'var(--critical-text)';
-    hint.textContent = '✗ Only @digiclarity.com or @clarityrcm.com allowed';
+    hint.textContent = '✗ Only @digiclarity.in or @clarityrcm.com allowed';
     input.classList.add('invalid');
   }
 }
@@ -147,6 +252,11 @@ function switchTab(t) {
 
 // ── On load: handle OAuth return ───────────────────────────────
 window.addEventListener('load', async () => {
+  // If user landed here from a password reset email, show the update panel
+  if (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token')) {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) { showUpdate(); return; }
+  }
   const session = await getSession();
   if (session) {
     // Domain check for Google SSO users
@@ -185,7 +295,12 @@ async function emailLogin() {
   }
   setLoading('l', true);
   const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = error.message; errEl.style.display = ''; setLoading('l', false); return; }
+  if (error) {
+    const msg = error.message.includes('Invalid login') ? 'Incorrect email or password. Try again or use Forgot Password.' :
+                error.message.includes('Email not confirmed') ? 'Please confirm your email first — check your inbox for a verification email.' :
+                error.message;
+    errEl.textContent=msg; errEl.style.display=''; setLoading('l', false); return;
+  }
   await redirectByRole(data.user.id);
 }
 
