@@ -531,13 +531,25 @@ async function createUser() {
   // Uses the service role key directly — safe here because admin.html
   // is only accessible to admins. We call the Supabase admin endpoint directly.
   try {
-    // ── Calls the create-user Edge Function (secure — no keys in browser) ──
-    const { data, error } = await db.functions.invoke('create-user', {
-      body: { email, password: pass, full_name: name, role, department: dept }
+    // ── Calls the create-user Edge Function ──────────────────────
+    // Must pass apikey header explicitly for Supabase Edge Functions
+    const { data: { session } } = await db.auth.getSession();
+    const accessToken = session?.access_token;
+
+    const fnRes = await fetch(SUPABASE_URL + '/functions/v1/create-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': 'Bearer ' + accessToken
+      },
+      body: JSON.stringify({ email, password: pass, full_name: name, role, department: dept })
     });
 
+    const data  = await fnRes.json();
+    const error = fnRes.ok ? null : { message: data.error || 'Request failed with status ' + fnRes.status };
+
     if (error) throw new Error(error.message || 'Edge Function error');
-    if (data?.error) throw new Error(data.error);
 
     okEl.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px">✓ User created successfully!</div>
