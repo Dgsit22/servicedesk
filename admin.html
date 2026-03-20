@@ -518,50 +518,51 @@ async function createUser() {
   const dept  = document.getElementById('cu-dept').value;
   const errEl = document.getElementById('cu-err');
   const okEl  = document.getElementById('cu-ok');
-  errEl.style.display = 'none';
-  okEl.style.display  = 'none';
+  errEl.style.display='none'; okEl.style.display='none';
 
-  // Validate
-  if (!name)  { errEl.textContent = 'Please enter the full name.'; errEl.style.display=''; return; }
-  if (!email) { errEl.textContent = 'Please enter a work email.'; errEl.style.display=''; return; }
-  if (!email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display=''; return; }
-  if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display=''; return; }
+  if (!name)  { errEl.textContent='Please enter the full name.'; errEl.style.display=''; return; }
+  if (!email) { errEl.textContent='Please enter a work email.'; errEl.style.display=''; return; }
+  if (!email.includes('@')) { errEl.textContent='Please enter a valid email address.'; errEl.style.display=''; return; }
+  if (pass.length < 8) { errEl.textContent='Password must be at least 8 characters.'; errEl.style.display=''; return; }
 
-  document.getElementById('cu-btn').disabled = true;
-  document.getElementById('cu-btn-text').style.display = 'none';
-  document.getElementById('cu-btn-spin').style.display = '';
+  setBtnState(true);
 
+  // ── Step 1: Create the user via Supabase Admin REST API ──────
+  // Uses the service role key directly — safe here because admin.html
+  // is only accessible to admins. We call the Supabase admin endpoint directly.
   try {
-    // Call the create-user Edge Function (uses service_role to bypass email confirmation)
+    // ── Calls the create-user Edge Function (secure — no keys in browser) ──
     const { data, error } = await db.functions.invoke('create-user', {
       body: { email, password: pass, full_name: name, role, department: dept }
     });
 
-    if (error) throw new Error(error.message || 'Failed to create user');
+    if (error) throw new Error(error.message || 'Edge Function error');
     if (data?.error) throw new Error(data.error);
 
-    okEl.innerHTML = `✓ User <strong>${name}</strong> created successfully!<br>
-      Email: <strong>${email}</strong><br>
-      Temp password: <code style="font-family:monospace;background:#f0fdf4;padding:2px 6px;border-radius:4px">${pass}</code><br>
-      <span style="font-size:11px;color:#6b6860">Share these credentials with the user. They can reset their password after first login.</span>`;
-    okEl.style.display = '';
-
-    // Refresh user list
+    okEl.innerHTML = `
+      <div style="font-weight:600;margin-bottom:6px">✓ User created successfully!</div>
+      <div style="margin-bottom:4px">Name: <strong>${name}</strong></div>
+      <div style="margin-bottom:4px">Email: <strong>${email}</strong></div>
+      <div style="margin-bottom:4px">Role: <strong>${cap(role)}</strong></div>
+      <div style="margin-bottom:10px">Temp password: <code style="font-family:monospace;background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 8px;border-radius:4px;font-size:12px">${pass}</code></div>
+      <div style="font-size:11px;color:#6b6860">Share these credentials with the user. They can log in immediately and change their password via Forgot Password.</div>
+    `;
+    okEl.style.display='';
     await loadUsers();
-
-    // Keep modal open so admin can copy the credentials
-    document.getElementById('cu-btn').disabled = false;
-    document.getElementById('cu-btn-text').textContent = 'Create Another';
-    document.getElementById('cu-btn-text').style.display = '';
-    document.getElementById('cu-btn-spin').style.display = 'none';
+    setBtnState(false);
+    document.getElementById('cu-btn-text').textContent='Create Another';
 
   } catch(err) {
-    errEl.textContent = err.message || 'Failed to create user. Please try again.';
-    errEl.style.display = '';
-    document.getElementById('cu-btn').disabled = false;
-    document.getElementById('cu-btn-text').style.display = '';
-    document.getElementById('cu-btn-spin').style.display = 'none';
+    errEl.textContent = err.message || 'Failed to create user. Make sure the create-user Edge Function is deployed.';
+    errEl.style.display='';
+    setBtnState(false);
   }
+}
+
+function setBtnState(loading) {
+  document.getElementById('cu-btn').disabled = loading;
+  document.getElementById('cu-btn-text').style.display = loading ? 'none' : '';
+  document.getElementById('cu-btn-spin').style.display = loading ? '' : 'none';
 }
 
 // Close modal when clicking outside
