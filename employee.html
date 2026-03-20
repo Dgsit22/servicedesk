@@ -3,151 +3,155 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ServiceDesk — My Tickets</title>
+<title>ServiceDesk — Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
-:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--pending-bg:#f5f3ff;--pending-text:#5b21b6;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10)}
+:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--pending-bg:#f5f3ff;--pending-text:#5b21b6;--radius:10px;--radius-sm:6px;--shadow:0 2px 12px rgba(0,0,0,.08)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 .shell{display:flex;height:100vh;overflow:hidden}
+/* Sidebar */
 .sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.sb-brand{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-brand{padding:18px 18px 12px;border-bottom:1px solid var(--border)}
 .sb-brand-name{font-size:15px;font-weight:600;letter-spacing:-.3px}
 .sb-brand-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.sb-nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
-.sb-nav-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px 4px}
-.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s,color .12s}
+.sb-nav{padding:8px;flex:1;display:flex;flex-direction:column;gap:1px;overflow-y:auto}
+.sb-section{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:10px 10px 4px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .1s,color .1s}
 .nav-btn:hover{background:var(--surface2);color:var(--text)}
 .nav-btn.active{background:var(--accent-light);color:var(--accent-text);font-weight:500}
-.nav-badge{margin-left:auto;background:var(--accent-light);color:var(--accent-text);font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace;display:none}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'DM Mono',monospace;min-width:16px;text-align:center}
 .sb-footer{padding:12px 14px;border-top:1px solid var(--border)}
-.sb-user{display:flex;align-items:center;gap:10px}
-.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sb-user-name{font-size:12px;font-weight:500}
+.sb-user{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-user-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-user-role{font-size:10px;color:var(--text3)}
-.signout-btn{margin-top:6px;padding:5px 10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text3);font-family:inherit;width:100%;text-align:left;transition:all .12s}
+.signout-btn{width:100%;padding:6px 10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text3);font-family:inherit;text-align:left;transition:all .1s}
 .signout-btn:hover{background:var(--surface2);color:var(--text)}
-.view{display:none;flex-direction:column;height:100%;animation:fadeIn .18s ease}
-.view.active{display:flex}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.view{display:none;flex-direction:column;height:100%}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .topbar-title{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
-.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;font-weight:400}
-.btn{padding:7px 15px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
-.btn:hover{background:var(--surface2)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:#1648c0}
-.btn-sm{padding:5px 11px;font-size:12px}
-.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
-.btn-ghost:hover{background:var(--surface2)}
+.topbar-sub{font-size:12px;color:var(--text3);margin-top:1px}
+/* Buttons */
+.btn{padding:7px 14px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .1s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface2)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-primary:hover{background:#1648c0}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}.btn-ghost:hover{background:var(--surface2)}
+/* Scroll area */
 .scroll-area{flex:1;overflow-y:auto;padding:22px 24px}
-.dash-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
-.metric-card .m-val{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace}
-.metric-card .m-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.card-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-header h3{font-size:13px;font-weight:600}
-/* Templates grid */
-.template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.template-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;text-align:left}
-.template-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
-.template-icon{font-size:24px;margin-bottom:8px}
-.template-name{font-size:13px;font-weight:600;margin-bottom:3px}
-.template-desc{font-size:11px;color:var(--text3);line-height:1.4}
-/* Filter */
-.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
-.search-wrap{position:relative;flex:1;max-width:260px}
-.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
-.search-input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .12s}
-.search-input:focus{border-color:var(--accent);background:var(--surface)}
-.filter-chip{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:500;transition:all .12s}
-.filter-chip:hover{color:var(--text);border-color:var(--border2)}
-.filter-chip.on{background:var(--accent-light);color:var(--accent-text);border-color:var(--medium-border);font-weight:600}
-.filter-sep{width:1px;height:20px;background:var(--border)}
-/* Ticket table */
-.tt-head{display:grid;grid-template-columns:80px 1fr 130px 90px 110px 80px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
-.tt-head span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
-.tt-row{display:grid;grid-template-columns:80px 1fr 130px 90px 110px 80px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;align-items:center;background:var(--surface)}
-.tt-row:last-child{border-bottom:none}
-.tt-row:hover{background:var(--surface2)}
-.tt-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);font-weight:500}
-.tt-info{overflow:hidden}
-.tt-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.tt-sub{font-size:11px;color:var(--text3)}
+/* Dashboard metrics */
+.metrics-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.metric-val{font-size:30px;font-weight:600;letter-spacing:-1px;font-family:'DM Mono',monospace;line-height:1}
+.metric-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:5px;font-weight:500}
+/* Quick action cards */
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:22px}
+.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:all .15s}
+.quick-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.06);transform:translateY(-1px)}
+.quick-icon{font-size:22px;margin-bottom:8px}
+.quick-name{font-size:12px;font-weight:600}
+.quick-desc{font-size:11px;color:var(--text3);margin-top:2px;line-height:1.4}
+/* Ticket CARDS */
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.search-box{position:relative;flex:1;max-width:240px}
+.search-box input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.search-box input:focus{border-color:var(--accent);background:var(--surface)}
+.search-box svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3)}
+.chip{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:500;transition:all .1s}
+.chip:hover{border-color:var(--border2);color:var(--text)}
+.chip.on{background:var(--accent-light);color:var(--accent-text);border-color:var(--medium-border);font-weight:600}
+.sep{width:1px;height:18px;background:var(--border)}
+.cards-area{flex:1;overflow-y:auto;padding:20px 24px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px}
+.tcard:hover{border-color:var(--accent);box-shadow:var(--shadow);transform:translateY(-1px)}
+.tcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tcard-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:3px}
+.tcard-title{font-size:13px;font-weight:600;line-height:1.4;flex:1}
+.tcard-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tcard-foot{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)}
+.assignee-chip{display:flex;align-items:center;gap:5px}
+.av{width:18px;height:18px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.no-tickets{grid-column:1/-1;text-align:center;padding:60px 20px}
+.no-tickets .ni{font-size:36px;margin-bottom:10px}
+.no-tickets p{font-size:13px;color:var(--text3)}
 /* Badges */
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
-.badge::before{content:'';width:5px;height:5px;border-radius:50%}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .b-critical{background:var(--critical-bg);color:var(--critical-text);border:1px solid var(--critical-border)}.b-critical::before{background:var(--critical-text)}
 .b-high{background:var(--high-bg);color:var(--high-text);border:1px solid var(--high-border)}.b-high::before{background:var(--high-text)}
 .b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
 .b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
-.b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
-.b-pending_approval{background:var(--pending-bg);color:var(--pending-text)}
-.b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
-/* Form */
+.b-open{background:var(--open-bg);color:var(--open-text)}.b-open::before{background:var(--open-text)}
+.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-inprogress::before{background:var(--inprog-text)}
+.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}.b-closed::before,.b-resolved::before{background:var(--closed-text)}
+.b-pending_approval{background:var(--pending-bg);color:var(--pending-text)}.b-pending_approval::before{background:var(--pending-text)}
+.b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
+/* Forms */
 .form-wrap{max-width:640px}
-.form-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
-.form-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.fg{display:flex;flex-direction:column;gap:5px}
+.fsec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px}
+.fsec-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
 .fg.full{grid-column:span 2}
 .fg label{font-size:12px;font-weight:500;color:var(--text2)}
 .fg label span{color:var(--critical-text)}
-.fg input,.fg select,.fg textarea{padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .12s,background .12s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border .1s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(26,86,219,.07)}
 .fg input[readonly]{background:var(--surface3);color:var(--text2);cursor:default}
 .fg textarea{resize:vertical;line-height:1.6}
-.priority-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.p-opt{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:center;transition:all .12s}
-.p-opt:hover{border-color:var(--border2);background:var(--surface2)}
-.p-opt.sel-critical{border-color:var(--critical-text);background:var(--critical-bg)}.p-opt.sel-high{border-color:var(--high-text);background:var(--high-bg)}.p-opt.sel-medium{border-color:var(--medium-text);background:var(--medium-bg)}.p-opt.sel-low{border-color:var(--low-text);background:var(--low-bg)}
-.p-opt-label{font-size:11px;font-weight:600;margin-top:5px}.p-opt-desc{font-size:10px;color:var(--text3);margin-top:2px}.p-opt-icon{font-size:18px}
+.prio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.popt{padding:11px 6px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:center;transition:all .1s}
+.popt:hover{border-color:var(--border2);background:var(--surface2)}
+.popt.sel-low{border-color:var(--low-text);background:var(--low-bg)}
+.popt.sel-medium{border-color:var(--medium-text);background:var(--medium-bg)}
+.popt.sel-high{border-color:var(--high-text);background:var(--high-bg)}
+.popt.sel-critical{border-color:var(--critical-text);background:var(--critical-bg)}
+.popt-icon{font-size:17px}.popt-lbl{font-size:11px;font-weight:600;margin-top:4px}.popt-desc{font-size:10px;color:var(--text3);margin-top:1px}
 .form-actions{display:flex;gap:10px;align-items:center}
-.char-count{font-size:11px;color:var(--text3);margin-top:3px}
-/* Checklist items */
-.checklist{display:flex;flex-direction:column;gap:6px}
-.check-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px}
-.check-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);flex-shrink:0}
-.check-item label{flex:1;cursor:pointer}
+.ccount{font-size:11px;color:var(--text3);margin-top:3px}
+/* Checklist */
+.checklist{display:flex;flex-direction:column;gap:5px}
+.ci{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px}
+.ci input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);flex-shrink:0}
+.ci label{flex:1;cursor:pointer;line-height:1.4}
 /* Approval banner */
-.approval-banner{background:var(--pending-bg);border:1px solid #ddd6fe;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px}
-.approval-banner-icon{font-size:20px;flex-shrink:0}
-.approval-banner-body h4{font-size:13px;font-weight:600;color:var(--pending-text);margin-bottom:3px}
-.approval-banner-body p{font-size:12px;color:#6d28d9;line-height:1.5}
+.appr-banner{background:var(--pending-bg);border:1px solid #ddd6fe;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;gap:10px}
+.appr-banner-body h4{font-size:12px;font-weight:600;color:var(--pending-text);margin-bottom:2px}
+.appr-banner-body p{font-size:11px;color:#6d28d9;line-height:1.5}
 /* Detail panel */
-.detail-panel{position:absolute;right:0;top:0;height:100%;width:460px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
-.detail-panel.open{transform:translateX(0)}
-.dp-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
-.dp-header-info{flex:1;overflow:hidden}
-.dp-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px}
-.dp-title{font-size:14px;font-weight:600;line-height:1.3}
-.dp-body{flex:1;overflow-y:auto}
-.dp-section{padding:14px 18px;border-bottom:1px solid var(--border)}
-.dp-section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
-.dp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.dp-row:last-child{border:none}
-.dp-row-label{color:var(--text3)}
-.dp-row-val{font-weight:500;text-align:right}
-.dp-desc{font-size:12px;color:var(--text2);line-height:1.7}
-.comment-item{padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;border-left:2px solid var(--accent)}
-.comment-item:last-child{margin-bottom:0}
-.comment-meta{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:'DM Mono',monospace}
-.comment-text{font-size:12px;line-height:1.6}
-.dp-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0}
-.dp-footer textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;transition:border .12s}
-.dp-footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
-.dp-footer-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
-.overlay{position:absolute;inset:0;background:rgba(28,27,25,.25);z-index:15;display:none}
+.overlay{position:absolute;inset:0;background:rgba(28,27,25,.22);z-index:15;display:none}
 .overlay.show{display:block}
+.panel{position:absolute;right:0;top:0;height:100%;width:460px;background:var(--surface);border-left:1px solid var(--border);box-shadow:-4px 0 24px rgba(0,0,0,.08);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
+.panel.open{transform:translateX(0)}
+.panel-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
+.panel-head-info{flex:1;min-width:0}
+.panel-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:2px}
+.panel-title{font-size:14px;font-weight:600;line-height:1.3}
+.panel-body{flex:1;overflow-y:auto}
+.ps{padding:13px 18px;border-bottom:1px solid var(--border)}
+.ps-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
+.prow:last-child{border:none}
+.prow-lbl{color:var(--text3)}
+.prow-val{font-weight:500}
+.pdesc{font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap}
+.cmt{padding:9px 11px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:7px;border-left:2px solid var(--accent)}
+.cmt-meta{font-size:10px;color:var(--text3);margin-bottom:3px;font-family:'DM Mono',monospace}
+.cmt-body{font-size:12px;line-height:1.5}
+.panel-foot{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0}
+.panel-foot textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5}
+.panel-foot textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.07)}
+.panel-foot-row{display:flex;gap:8px;margin-top:8px}
+/* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#1c1b19;color:#fff;padding:9px 20px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.empty{padding:60px 20px;text-align:center;background:var(--surface)}
-.empty-icon{font-size:32px;margin-bottom:10px}.empty-title{font-size:14px;font-weight:600;margin-bottom:4px}.empty-sub{font-size:12px;color:var(--text3)}
 .loading{padding:40px;text-align:center;color:var(--text3);font-size:13px}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
 </style>
@@ -155,156 +159,135 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 <body>
 <div class="shell">
   <aside class="sidebar">
-    <div class="sb-brand">
-      <div class="sb-brand-name">&#9632; ServiceDesk</div>
-      <div class="sb-brand-sub">IT Help Portal</div>
-    </div>
+    <div class="sb-brand"><div class="sb-brand-name">&#9632; ServiceDesk</div><div class="sb-brand-sub">IT Help Portal</div></div>
     <nav class="sb-nav">
-      <div class="sb-nav-label">My Portal</div>
-      <button class="nav-btn active" id="nav-dashboard" onclick="show('dashboard')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4v6H2V3zm0 7h5v4H3a1 1 0 01-1-1v-3zm6 4V3h5a1 1 0 011 1v9a1 1 0 01-1 1H8z"/></svg>
+      <div class="sb-section">Overview</div>
+      <button class="nav-btn active" id="nav-dash" onclick="show('dash')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4v6H2V3zm0 7h5v4H3a1 1 0 01-1-1v-3zm6 4V3h5a1 1 0 011 1v9a1 1 0 01-1 1H8z"/></svg>
         Dashboard
       </button>
       <button class="nav-btn" id="nav-tickets" onclick="show('tickets')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
-        My Tickets
-        <span class="nav-badge" id="open-badge">0</span>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
+        My Tickets <span class="nav-badge" id="open-badge" style="display:none">0</span>
       </button>
-      <div class="sb-nav-label">New Request</div>
+      <div class="sb-section">New Request</div>
       <button class="nav-btn" id="nav-new" onclick="show('new')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
         General Request
       </button>
       <button class="nav-btn" id="nav-hardware" onclick="show('hardware')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V3zm1 0v8h12V3H2zm1 9h10v1H3v-1z"/></svg>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V3z"/></svg>
         Hardware Request
       </button>
-      <button class="nav-btn" id="nav-onboarding" onclick="show('onboarding')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 0110 0H3z"/></svg>
-        Onboarding Task
-      </button>
-      <button class="nav-btn" id="nav-exit" onclick="show('exit')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M10.293 3.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 9H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z"/></svg>
-        Exit Task
-      </button>
+      <!-- Hidden by default — shown only for manager/tl/admin -->
+      <div id="nav-section-mgr" style="display:none">
+        <div class="sb-section">Management</div>
+        <button class="nav-btn" id="nav-onboarding" onclick="show('onboarding')">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 0110 0H3z"/></svg>
+          Onboarding Task
+        </button>
+        <button class="nav-btn" id="nav-exit" onclick="show('exit')">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M10.293 3.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 9H3a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z"/></svg>
+          Exit Task
+        </button>
+      </div>
     </nav>
     <div class="sb-footer">
       <div class="sb-user">
-        <div class="sb-avatar" id="sb-avatar">?</div>
-        <div>
+        <div class="sb-avatar" id="sb-av">?</div>
+        <div style="min-width:0">
           <div class="sb-user-name" id="sb-name">Loading…</div>
-          <div class="sb-user-role" id="sb-dept">Employee</div>
+          <div class="sb-user-role" id="sb-role">—</div>
         </div>
       </div>
-      <button class="signout-btn" onclick="signOut()">&#8594; Sign out</button>
+      <button class="signout-btn" onclick="signOut()">→ Sign out</button>
     </div>
   </aside>
 
   <main class="main">
 
     <!-- DASHBOARD -->
-    <div class="view active" id="view-dashboard">
+    <div class="view" id="view-dash">
       <div class="topbar">
-        <div><div class="topbar-title">My Dashboard</div><div class="topbar-sub">Your IT service request overview</div></div>
-        <button class="btn btn-primary" onclick="show('new')">+ New Request</button>
+        <div><div class="topbar-title">My Dashboard</div><div class="topbar-sub" id="greeting">Welcome back</div></div>
+        <button class="btn btn-primary btn-sm" onclick="show('new')">+ New Request</button>
       </div>
       <div class="scroll-area">
-        <div class="dash-metrics" id="dash-metrics"><div class="loading">Loading…</div></div>
-        <div style="margin-bottom:16px">
-          <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Quick Request Templates</div>
-          <div class="template-grid">
-            <div class="template-card" onclick="show('hardware')">
-              <div class="template-icon">🖥️</div>
-              <div class="template-name">Hardware Request</div>
-              <div class="template-desc">Laptop, phone, peripherals — requires manager approval</div>
-            </div>
-            <div class="template-card" onclick="show('onboarding')">
-              <div class="template-icon">👋</div>
-              <div class="template-name">Onboarding Tasks</div>
-              <div class="template-desc">New joiner IT setup checklist</div>
-            </div>
-            <div class="template-card" onclick="show('exit')">
-              <div class="template-icon">📦</div>
-              <div class="template-name">Exit Tasks</div>
-              <div class="template-desc">Offboarding IT checklist and asset return</div>
-            </div>
-          </div>
+        <div class="metrics-row" id="metrics"><div class="loading">Loading…</div></div>
+        <div id="quick-section" style="display:none;margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Quick Actions</div>
+          <div class="quick-grid" id="quick-cards"></div>
         </div>
-        <div class="card">
-          <div class="card-header"><h3>Recent Requests</h3><button class="btn btn-ghost btn-sm" onclick="show('tickets')">View all &rarr;</button></div>
-          <div id="dash-recent"><div class="loading">Loading…</div></div>
-        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Recent Requests</div>
+        <div id="recent-cards"><div class="loading">Loading…</div></div>
       </div>
     </div>
 
-    <!-- TICKETS -->
+    <!-- TICKETS — CARD VIEW -->
     <div class="view" id="view-tickets">
       <div class="topbar">
-        <div><div class="topbar-title">My Tickets</div><div class="topbar-sub" id="ticket-count-label">All requests</div></div>
-        <button class="btn btn-primary" onclick="show('new')">+ New Request</button>
+        <div><div class="topbar-title">My Tickets</div><div class="topbar-sub" id="tkt-count">—</div></div>
+        <button class="btn btn-primary btn-sm" onclick="show('new')">+ New Request</button>
       </div>
-      <div class="filter-row">
-        <div class="search-wrap">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
-          <input class="search-input" id="search-inp" placeholder="Search tickets…" oninput="renderList()">
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
+          <input id="srch" placeholder="Search…" oninput="renderCards()">
         </div>
-        <div class="filter-sep"></div>
-        <button class="filter-chip on" id="fc-all" onclick="setFilter('all')">All</button>
-        <button class="filter-chip" id="fc-open" onclick="setFilter('open')">Open</button>
-        <button class="filter-chip" id="fc-inprogress" onclick="setFilter('inprogress')">In Progress</button>
-        <button class="filter-chip" id="fc-pending_approval" onclick="setFilter('pending_approval')">Pending Approval</button>
-        <button class="filter-chip" id="fc-closed" onclick="setFilter('closed')">Closed</button>
+        <div class="sep"></div>
+        <button class="chip on" id="fc-all" onclick="setF('all')">All</button>
+        <button class="chip" id="fc-open" onclick="setF('open')">Open</button>
+        <button class="chip" id="fc-inprogress" onclick="setF('inprogress')">In Progress</button>
+        <button class="chip" id="fc-pending_approval" onclick="setF('pending_approval')">Pending</button>
+        <button class="chip" id="fc-closed" onclick="setF('closed')">Closed</button>
       </div>
-      <div style="flex:1;overflow-y:auto;background:var(--surface)">
-        <div class="tt-head"><span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Date</span></div>
-        <div id="ticket-list"><div class="loading">Loading…</div></div>
-      </div>
+      <div class="cards-area"><div class="cards-grid" id="cards-grid"><div class="loading">Loading…</div></div></div>
     </div>
 
     <!-- GENERAL REQUEST -->
     <div class="view" id="view-new">
       <div class="topbar">
-        <div><div class="topbar-title">General IT Request</div><div class="topbar-sub">Software, network, access, or any IT issue</div></div>
-        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+        <div><div class="topbar-title">General IT Request</div><div class="topbar-sub">Software, network, access or any IT issue</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="show('dash')">← Back</button>
       </div>
       <div class="scroll-area">
         <div class="form-wrap">
-          <div class="form-section">
-            <div class="form-section-title">Your Information</div>
-            <div class="form-grid-2">
-              <div class="fg"><label>Full Name</label><input id="f-name" type="text" readonly></div>
+          <div class="fsec">
+            <div class="fsec-title">Your Information</div>
+            <div class="fgrid">
+              <div class="fg"><label>Full Name</label><input id="f-name" readonly></div>
               <div class="fg"><label>Email</label><input id="f-email" type="email" readonly></div>
-              <div class="fg"><label>Department</label><input id="f-dept-display" type="text" readonly></div>
+              <div class="fg"><label>Department</label><input id="f-dept" readonly></div>
               <div class="fg"><label>Phone (optional)</label><input id="f-phone" type="tel" placeholder="+91 98000 00000"></div>
             </div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Issue Details</div>
-            <div class="form-grid-2">
-              <div class="fg full"><label>Subject <span>*</span></label><input id="f-title" type="text" placeholder="Short description of the issue"></div>
+          <div class="fsec">
+            <div class="fsec-title">Issue Details</div>
+            <div class="fgrid">
+              <div class="fg full"><label>Subject <span>*</span></label><input id="f-title" placeholder="Short description of the issue"></div>
               <div class="fg"><label>Category <span>*</span></label>
                 <select id="f-cat"><option>Software</option><option>Network / VPN</option><option>Access &amp; Permissions</option><option>Email / Calendar</option><option>Printer / Scanner</option><option>Phone / Mobile</option><option>Other</option></select>
               </div>
-              <div class="fg"><label>Affected Asset (optional)</label><input id="f-asset" type="text" placeholder="e.g. LAPTOP-042"></div>
+              <div class="fg"><label>Affected Asset (optional)</label><input id="f-asset" placeholder="e.g. LAPTOP-042"></div>
               <div class="fg full"><label>Description <span>*</span></label>
-                <textarea id="f-desc" rows="5" placeholder="Describe the problem in detail…" oninput="updateCharCount(this,'desc-count',1200)"></textarea>
-                <div class="char-count" id="desc-count">0 / 1200 characters</div>
+                <textarea id="f-desc" rows="5" placeholder="Describe the problem in detail…" oninput="cc(this,'f-cc',1200)"></textarea>
+                <div class="ccount" id="f-cc">0 / 1200</div>
               </div>
             </div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Priority Level</div>
-            <div class="priority-picker">
-              <div class="p-opt" id="popt-low" onclick="selectPriority('low')"><div class="p-opt-icon">🟢</div><div class="p-opt-label" style="color:var(--low-text)">Low</div><div class="p-opt-desc">Minor inconvenience</div></div>
-              <div class="p-opt sel-medium" id="popt-medium" onclick="selectPriority('medium')"><div class="p-opt-icon">🔵</div><div class="p-opt-label" style="color:var(--medium-text)">Medium</div><div class="p-opt-desc">Work is impacted</div></div>
-              <div class="p-opt" id="popt-high" onclick="selectPriority('high')"><div class="p-opt-icon">🟡</div><div class="p-opt-label" style="color:var(--high-text)">High</div><div class="p-opt-desc">Blocking work</div></div>
-              <div class="p-opt" id="popt-critical" onclick="selectPriority('critical')"><div class="p-opt-icon">🔴</div><div class="p-opt-label" style="color:var(--critical-text)">Critical</div><div class="p-opt-desc">System / team down</div></div>
+          <div class="fsec">
+            <div class="fsec-title">Priority</div>
+            <div class="prio-grid">
+              <div class="popt" id="po-low" onclick="selP('low')"><div class="popt-icon">🟢</div><div class="popt-lbl" style="color:var(--low-text)">Low</div><div class="popt-desc">Minor issue</div></div>
+              <div class="popt sel-medium" id="po-medium" onclick="selP('medium')"><div class="popt-icon">🔵</div><div class="popt-lbl" style="color:var(--medium-text)">Medium</div><div class="popt-desc">Work impacted</div></div>
+              <div class="popt" id="po-high" onclick="selP('high')"><div class="popt-icon">🟡</div><div class="popt-lbl" style="color:var(--high-text)">High</div><div class="popt-desc">Blocking work</div></div>
+              <div class="popt" id="po-critical" onclick="selP('critical')"><div class="popt-icon">🔴</div><div class="popt-lbl" style="color:var(--critical-text)">Critical</div><div class="popt-desc">Team down</div></div>
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" id="submit-btn" onclick="submitGeneral()">&#10148; Submit Request</button>
-            <button class="btn" onclick="clearGeneralForm()">Clear</button>
-            <span id="form-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
+            <button class="btn btn-primary" id="f-btn" onclick="submitGeneral()">→ Submit Request</button>
+            <button class="btn" onclick="clearForm()">Clear</button>
+            <span id="f-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
           </div>
         </div>
       </div>
@@ -313,169 +296,123 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     <!-- HARDWARE REQUEST -->
     <div class="view" id="view-hardware">
       <div class="topbar">
-        <div><div class="topbar-title">Hardware Request</div><div class="topbar-sub">Requires manager approval before IT processes</div></div>
-        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+        <div><div class="topbar-title">Hardware Request</div><div class="topbar-sub">Sent to manager for approval before IT processes</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="show('dash')">← Back</button>
       </div>
       <div class="scroll-area">
         <div class="form-wrap">
-          <div class="approval-banner">
-            <div class="approval-banner-icon">🔐</div>
-            <div class="approval-banner-body">
-              <h4>Approval Required</h4>
-              <p>Hardware requests are sent to your manager for approval before IT processes them. You will receive an email at each stage — submitted, approved/rejected, and when IT completes the request.</p>
-            </div>
+          <div class="appr-banner">
+            <div style="font-size:20px;flex-shrink:0">🔐</div>
+            <div class="appr-banner-body"><h4>Approval Required</h4><p>Your manager will be emailed to approve. You'll receive updates at every stage.</p></div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Requester Details</div>
-            <div class="form-grid-2">
-              <div class="fg"><label>Full Name</label><input id="hw-name" type="text" readonly></div>
+          <div class="fsec">
+            <div class="fsec-title">Requester</div>
+            <div class="fgrid">
+              <div class="fg"><label>Full Name</label><input id="hw-name" readonly></div>
               <div class="fg"><label>Email</label><input id="hw-email" type="email" readonly></div>
-              <div class="fg"><label>Department</label><input id="hw-dept" type="text" readonly></div>
-              <div class="fg"><label>Manager Email <span>*</span></label><input id="hw-manager" type="email" placeholder="manager@digiclarity.com"></div>
+              <div class="fg"><label>Department</label><input id="hw-dept" readonly></div>
+              <div class="fg"><label>Manager Email <span>*</span></label><input id="hw-mgr" type="email" placeholder="manager@digiclarity.in"></div>
             </div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Hardware Details</div>
-            <div class="form-grid-2">
+          <div class="fsec">
+            <div class="fsec-title">Hardware Details</div>
+            <div class="fgrid">
               <div class="fg"><label>Hardware Type <span>*</span></label>
                 <select id="hw-type">
-                  <option value="">Select type…</option>
-                  <option>Laptop — Windows</option><option>Laptop — MacBook</option>
-                  <option>Desktop Computer</option><option>Monitor</option>
-                  <option>iPhone</option><option>Android Phone</option>
-                  <option>Keyboard / Mouse</option><option>Headset</option>
-                  <option>Webcam</option><option>Docking Station</option>
-                  <option>Printer</option><option>Other</option>
+                  <option value="">Select…</option>
+                  <option>Laptop — Windows</option><option>Laptop — MacBook</option><option>Desktop Computer</option>
+                  <option>Monitor</option><option>iPhone</option><option>Android Phone</option>
+                  <option>Keyboard / Mouse</option><option>Headset</option><option>Webcam</option>
+                  <option>Docking Station</option><option>Printer</option><option>Other</option>
                 </select>
               </div>
-              <div class="fg"><label>Quantity <span>*</span></label>
-                <select id="hw-qty">
-                  <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-                </select>
+              <div class="fg"><label>Quantity</label>
+                <select id="hw-qty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
               </div>
-              <div class="fg"><label>Required By Date</label><input id="hw-date" type="date"></div>
-              <div class="fg"><label>Estimated Budget (₹)</label><input id="hw-budget" type="text" placeholder="e.g. 80,000"></div>
-              <div class="fg full"><label>Business Justification <span>*</span></label>
-                <textarea id="hw-justification" rows="3" placeholder="Why is this hardware needed? What work will it enable?"></textarea>
-              </div>
-              <div class="fg full"><label>Preferred Specifications (optional)</label>
-                <textarea id="hw-specs" rows="2" placeholder="e.g. 16GB RAM, 512GB SSD, i7 processor"></textarea>
-              </div>
+              <div class="fg"><label>Required By</label><input id="hw-date" type="date"></div>
+              <div class="fg"><label>Budget (₹)</label><input id="hw-budget" placeholder="e.g. 80,000"></div>
+              <div class="fg full"><label>Business Justification <span>*</span></label><textarea id="hw-just" rows="3" placeholder="Why is this hardware needed?"></textarea></div>
+              <div class="fg full"><label>Preferred Specs (optional)</label><textarea id="hw-specs" rows="2" placeholder="e.g. 16GB RAM, 512GB SSD"></textarea></div>
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" id="hw-submit-btn" onclick="submitHardwareRequest()">&#10148; Submit for Approval</button>
+            <button class="btn btn-primary" id="hw-btn" onclick="submitHardware()">→ Submit for Approval</button>
             <span id="hw-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ONBOARDING TASK -->
+    <!-- ONBOARDING (manager/TL/admin only) -->
     <div class="view" id="view-onboarding">
       <div class="topbar">
-        <div><div class="topbar-title">New Joiner Onboarding</div><div class="topbar-sub">IT setup checklist for new employees</div></div>
-        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+        <div><div class="topbar-title">Onboarding Task</div><div class="topbar-sub">New joiner IT setup checklist</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="show('dash')">← Back</button>
       </div>
       <div class="scroll-area">
         <div class="form-wrap">
-          <div class="form-section">
-            <div class="form-section-title">New Joiner Details</div>
-            <div class="form-grid-2">
-              <div class="fg"><label>New Employee Name <span>*</span></label><input id="ob-empname" type="text" placeholder="Full name of new joiner"></div>
-              <div class="fg"><label>New Employee Email <span>*</span></label><input id="ob-empemail" type="email" placeholder="new.joiner@digiclarity.com"></div>
+          <div class="fsec">
+            <div class="fsec-title">New Joiner Details</div>
+            <div class="fgrid">
+              <div class="fg"><label>Employee Name <span>*</span></label><input id="ob-name" placeholder="Full name"></div>
+              <div class="fg"><label>Employee Email <span>*</span></label><input id="ob-email" type="email" placeholder="new.joiner@digiclarity.in"></div>
               <div class="fg"><label>Department <span>*</span></label>
-                <select id="ob-dept">
-                  <option value="">Select…</option>
-                  <option>Engineering</option><option>Marketing</option><option>Finance</option>
-                  <option>HR</option><option>Operations</option><option>Management</option>
-                  <option>IT</option><option>Sales</option><option>Other</option>
-                </select>
+                <select id="ob-dept"><option value="">Select…</option><option>Engineering</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Management</option><option>IT</option><option>Sales</option><option>Other</option></select>
               </div>
-              <div class="fg"><label>Joining Date <span>*</span></label><input id="ob-joindate" type="date"></div>
-              <div class="fg"><label>Reporting Manager</label><input id="ob-manager" type="text" placeholder="Manager name"></div>
+              <div class="fg"><label>Joining Date <span>*</span></label><input id="ob-date" type="date"></div>
+              <div class="fg"><label>Reporting Manager</label><input id="ob-mgr" placeholder="Manager name"></div>
               <div class="fg"><label>Work Location</label>
-                <select id="ob-location"><option>Office — Chennai</option><option>Office — Bangalore</option><option>Remote</option><option>Hybrid</option></select>
+                <select id="ob-loc"><option>Office — Chennai</option><option>Office — Bangalore</option><option>Remote</option><option>Hybrid</option></select>
               </div>
             </div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">IT Setup Tasks Required</div>
-            <div class="checklist" id="ob-checklist">
-              <div class="check-item"><input type="checkbox" id="ob1" checked><label for="ob1">Laptop / Computer setup and configuration</label></div>
-              <div class="check-item"><input type="checkbox" id="ob2" checked><label for="ob2">Company email account creation (Google Workspace / Outlook)</label></div>
-              <div class="check-item"><input type="checkbox" id="ob3" checked><label for="ob3">VPN access setup</label></div>
-              <div class="check-item"><input type="checkbox" id="ob4" checked><label for="ob4">Slack / Teams account setup</label></div>
-              <div class="check-item"><input type="checkbox" id="ob5" checked><label for="ob5">HRMS / Payroll system access</label></div>
-              <div class="check-item"><input type="checkbox" id="ob6"><label for="ob6">CRM system access</label></div>
-              <div class="check-item"><input type="checkbox" id="ob7"><label for="ob7">GitHub / GitLab access (Engineering)</label></div>
-              <div class="check-item"><input type="checkbox" id="ob8"><label for="ob8">Jira / Project management access</label></div>
-              <div class="check-item"><input type="checkbox" id="ob9"><label for="ob9">Phone / Mobile device setup</label></div>
-              <div class="check-item"><input type="checkbox" id="ob10"><label for="ob10">Security training &amp; policy acknowledgement</label></div>
-            </div>
+          <div class="fsec">
+            <div class="fsec-title">IT Setup Tasks</div>
+            <div class="checklist" id="ob-tasks"><div class="loading" style="padding:12px">Loading tasks…</div></div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Additional Notes</div>
-            <div class="fg"><label>Any specific software or access requirements?</label>
-              <textarea id="ob-notes" rows="3" placeholder="e.g. Needs access to Salesforce, requires dual monitors…"></textarea>
-            </div>
+          <div class="fsec">
+            <div class="fsec-title">Additional Notes</div>
+            <div class="fg"><label>Specific requirements</label><textarea id="ob-notes" rows="3" placeholder="e.g. Needs Salesforce access, dual monitors…"></textarea></div>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" onclick="submitOnboarding()">&#10148; Submit Onboarding Request</button>
+            <button class="btn btn-primary" onclick="submitOnboarding()">→ Submit Onboarding Request</button>
             <span id="ob-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- EXIT TASK -->
+    <!-- EXIT TASK (manager/TL/admin only) -->
     <div class="view" id="view-exit">
       <div class="topbar">
-        <div><div class="topbar-title">Exit / Offboarding Tasks</div><div class="topbar-sub">IT checklist for departing employees</div></div>
-        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+        <div><div class="topbar-title">Exit Task</div><div class="topbar-sub">IT offboarding checklist for departing employees</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="show('dash')">← Back</button>
       </div>
       <div class="scroll-area">
         <div class="form-wrap">
-          <div class="form-section">
-            <div class="form-section-title">Departing Employee Details</div>
-            <div class="form-grid-2">
-              <div class="fg"><label>Employee Name <span>*</span></label><input id="ex-empname" type="text" placeholder="Full name of departing employee"></div>
-              <div class="fg"><label>Employee Email <span>*</span></label><input id="ex-empemail" type="email" placeholder="employee@digiclarity.com"></div>
-              <div class="fg"><label>Department</label><input id="ex-dept" type="text" placeholder="Department"></div>
-              <div class="fg"><label>Last Working Date <span>*</span></label><input id="ex-lastdate" type="date"></div>
-              <div class="fg"><label>Employee ID (optional)</label><input id="ex-empid" type="text" placeholder="EMP-001"></div>
+          <div class="fsec">
+            <div class="fsec-title">Departing Employee</div>
+            <div class="fgrid">
+              <div class="fg"><label>Employee Name <span>*</span></label><input id="ex-name" placeholder="Full name"></div>
+              <div class="fg"><label>Employee Email <span>*</span></label><input id="ex-email" type="email" placeholder="employee@digiclarity.in"></div>
+              <div class="fg"><label>Department</label><input id="ex-dept" placeholder="Department"></div>
+              <div class="fg"><label>Last Working Date <span>*</span></label><input id="ex-date" type="date"></div>
+              <div class="fg"><label>Employee ID (optional)</label><input id="ex-empid" placeholder="EMP-001"></div>
               <div class="fg"><label>Reason for Leaving</label>
-                <select id="ex-reason">
-                  <option value="">Select…</option>
-                  <option>Resignation</option><option>End of Contract</option>
-                  <option>Retirement</option><option>Termination</option><option>Other</option>
-                </select>
+                <select id="ex-reason"><option value="">Select…</option><option>Resignation</option><option>End of Contract</option><option>Retirement</option><option>Termination</option><option>Other</option></select>
               </div>
             </div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">IT Offboarding Tasks</div>
-            <div class="checklist">
-              <div class="check-item"><input type="checkbox" id="ex1" checked><label for="ex1">Laptop / Computer collection and factory reset</label></div>
-              <div class="check-item"><input type="checkbox" id="ex2" checked><label for="ex2">Company email account deactivation</label></div>
-              <div class="check-item"><input type="checkbox" id="ex3" checked><label for="ex3">VPN &amp; remote access revocation</label></div>
-              <div class="check-item"><input type="checkbox" id="ex4" checked><label for="ex4">All system access &amp; passwords revoked</label></div>
-              <div class="check-item"><input type="checkbox" id="ex5" checked><label for="ex5">Mobile device / phone collection</label></div>
-              <div class="check-item"><input type="checkbox" id="ex6" checked><label for="ex6">Data backup from employee's devices</label></div>
-              <div class="check-item"><input type="checkbox" id="ex7" checked><label for="ex7">Software licenses released (Adobe, Office, etc.)</label></div>
-              <div class="check-item"><input type="checkbox" id="ex8"><label for="ex8">GitHub / source control access removed</label></div>
-              <div class="check-item"><input type="checkbox" id="ex9"><label for="ex9">CRM &amp; business system access removed</label></div>
-              <div class="check-item"><input type="checkbox" id="ex10"><label for="ex10">Security key / access cards returned</label></div>
-            </div>
+          <div class="fsec">
+            <div class="fsec-title">IT Offboarding Tasks</div>
+            <div class="checklist" id="ex-tasks"><div class="loading" style="padding:12px">Loading tasks…</div></div>
           </div>
-          <div class="form-section">
-            <div class="form-section-title">Asset Return</div>
-            <div class="fg"><label>Assets to be collected</label>
-              <textarea id="ex-assets" rows="2" placeholder="e.g. MacBook Pro 14&quot; (SN: ABC123), iPhone 13 (IMEI: 123456), access card"></textarea>
-            </div>
+          <div class="fsec">
+            <div class="fsec-title">Asset Return</div>
+            <div class="fg"><label>Assets to collect</label><textarea id="ex-assets" rows="2" placeholder='e.g. MacBook Pro 14" (SN: ABC123), iPhone 13, access card'></textarea></div>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" onclick="submitExit()">&#10148; Submit Exit Request</button>
+            <button class="btn btn-primary" onclick="submitExit()">→ Submit Exit Request</button>
             <span id="ex-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
           </div>
         </div>
@@ -483,287 +420,293 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     </div>
 
     <div class="overlay" id="overlay" onclick="closePanel()"></div>
-    <div class="detail-panel" id="detail-panel">
-      <div class="dp-header">
-        <div class="dp-header-info"><div class="dp-id" id="dp-id">TKT-000</div><div class="dp-title" id="dp-title">—</div></div>
-        <button class="btn btn-ghost btn-sm" onclick="closePanel()">&#10005;</button>
+    <div class="panel" id="panel">
+      <div class="panel-head">
+        <div class="panel-head-info"><div class="panel-id" id="p-id">—</div><div class="panel-title" id="p-title">—</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button>
       </div>
-      <div class="dp-body" id="dp-body"></div>
-      <div class="dp-footer" id="dp-footer"></div>
+      <div class="panel-body" id="p-body"></div>
+      <div class="panel-foot" id="p-foot"></div>
     </div>
   </main>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-let currentUser=null, currentProfile=null;
-let allTickets=[], currentFilter='all', selectedId=null, selectedPriority='medium';
+let user=null, profile=null, tickets=[], filter='all', selId=null, prio='medium';
+const MGR_ROLES = ['admin','manager','tl'];
 
-// ── Auth guard ─────────────────────────────────────────────────
 window.addEventListener('load', async () => {
-  const session = await getSession();
-  if (!session) { location.href='index.html'; return; }
-  currentUser = session.user;
-  currentProfile = await getProfile(currentUser.id);
-  if (!currentProfile || currentProfile.role !== 'employee') {
-    if (currentProfile?.role==='admin') location.href='admin.html';
-    else if (currentProfile?.role==='technician') location.href='technician.html';
-    else location.href='index.html';
-    return;
+  const s = await getSession();
+  if (!s) { location.href='index.html'; return; }
+  user = s.user;
+  profile = await getProfile(user.id);
+  if (!profile) { location.href='index.html'; return; }
+  if (profile.role==='technician') { location.href='technician.html'; return; }
+  if (profile.role==='admin') { location.href='admin.html'; return; }
+
+  const ini=(profile.full_name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('sb-av').textContent=ini;
+  document.getElementById('sb-name').textContent=profile.full_name||profile.email;
+  const roleMap={employee:'Employee',manager:'Manager',tl:'Team Lead'};
+  document.getElementById('sb-role').textContent=roleMap[profile.role]||profile.role;
+
+  // Show mgr-only nav
+  if (MGR_ROLES.includes(profile.role)) {
+    document.getElementById('nav-section-mgr').style.display='';
+    document.getElementById('quick-section').style.display='';
+    document.getElementById('quick-cards').innerHTML=`
+      <div class="quick-card" onclick="show('hardware')"><div class="quick-icon">🖥️</div><div class="quick-name">Hardware Request</div><div class="quick-desc">Requires approval</div></div>
+      <div class="quick-card" onclick="show('onboarding')"><div class="quick-icon">👋</div><div class="quick-name">Onboarding</div><div class="quick-desc">New joiner setup</div></div>
+      <div class="quick-card" onclick="show('exit')"><div class="quick-icon">📦</div><div class="quick-name">Exit Task</div><div class="quick-desc">Offboarding checklist</div></div>
+    `;
   }
-  const initials=(currentProfile.full_name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('sb-avatar').textContent=initials;
-  document.getElementById('sb-name').textContent=currentProfile.full_name||currentProfile.email;
-  document.getElementById('sb-dept').textContent=currentProfile.department||'Employee';
-  // Pre-fill all forms
-  ['f-name','hw-name','ob-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=currentProfile.full_name||'';});
-  ['f-email','hw-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=currentProfile.email||'';});
-  ['f-dept-display','hw-dept'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=currentProfile.department||'';});
+
+  // Prefill forms
+  ['f-name','hw-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.full_name||'';});
+  ['f-email','hw-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.email||'';});
+  ['f-dept','hw-dept'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.department||'';});
+
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=(h<12?'Good morning':'h'<17?'Good afternoon':'Good evening')+', '+(profile.full_name?.split(' ')[0]||'');
+
   await loadTickets();
   renderDash();
+  document.getElementById('view-dash').style.cssText='display:flex;flex-direction:column;height:100%';
 });
 
-async function loadTickets() {
-  const {data} = await db.from('tickets')
-    .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assignee:profiles!assigned_to(full_name),comments(id)')
-    .order('created_at',{ascending:false});
-  allTickets=(data||[]).map(t=>({...t,id:t.ticket_no,uid:t.id,assignee_name:t.assignee?.full_name||'',comment_count:t.comments?.length||0}));
-  const open=allTickets.filter(t=>t.status==='open'||t.status==='inprogress'||t.status==='pending_approval').length;
-  const badge=document.getElementById('open-badge');
-  badge.textContent=open; badge.style.display=open>0?'':'none';
+// ── Load task templates from Supabase ──────────────────────────
+async function loadTasks(type, containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '<div class="loading" style="padding:12px">Loading tasks…</div>';
+  const { data } = await db.from('task_templates').select('*').eq('type', type).order('sort_order', { ascending: true });
+  if (!data || !data.length) { el.innerHTML='<p style="padding:12px;font-size:12px;color:var(--text3)">No tasks configured. Ask admin to add tasks.</p>'; return; }
+  el.innerHTML = data.map((t,i) => `
+    <div class="ci">
+      <input type="checkbox" id="${type}-${i}" ${t.checked?'checked':''}>
+      <label for="${type}-${i}">${t.label}</label>
+    </div>`).join('');
 }
 
+// ── Navigation ─────────────────────────────────────────────────
+const VIEWS = ['dash','tickets','new','hardware','onboarding','exit'];
 function show(v) {
-  const views=['dashboard','tickets','new','hardware','onboarding','exit'];
-  views.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display='none';});
+  VIEWS.forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('view-'+v);
-  if(el){el.style.cssText='display:flex;flex-direction:column;height:100%';}
+  if(el){el.style.cssText='display:flex;flex-direction:column;height:100%;animation:fadeUp .18s ease';}
   const nb=document.getElementById('nav-'+v);
-  if(nb) nb.classList.add('active');
+  if(nb)nb.classList.add('active');
   closePanel();
-  if(v==='dashboard') renderDash();
-  if(v==='tickets') renderList();
+  if(v==='dash') renderDash();
+  if(v==='tickets') renderCards();
+  if(v==='onboarding') loadTasks('onboarding','ob-tasks');
+  if(v==='exit') loadTasks('exit','ex-tasks');
+}
+
+// ── Tickets ────────────────────────────────────────────────────
+async function loadTickets() {
+  const {data}=await db.from('tickets')
+    .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assignee:profiles!assigned_to(full_name),comments(id)')
+    .order('created_at',{ascending:false});
+  tickets=(data||[]).map(t=>({...t,_id:t.ticket_no,_uid:t.id,assignee_name:t.assignee?.full_name||'',ccount:t.comments?.length||0}));
+  const open=tickets.filter(t=>['open','inprogress','pending_approval'].includes(t.status)).length;
+  const b=document.getElementById('open-badge');
+  b.textContent=open; b.style.display=open?'':'none';
 }
 
 function renderDash() {
-  const total=allTickets.length, open=allTickets.filter(t=>t.status==='open').length,
-    pending=allTickets.filter(t=>t.status==='pending_approval').length;
-  document.getElementById('dash-metrics').innerHTML=`
-    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Requests</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--pending-text)">${pending}</div><div class="m-lbl">Pending Approval</div></div>
+  const total=tickets.length, open=tickets.filter(t=>t.status==='open').length, pending=tickets.filter(t=>t.status==='pending_approval').length;
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="metric-val">${total}</div><div class="metric-lbl">Total Requests</div></div>
+    <div class="metric"><div class="metric-val" style="color:var(--open-text)">${open}</div><div class="metric-lbl">Open</div></div>
+    <div class="metric"><div class="metric-val" style="color:var(--pending-text)">${pending}</div><div class="metric-lbl">Pending Approval</div></div>
   `;
-  const recent=allTickets.slice(0,6);
-  document.getElementById('dash-recent').innerHTML=recent.length?recent.map(t=>`
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
-      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
-      <div style="flex:1;overflow:hidden">
-        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.id} — ${t.title}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)}</div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
-    </div>
-  `).join(''):'<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Submit your first request</div></div>';
+  const recent=tickets.slice(0,6);
+  document.getElementById('recent-cards').innerHTML = recent.length
+    ? `<div class="cards-grid">${recent.map(t=>mkCard(t)).join('')}</div>`
+    : '<p style="font-size:13px;color:var(--text3);padding:20px 0">No tickets yet — submit your first request.</p>';
 }
 
-function setFilter(f) {
-  currentFilter=f;
+function setF(f){
+  filter=f;
   ['all','open','inprogress','pending_approval','closed'].forEach(k=>document.getElementById('fc-'+k)?.classList.toggle('on',k===f));
-  renderList();
+  renderCards();
 }
 
-function renderList() {
-  const q=(document.getElementById('search-inp').value||'').toLowerCase();
-  let list=allTickets.filter(t=>{
-    if(currentFilter==='closed') return t.status==='closed'||t.status==='resolved';
-    if(currentFilter!=='all') return t.status===currentFilter;
+function renderCards() {
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  let list=tickets.filter(t=>{
+    if(filter==='closed') return t.status==='closed'||t.status==='resolved';
+    if(filter!=='all') return t.status===filter;
     return true;
-  }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q));
-  document.getElementById('ticket-count-label').textContent=list.length+' request'+(list.length!==1?'s':'');
-  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>`
-    <div class="tt-row" onclick="openPanel('${t.uid}')">
-      <span class="tt-id">${t.id}</span>
-      <div class="tt-info"><div class="tt-title">${t.title}</div><div class="tt-sub">${t.assignee_name?'Assigned: '+t.assignee_name:'Unassigned'}</div></div>
-      <div>${tagBadge(t.category)}</div>
-      <div>${prioBadge(t.priority)}</div>
-      <div>${statusBadge(t.status)}</div>
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${t.created_at?.slice(0,10)}</span>
-    </div>
-  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div></div>';
+  }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t._id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q));
+  document.getElementById('tkt-count').textContent=list.length+' request'+(list.length!==1?'s':'');
+  document.getElementById('cards-grid').innerHTML = list.length
+    ? list.map(t=>mkCard(t)).join('')
+    : `<div class="no-tickets"><div class="ni">📂</div><p>No tickets found</p></div>`;
 }
 
-// ── Detail Panel ───────────────────────────────────────────────
+function mkCard(t) {
+  const initials=t.assignee_name?t.assignee_name.split(' ').map(w=>w[0]).join('').slice(0,2):'';
+  return `<div class="tcard" onclick="openPanel('${t._uid}')">
+    <div class="tcard-top">
+      <div style="flex:1;min-width:0"><div class="tcard-id">${t._id}</div><div class="tcard-title">${t.title}</div></div>
+      ${stBadge(t.status)}
+    </div>
+    <div class="tcard-tags">${tagBadge(t.category)} ${prioBadge(t.priority)}</div>
+    <div class="tcard-foot">
+      <div class="assignee-chip">${t.assignee_name?`<div class="av">${initials}</div><span>${t.assignee_name}</span>`:'<span>Unassigned</span>'}</div>
+      <div style="display:flex;align-items:center;gap:6px">${t.ccount?`<span>💬 ${t.ccount}</span>`:''}<span>${t.created_at?.slice(0,10)}</span></div>
+    </div>
+  </div>`;
+}
+
+// ── Detail panel ───────────────────────────────────────────────
 async function openPanel(uid) {
-  selectedId=uid;
-  const {data:t}=await db.from('tickets').select(`*,assignee:profiles!assigned_to(full_name,email),comments(id,body,created_at,author:profiles!author_id(full_name))`).eq('id',uid).single();
+  selId=uid;
+  const {data:t}=await db.from('tickets').select(`*,assignee:profiles!assigned_to(full_name),comments(id,body,created_at,author:profiles!author_id(full_name))`).eq('id',uid).single();
   if(!t) return;
-  const isPending=t.status==='pending_approval';
-  document.getElementById('dp-id').textContent=t.ticket_no;
-  document.getElementById('dp-title').textContent=t.title;
-  document.getElementById('dp-body').innerHTML=`
-    <div class="dp-section">
-      <div class="dp-section-title">Status &amp; Priority</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${statusBadge(t.status)} ${tagBadge(t.category)}</div>
-      ${isPending?'<div style="margin-top:10px;font-size:12px;color:var(--pending-text);background:var(--pending-bg);padding:8px 10px;border-radius:6px">⏳ Waiting for manager approval. You will receive an email once a decision is made.</div>':''}
+  document.getElementById('p-id').textContent=t.ticket_no;
+  document.getElementById('p-title').textContent=t.title;
+  const pending=t.status==='pending_approval';
+  document.getElementById('p-body').innerHTML=`
+    <div class="ps"><div class="ps-title">Status &amp; Priority</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${prioBadge(t.priority)} ${stBadge(t.status)} ${tagBadge(t.category)}</div>
+      ${pending?'<div style="margin-top:10px;font-size:12px;color:var(--pending-text);background:var(--pending-bg);padding:8px 10px;border-radius:6px">⏳ Awaiting manager approval — you will be emailed when a decision is made.</div>':''}
     </div>
-    <div class="dp-section">
-      <div class="dp-section-title">Details</div>
-      <div class="dp-row"><span class="dp-row-label">Ticket ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.ticket_no}</span></div>
-      <div class="dp-row"><span class="dp-row-label">Category</span><span class="dp-row-val">${t.category}</span></div>
-      ${t.asset_tag?`<div class="dp-row"><span class="dp-row-label">Asset</span><span class="dp-row-val">${t.asset_tag}</span></div>`:''}
-      <div class="dp-row"><span class="dp-row-label">Assigned to</span><span class="dp-row-val">${t.assignee?.full_name||'<em style="color:var(--text3)">Unassigned</em>'}</span></div>
-      <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
+    <div class="ps"><div class="ps-title">Details</div>
+      <div class="prow"><span class="prow-lbl">Ticket</span><span class="prow-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.ticket_no}</span></div>
+      <div class="prow"><span class="prow-lbl">Category</span><span class="prow-val">${t.category}</span></div>
+      <div class="prow"><span class="prow-lbl">Assigned to</span><span class="prow-val">${t.assignee?.full_name||'<em style="color:var(--text3)">Unassigned</em>'}</span></div>
+      <div class="prow"><span class="prow-lbl">Submitted</span><span class="prow-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
     </div>
-    <div class="dp-section"><div class="dp-section-title">Description</div><div class="dp-desc">${t.description}</div></div>
-    ${t.comments?.length?`<div class="dp-section"><div class="dp-section-title">Updates (${t.comments.length})</div>${t.comments.map(c=>`<div class="comment-item"><div class="comment-meta">${c.author?.full_name||'IT Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="comment-text">${c.body}</div></div>`).join('')}</div>`:''}
+    <div class="ps"><div class="ps-title">Description</div><div class="pdesc">${t.description}</div></div>
+    ${t.comments?.length?`<div class="ps"><div class="ps-title">Updates (${t.comments.length})</div>${t.comments.map(c=>`<div class="cmt"><div class="cmt-meta">${c.author?.full_name||'IT Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="cmt-body">${c.body}</div></div>`).join('')}</div>`:''}
   `;
-  document.getElementById('dp-footer').innerHTML=`
+  document.getElementById('p-foot').innerHTML=`
     <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Add a comment</div>
-    <textarea id="dp-comment" rows="2" placeholder="Ask a question or add more details…"></textarea>
-    <div class="dp-footer-row"><button class="btn btn-primary btn-sm" onclick="addComment()">Send</button></div>
+    <textarea id="p-cmt" rows="2" placeholder="Ask a question or provide more details…"></textarea>
+    <div class="panel-foot-row"><button class="btn btn-primary btn-sm" onclick="addComment()">Send</button></div>
   `;
-  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
 }
 
 async function addComment() {
-  const body=document.getElementById('dp-comment').value.trim();
+  const body=document.getElementById('p-cmt').value.trim();
   if(!body) return;
-  await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body});
-  toast('Comment added'); openPanel(selectedId);
+  const {data:t}=await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selId).single();
+  await db.from('comments').insert({ticket_id:selId,author_id:user.id,body});
+  // Email the IT technician/requester about the comment
+  await notify('comment_added',{ticket_no:t.ticket_no,title:t.title,requester_email:t.creator?.email,requester_name:t.creator?.full_name,commenter_name:profile.full_name,comment:body});
+  toast('Comment added'); openPanel(selId);
 }
-function closePanel(){document.getElementById('detail-panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selectedId=null;}
 
-// ── General request ────────────────────────────────────────────
-function selectPriority(p) {
-  selectedPriority=p;
-  ['low','medium','high','critical'].forEach(x=>document.getElementById('popt-'+x).className='p-opt'+(x===p?' sel-'+p:''));
-}
-function updateCharCount(el,id,max){document.getElementById(id).textContent=el.value.length+' / '+max+' characters';}
-function clearGeneralForm(){['f-title','f-desc','f-asset','f-phone'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value='';});selectPriority('medium');document.getElementById('form-err').style.display='none';}
+function closePanel(){document.getElementById('panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selId=null;}
+
+// ── Submit General ─────────────────────────────────────────────
+function selP(p){prio=p;['low','medium','high','critical'].forEach(x=>document.getElementById('po-'+x).className='popt'+(x===p?' sel-'+p:''));}
+function cc(el,id,max){document.getElementById(id).textContent=el.value.length+' / '+max;}
+function clearForm(){['f-title','f-desc','f-asset','f-phone'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value='';});selP('medium');document.getElementById('f-err').style.display='none';}
 
 async function submitGeneral() {
   const title=document.getElementById('f-title').value.trim();
   const desc=document.getElementById('f-desc').value.trim();
-  const errEl=document.getElementById('form-err'); errEl.style.display='none';
-  if(!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
-  if(!desc){errEl.textContent='Please describe the issue.';errEl.style.display='';return;}
-  document.getElementById('submit-btn').disabled=true;
+  const err=document.getElementById('f-err'); err.style.display='none';
+  if(!title){err.textContent='Please enter a subject.';err.style.display='';return;}
+  if(!desc){err.textContent='Please describe the issue.';err.style.display='';return;}
+  document.getElementById('f-btn').disabled=true;
   const {data,error}=await db.from('tickets').insert({
     title,description:desc,category:document.getElementById('f-cat').value,
-    priority:selectedPriority,created_by:currentUser.id,
-    department:currentProfile.department,
+    priority:prio,created_by:user.id,department:profile.department,
     asset_tag:document.getElementById('f-asset').value.trim()
-  }).select('ticket_no').single();
-  document.getElementById('submit-btn').disabled=false;
-  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
-  // Send email notification
-  await sendEmail('ticket_created',{ticket_no:data.ticket_no,title,requester_email:currentProfile.email,requester_name:currentProfile.full_name});
-  toast('Request '+data.ticket_no+' submitted!'); clearGeneralForm(); await loadTickets(); show('tickets');
-}
-
-// ── Hardware request ───────────────────────────────────────────
-async function submitHardwareRequest() {
-  const managerEmail=document.getElementById('hw-manager').value.trim();
-  const hwType=document.getElementById('hw-type').value;
-  const justification=document.getElementById('hw-justification').value.trim();
-  const errEl=document.getElementById('hw-err'); errEl.style.display='none';
-  if(!managerEmail){errEl.textContent='Please enter your manager\'s email.';errEl.style.display='';return;}
-  if(!hwType){errEl.textContent='Please select a hardware type.';errEl.style.display='';return;}
-  if(!justification){errEl.textContent='Please provide a business justification.';errEl.style.display='';return;}
-  document.getElementById('hw-submit-btn').disabled=true;
-  const qty=document.getElementById('hw-qty').value;
-  const specs=document.getElementById('hw-specs').value.trim();
-  const budget=document.getElementById('hw-budget').value.trim();
-  const reqDate=document.getElementById('hw-date').value;
-  const desc=`Hardware Type: ${hwType}\nQuantity: ${qty}\nRequired By: ${reqDate||'ASAP'}\nEstimated Budget: ${budget||'Not specified'}\nSpecifications: ${specs||'Standard'}\n\nBusiness Justification:\n${justification}`;
-  const {data,error}=await db.from('tickets').insert({
-    title:`Hardware Request — ${hwType} (x${qty})`,
-    description:desc, category:'Hardware',
-    priority:'medium', status:'pending_approval',
-    created_by:currentUser.id, department:currentProfile.department
   }).select('ticket_no,id').single();
-  document.getElementById('hw-submit-btn').disabled=false;
-  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
-  // Send emails: confirmation to requester + approval request to manager
-  await sendEmail('hardware_submitted',{
-    ticket_no:data.ticket_no, ticket_id:data.id,
-    hw_type:hwType, qty, justification,
-    requester_email:currentProfile.email, requester_name:currentProfile.full_name,
-    manager_email:managerEmail, dept:currentProfile.department,
-    approve_url: BASE_URL+'admin.html'
-  });
-  toast('Hardware request '+data.ticket_no+' submitted for approval!'); await loadTickets(); show('tickets');
+  document.getElementById('f-btn').disabled=false;
+  if(error){err.textContent=error.message;err.style.display='';return;}
+  await notify('ticket_created',{ticket_no:data.ticket_no,title,requester_email:profile.email,requester_name:profile.full_name});
+  toast('✓ Request '+data.ticket_no+' submitted — you will receive an email confirmation.');
+  clearForm(); await loadTickets(); show('tickets');
 }
 
-// ── Onboarding ─────────────────────────────────────────────────
+// ── Submit Hardware ────────────────────────────────────────────
+async function submitHardware() {
+  const mgr=document.getElementById('hw-mgr').value.trim();
+  const type=document.getElementById('hw-type').value;
+  const just=document.getElementById('hw-just').value.trim();
+  const err=document.getElementById('hw-err'); err.style.display='none';
+  if(!mgr){err.textContent='Please enter manager email.';err.style.display='';return;}
+  if(!type){err.textContent='Please select a hardware type.';err.style.display='';return;}
+  if(!just){err.textContent='Please provide a business justification.';err.style.display='';return;}
+  document.getElementById('hw-btn').disabled=true;
+  const qty=document.getElementById('hw-qty').value;
+  const desc=`Hardware: ${type}\nQty: ${qty}\nRequired By: ${document.getElementById('hw-date').value||'ASAP'}\nBudget: ₹${document.getElementById('hw-budget').value||'Not specified'}\nSpecs: ${document.getElementById('hw-specs').value||'Standard'}\n\nJustification:\n${just}`;
+  const {data,error}=await db.from('tickets').insert({
+    title:`Hardware Request — ${type} (x${qty})`,description:desc,
+    category:'Hardware',priority:'medium',status:'pending_approval',
+    created_by:user.id,department:profile.department
+  }).select('ticket_no,id').single();
+  document.getElementById('hw-btn').disabled=false;
+  if(error){err.textContent=error.message;err.style.display='';return;}
+  await notify('hardware_submitted',{ticket_no:data.ticket_no,hw_type:type,qty,justification:just,requester_email:profile.email,requester_name:profile.full_name,manager_email:mgr,dept:profile.department,approve_url:BASE_URL+'admin.html'});
+  toast('✓ Hardware request '+data.ticket_no+' submitted — your manager will be emailed for approval.');
+  await loadTickets(); show('tickets');
+}
+
+// ── Submit Onboarding ──────────────────────────────────────────
 async function submitOnboarding() {
-  const empName=document.getElementById('ob-empname').value.trim();
-  const empEmail=document.getElementById('ob-empemail').value.trim();
-  const joinDate=document.getElementById('ob-joindate').value;
-  const errEl=document.getElementById('ob-err'); errEl.style.display='none';
-  if(!empName){errEl.textContent='Please enter the new employee\'s name.';errEl.style.display='';return;}
-  if(!empEmail){errEl.textContent='Please enter the new employee\'s email.';errEl.style.display='';return;}
-  if(!joinDate){errEl.textContent='Please enter the joining date.';errEl.style.display='';return;}
-  const checks=['ob1','ob2','ob3','ob4','ob5','ob6','ob7','ob8','ob9','ob10'];
-  const checkedLabels=checks.filter(id=>document.getElementById(id).checked).map(id=>document.querySelector(`label[for="${id}"]`).textContent);
+  const name=document.getElementById('ob-name').value.trim();
+  const email=document.getElementById('ob-email').value.trim();
+  const date=document.getElementById('ob-date').value;
+  const err=document.getElementById('ob-err'); err.style.display='none';
+  if(!name){err.textContent='Please enter employee name.';err.style.display='';return;}
+  if(!email){err.textContent='Please enter employee email.';err.style.display='';return;}
+  if(!date){err.textContent='Please enter joining date.';err.style.display='';return;}
+  const tasks=[...document.querySelectorAll('#ob-tasks input[type=checkbox]')].filter(c=>c.checked).map(c=>document.querySelector(`label[for="${c.id}"]`).textContent);
   const dept=document.getElementById('ob-dept').value;
-  const location=document.getElementById('ob-location').value;
-  const manager=document.getElementById('ob-manager').value.trim();
   const notes=document.getElementById('ob-notes').value.trim();
-  const desc=`NEW JOINER: ${empName}\nEmail: ${empEmail}\nDepartment: ${dept}\nJoining Date: ${joinDate}\nLocation: ${location}\nReporting Manager: ${manager||'TBD'}\n\nIT SETUP TASKS:\n${checkedLabels.map(l=>'• '+l).join('\n')}${notes?'\n\nAdditional Notes:\n'+notes:''}`;
+  const desc=`NEW JOINER: ${name}\nEmail: ${email}\nDept: ${dept}\nJoining: ${date}\nLocation: ${document.getElementById('ob-loc').value}\nManager: ${document.getElementById('ob-mgr').value||'TBD'}\nRequested by: ${profile.full_name}\n\nIT TASKS:\n${tasks.map(t=>'• '+t).join('\n')}${notes?'\n\nNotes:\n'+notes:''}`;
   const {data,error}=await db.from('tickets').insert({
-    title:`Onboarding Setup — ${empName} (Joins ${joinDate})`,
-    description:desc, category:'Onboarding',
-    priority:'high', created_by:currentUser.id, department:dept
+    title:`Onboarding — ${name} (Joins ${date})`,description:desc,
+    category:'Onboarding',priority:'high',created_by:user.id,department:dept
   }).select('ticket_no').single();
-  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
-  await sendEmail('ticket_created',{ticket_no:data.ticket_no,title:`Onboarding — ${empName}`,requester_email:currentProfile.email,requester_name:currentProfile.full_name});
-  toast('Onboarding request '+data.ticket_no+' submitted!'); await loadTickets(); show('tickets');
+  if(error){err.textContent=error.message;err.style.display='';return;}
+  await notify('ticket_created',{ticket_no:data.ticket_no,title:`Onboarding — ${name}`,requester_email:profile.email,requester_name:profile.full_name});
+  toast('✓ Onboarding request '+data.ticket_no+' submitted.'); await loadTickets(); show('tickets');
 }
 
-// ── Exit ───────────────────────────────────────────────────────
+// ── Submit Exit ────────────────────────────────────────────────
 async function submitExit() {
-  const empName=document.getElementById('ex-empname').value.trim();
-  const empEmail=document.getElementById('ex-empemail').value.trim();
-  const lastDate=document.getElementById('ex-lastdate').value;
-  const errEl=document.getElementById('ex-err'); errEl.style.display='none';
-  if(!empName){errEl.textContent='Please enter the employee\'s name.';errEl.style.display='';return;}
-  if(!lastDate){errEl.textContent='Please enter the last working date.';errEl.style.display='';return;}
-  const checks=['ex1','ex2','ex3','ex4','ex5','ex6','ex7','ex8','ex9','ex10'];
-  const checkedLabels=checks.filter(id=>document.getElementById(id).checked).map(id=>document.querySelector(`label[for="${id}"]`).textContent);
-  const assets=document.getElementById('ex-assets').value.trim();
-  const reason=document.getElementById('ex-reason').value;
+  const name=document.getElementById('ex-name').value.trim();
+  const date=document.getElementById('ex-date').value;
+  const err=document.getElementById('ex-err'); err.style.display='none';
+  if(!name){err.textContent='Please enter employee name.';err.style.display='';return;}
+  if(!date){err.textContent='Please enter last working date.';err.style.display='';return;}
+  const tasks=[...document.querySelectorAll('#ex-tasks input[type=checkbox]')].filter(c=>c.checked).map(c=>document.querySelector(`label[for="${c.id}"]`).textContent);
   const dept=document.getElementById('ex-dept').value.trim();
-  const desc=`DEPARTING EMPLOYEE: ${empName}\nEmail: ${empEmail}\nDepartment: ${dept||'—'}\nLast Working Date: ${lastDate}\nReason: ${reason||'—'}\n\nOFFBOARDING TASKS:\n${checkedLabels.map(l=>'• '+l).join('\n')}${assets?'\n\nASSETS TO COLLECT:\n'+assets:''}`;
+  const assets=document.getElementById('ex-assets').value.trim();
+  const desc=`DEPARTING: ${name}\nEmail: ${document.getElementById('ex-email').value}\nDept: ${dept||'—'}\nLast Day: ${date}\nReason: ${document.getElementById('ex-reason').value||'—'}\nRequested by: ${profile.full_name}\n\nOFFBOARDING:\n${tasks.map(t=>'• '+t).join('\n')}${assets?'\n\nASSETS:\n'+assets:''}`;
   const {data,error}=await db.from('tickets').insert({
-    title:`Exit Tasks — ${empName} (Last day: ${lastDate})`,
-    description:desc, category:'Offboarding',
-    priority:'high', created_by:currentUser.id, department:dept||currentProfile.department
+    title:`Exit — ${name} (Last day: ${date})`,description:desc,
+    category:'Offboarding',priority:'high',created_by:user.id,department:dept||profile.department
   }).select('ticket_no').single();
-  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
-  await sendEmail('ticket_created',{ticket_no:data.ticket_no,title:`Exit — ${empName}`,requester_email:currentProfile.email,requester_name:currentProfile.full_name});
-  toast('Exit request '+data.ticket_no+' submitted!'); await loadTickets(); show('tickets');
+  if(error){err.textContent=error.message;err.style.display='';return;}
+  await notify('ticket_created',{ticket_no:data.ticket_no,title:`Exit — ${name}`,requester_email:profile.email,requester_name:profile.full_name});
+  toast('✓ Exit request '+data.ticket_no+' submitted.'); await loadTickets(); show('tickets');
 }
 
-// ── Email helper (calls Supabase Edge Function) ─────────────────
-async function sendEmail(type, payload) {
-  try {
-    await db.functions.invoke('send-notification', { body: { type, ...payload } });
-  } catch(e) { console.warn('Email send failed (non-critical):', e); }
+// ── Email notification helper ──────────────────────────────────
+async function notify(type, payload) {
+  try { await db.functions.invoke('send-notification',{body:{type,...payload}}); }
+  catch(e){ console.warn('Notification failed:',e); }
 }
 
 // ── Helpers ────────────────────────────────────────────────────
 function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}
-function statusBadge(s){const labels={open:'Open',inprogress:'In Progress',closed:'Closed',resolved:'Resolved',pending_approval:'Pending Approval'};return`<span class="badge b-${s}" style="border:none">${labels[s]||cap(s)}</span>`;}
+function stBadge(s){const m={open:'Open',inprogress:'In Progress',closed:'Closed',resolved:'Resolved',pending_approval:'Pending Approval'};return`<span class="badge b-${s}" style="border:none">${m[s]||cap(s)}</span>`;}
 function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
-function pDot(p){return{critical:'#a61e1e',high:'#8a4500',medium:'#1e40af',low:'#14532d'}[p]||'#aaa';}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
-
-document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','new','hardware','onboarding','exit'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.style.display='none';});
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
 </script>
 </body>
 </html>
