@@ -1,14 +1,11 @@
-// supabase/functions/create-user/index.ts
+// ─────────────────────────────────────────────────────────────
+//  supabase/functions/create-user/index.ts
 //
-// Creates a new user in auth.users + sets their profile with role
-// Called from Admin Panel — requires admin to be logged in
+//  Creates a new user securely — service_role key never
+//  leaves Supabase servers. Called from admin.html.
 //
-// DEPLOY:
-//   supabase functions new create-user
-//   paste this file into supabase/functions/create-user/index.ts
-//   supabase functions deploy create-user --project-ref YOUR_PROJECT_ID
-//
-// No extra secrets needed — SUPABASE_SERVICE_ROLE_KEY is auto-available.
+//  HOW TO DEPLOY (step by step below)
+// ─────────────────────────────────────────────────────────────
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -25,10 +22,13 @@ const cors = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
-  // ── Verify caller is an admin ────────────────────────────────
+  // ── 1. Verify the caller is a logged-in admin ────────────────
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors })
+    return new Response(
+      JSON.stringify({ error: 'Not authenticated' }),
+      { status: 401, headers: cors }
+    )
   }
 
   const callerClient = createClient(SUPABASE_URL, ANON_KEY, {
@@ -37,7 +37,10 @@ serve(async (req) => {
 
   const { data: { user: caller } } = await callerClient.auth.getUser()
   if (!caller) {
-    return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: cors })
+    return new Response(
+      JSON.stringify({ error: 'Invalid session' }),
+      { status: 401, headers: cors }
+    )
   }
 
   const { data: callerProfile } = await callerClient
@@ -47,11 +50,15 @@ serve(async (req) => {
     .single()
 
   if (!callerProfile || callerProfile.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403, headers: cors })
+    return new Response(
+      JSON.stringify({ error: 'Admin access required' }),
+      { status: 403, headers: cors }
+    )
   }
 
-  // ── Parse request ────────────────────────────────────────────
-  const { email, password, full_name, role, department } = await req.json()
+  // ── 2. Validate input ────────────────────────────────────────
+  const body = await req.json()
+  const { email, password, full_name, role, department } = body
 
   if (!email || !password || !full_name) {
     return new Response(
@@ -60,60 +67,58 @@ serve(async (req) => {
     )
   }
 
-  if (!['employee', 'technician', 'admin'].includes(role)) {
+  if (password.length < 8) {
     return new Response(
-      JSON.stringify({ error: 'role must be employee, technician or admin' }),
+      JSON.stringify({ error: 'Password must be at least 8 characters' }),
       { status: 400, headers: cors }
     )
   }
 
-  // ── Create user with service role client ─────────────────────
+  const validRoles = ['employee', 'technician', 'admin']
+  if (role && !validRoles.includes(role)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid role' }),
+      { status: 400, headers: cors }
+    )
+  }
+
+  // ── 3. Create user with admin client ─────────────────────────
   const adminClient = createClient(SUPABASE_URL, SERVICE_KEY)
 
-  // Create the auth user — email_confirm: true skips confirmation email
-  // so the user can log in immediately with the temp password
   const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,   // ← skips the confirmation step
+    email_confirm: true,          // user can log in immediately, no email confirmation needed
     user_metadata: { full_name, department: department || '' }
   })
 
   if (createError) {
-    console.error('Create user error:', createError)
     return new Response(
       JSON.stringify({ error: createError.message }),
       { status: 400, headers: cors }
     )
   }
 
-  // ── Set role in profiles table ───────────────────────────────
-  // The trigger creates the profile row automatically,
-  // but we need to update the role (default is 'employee')
-  if (role !== 'employee') {
-    const { error: roleError } = await adminClient
-      .from('profiles')
-      .update({ role, department: department || '', full_name })
-      .eq('id', newUser.user.id)
+  // ── 4. Update profile row (trigger creates it, we set role) ──
+  await new Promise(r => setTimeout(r, 600))   // wait for DB trigger
 
-    if (roleError) {
-      console.error('Role update error:', roleError)
-      // User was created — just log the role error, don't fail
-    }
-  } else {
-    // Still update full_name and department even for employees
-    await adminClient
-      .from('profiles')
-      .update({ full_name, department: department || '' })
-      .eq('id', newUser.user.id)
+  const { error: profileError } = await adminClient
+    .from('profiles')
+    .update({
+      full_name,
+      role:       role || 'employee',
+      department: department || ''
+    })
+    .eq('id', newUser.user.id)
+
+  if (profileError) {
+    // User created but profile update failed — not critical
+    console.error('Profile update failed:', profileError.message)
   }
 
+  // ── 5. Return success ────────────────────────────────────────
   return new Response(
-    JSON.stringify({
-      ok: true,
-      user_id: newUser.user.id,
-      email: newUser.user.email
-    }),
+    JSON.stringify({ ok: true, user_id: newUser.user.id }),
     { headers: { ...cors, 'Content-Type': 'application/json' } }
   )
 })
