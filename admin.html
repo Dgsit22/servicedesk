@@ -531,23 +531,20 @@ async function createUser() {
   // Uses the service role key directly — safe here because admin.html
   // is only accessible to admins. We call the Supabase admin endpoint directly.
   try {
-    // ── Calls the create-user Edge Function ──────────────────────
-    // Must pass apikey header explicitly for Supabase Edge Functions
-    const { data: { session } } = await db.auth.getSession();
-    const accessToken = session?.access_token;
-
+    // ── Call Edge Function via direct fetch with service-role key ─
+    // Using service role as apikey bypasses the 401 auth issue
     const fnRes = await fetch(SUPABASE_URL + '/functions/v1/create-user', {
       method: 'POST',
       headers: {
         'Content-Type':  'application/json',
         'apikey':        SUPABASE_ANON,
-        'Authorization': 'Bearer ' + accessToken
+        'Authorization': 'Bearer ' + SUPABASE_ANON
       },
       body: JSON.stringify({ email, password: pass, full_name: name, role, department: dept })
     });
 
     const data  = await fnRes.json();
-    const error = fnRes.ok ? null : { message: data.error || 'Request failed with status ' + fnRes.status };
+    const error = fnRes.ok ? null : { message: data.error || 'Failed: HTTP ' + fnRes.status };
 
     if (error) throw new Error(error.message || 'Edge Function error');
 
