@@ -138,6 +138,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         My Assigned
         <span class="nav-badge nb-blue" id="mine-badge">0</span>
       </button>
+      <button class="nav-btn" id="nav-unassigned" onclick="show('unassigned')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1-1-1-2a7 7 0 0114 0c0 1-1 2-1 2H2z" opacity=".3"/><path d="M10.5 6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM12 13a4 4 0 00-8 0h8z" stroke="currentColor" stroke-width="1" fill="none"/><line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="1.5"/></svg>
+        Unassigned
+        <span class="nav-badge nb-red" id="unassigned-badge">0</span>
+      </button>
     </nav>
     <div class="sb-footer">
       <div class="sb-user">
@@ -166,7 +171,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div id="dash-recent"><div class="loading">Loading…</div></div>
           </div>
           <div class="card">
-            <div class="card-header"><h3>By Category</h3></div>
+            <div class="card-header"><h3>Technician Workload</h3><button class="btn btn-ghost btn-sm" onclick="show('unassigned')">Unassigned →</button></div>
             <div id="dash-cats"></div>
           </div>
         </div>
@@ -193,6 +198,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <button class="filter-chip" id="fc-resolved" onclick="setFilter('resolved','fc')">Resolved</button>
         <button class="filter-chip crit" id="fc-critical" onclick="setFilter('critical','fc')">⚡ Critical</button>
         <button class="filter-chip" id="fc-hardware" onclick="setFilter('hardware','fc')">🖥️ Hardware</button>
+        <button class="filter-chip" id="fc-unassigned" onclick="setFilter('unassigned','fc')" style="border-color:var(--critical-border);color:var(--critical-text)">⚠ Unassigned</button>
         <div class="filter-sep"></div>
         <select class="sort-select" id="sort-sel" onchange="renderList()">
           <option value="date-desc">Newest first</option>
@@ -215,6 +221,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       <div style="flex:1;overflow-y:auto;background:var(--surface)">
         <div class="tt-head"><span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Requester</span></div>
         <div id="mine-list"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- UNASSIGNED -->
+    <div class="view" id="view-unassigned">
+      <div class="topbar">
+        <div><div class="topbar-title">Unassigned Tickets</div><div class="topbar-sub" id="unassigned-count-label">Loading…</div></div>
+        <button class="btn" onclick="loadTickets().then(renderUnassigned)">&#8635; Refresh</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;background:var(--surface)">
+        <div class="tt-head"><span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Age</span></div>
+        <div id="unassigned-list"><div class="loading">Loading…</div></div>
       </div>
     </div>
 
@@ -279,9 +297,11 @@ async function loadTickets() {
 
   const open=allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
   const mine=allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
-  const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge');
+  const unassigned=allTickets.filter(t=>!t.assigned_to&&!['resolved','closed'].includes(t.status)).length;
+  const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge'), ub=document.getElementById('unassigned-badge');
   if(ob){ob.textContent=open; ob.style.display=open?'':'none';}
   if(mb){mb.textContent=mine; mb.style.display=mine?'':'none';}
+  if(ub){ub.textContent=unassigned; ub.style.display=unassigned?'':'none';}
 }
 
 async function loadTechList() {
@@ -293,7 +313,7 @@ async function loadTechList() {
 
 // ── Navigation ──────────────────────────────────────────────────
 function show(v) {
-  ['dashboard','tickets','mine'].forEach(x=>{document.getElementById('view-'+x).style.display='none';});
+  ['dashboard','tickets','mine','unassigned'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+v).style.cssText='display:flex;flex-direction:column;height:100%';
   document.getElementById('nav-'+v).classList.add('active');
@@ -301,19 +321,22 @@ function show(v) {
   if(v==='dashboard') renderDash();
   if(v==='tickets') renderList();
   if(v==='mine') renderMine();
+  if(v==='unassigned') renderUnassigned();
 }
 
 // ── Dashboard ───────────────────────────────────────────────────
 function renderDash() {
-  const total=allTickets.length,
-    open=allTickets.filter(t=>t.status==='open').length,
-    inp=allTickets.filter(t=>t.status==='inprogress').length,
-    crit=allTickets.filter(t=>t.priority==='critical'&&!['resolved','closed'].includes(t.status)).length;
+  const total=allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
+  const open=allTickets.filter(t=>t.status==='open').length;
+  const inp=allTickets.filter(t=>t.status==='inprogress').length;
+  const unassigned=allTickets.filter(t=>!t.assigned_to&&!['resolved','closed'].includes(t.status)).length;
+  const crit=allTickets.filter(t=>t.priority==='critical'&&!['resolved','closed'].includes(t.status)).length;
+  const closed=allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
   document.getElementById('dash-metrics').innerHTML=`
-    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Tickets</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--critical-text)">${crit}</div><div class="m-lbl">Critical</div></div>
+    <div class="metric-card" style="cursor:pointer" onclick="show('tickets')"><div class="m-val">${total}</div><div class="m-lbl">Active Tickets</div></div>
+    <div class="metric-card" style="cursor:pointer" onclick="show('unassigned')"><div class="m-val" style="color:var(--critical-text)">${unassigned}</div><div class="m-lbl">⚠ Unassigned</div></div>
+    <div class="metric-card" style="cursor:pointer" onclick="show('mine')"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
+    <div class="metric-card"><div class="m-val" style="color:var(--closed-text)">${closed}</div><div class="m-lbl">Closed / Resolved</div></div>
   `;
   const recent=allTickets.slice(0,8);
   document.getElementById('dash-recent').innerHTML=recent.length?recent.map(t=>`
@@ -326,18 +349,37 @@ function renderDash() {
       <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
     </div>
   `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Run SETUP-run-first.sql to add sample data</div></div>';
-  const cats={};
-  allTickets.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
-  const maxC=Math.max(...Object.values(cats),1);
-  document.getElementById('dash-cats').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`
-    <div class="cat-item"><div class="cat-name">${c}</div><div class="cat-bar-wrap"><div class="cat-bar" style="width:${Math.round(n/maxC*100)}%"></div></div><div class="cat-count">${n}</div></div>
-  `).join('');
+  // Technician workload — active tickets per person
+  const workload={};
+  allTickets.filter(t=>!['resolved','closed'].includes(t.status)).forEach(t=>{
+    if(t.assigned_to) {
+      const name=t.assignee?.full_name||'Unknown';
+      if(!workload[name]) workload[name]={open:0,inprog:0,total:0};
+      workload[name].total++;
+      if(t.status==='inprogress') workload[name].inprog++;
+      else workload[name].open++;
+    }
+  });
+  const maxW=Math.max(...Object.values(workload).map(w=>w.total),1);
+  const wEntries=Object.entries(workload).sort((a,b)=>b[1].total-a[1].total);
+  document.getElementById('dash-cats').innerHTML=wEntries.length?wEntries.map(([name,w])=>`
+    <div class="cat-item" style="padding:10px 18px;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;margin-bottom:3px">${name}</div>
+        <div style="display:flex;gap:6px">
+          <span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:1px 6px;border-radius:8px">${w.open} open</span>
+          <span style="font-size:10px;background:var(--inprog-bg);color:var(--inprog-text);padding:1px 6px;border-radius:8px">${w.inprog} working</span>
+        </div>
+      </div>
+      <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);min-width:28px;text-align:right">${w.total}</div>
+    </div>
+  `).join(''):'<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">No active assignments</div>';
 }
 
 // ── Filter & List ───────────────────────────────────────────────
 function setFilter(f,prefix) {
   currentFilter=f;
-  ['all','open','inprogress','waiting_for_info','pending_approval','resolved','critical','hardware'].forEach(k=>{
+  ['all','open','inprogress','waiting_for_info','pending_approval','resolved','critical','hardware','unassigned'].forEach(k=>{
     const el=document.getElementById(prefix+'-'+k); if(el) el.classList.toggle('on',k===f);
   });
   renderList();
@@ -352,6 +394,7 @@ function renderList() {
     if(currentFilter==='waiting_for_info') return t.status==='waiting_for_info';
     if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
     if(currentFilter==='hardware') return HW_CATS.includes(t.category)||t.status==='pending_approval';
+    if(currentFilter==='unassigned') return !t.assigned_to&&!['resolved','closed'].includes(t.status);
     if(currentFilter!=='all') return t.status===currentFilter;
     return true;
   }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q));
@@ -364,7 +407,12 @@ function renderList() {
       <span class="tt-id">${t.id}</span>
       <div class="tt-info">
         <div class="tt-title">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</div>
-        <div class="tt-sub">${t.assignee?.full_name||'Unassigned'} · ${t.creator?.full_name||''}</div>
+        <div class="tt-sub" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${t.assignee?.full_name
+            ? `<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`
+            : `<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">⚠ Unassigned</span>`}
+          <span style="color:var(--text3)">${t.creator?.full_name||''}</span>
+        </div>
       </div>
       <div>${tagBadge(t.category)}</div><div>${prioBadge(t.priority)}</div><div>${statusBadge(t.status)}</div>
       <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${t.created_at?.slice(0,10)}</span>
@@ -383,6 +431,43 @@ function renderMine() {
       <span style="font-size:12px;color:var(--text2)">${t.creator?.full_name||'—'}</span>
     </div>
   `).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No tickets assigned to you</div></div>';
+}
+
+function renderUnassigned() {
+  const active_statuses=['resolved','closed'];
+  const list=allTickets.filter(t=>!t.assigned_to&&!active_statuses.includes(t.status))
+    .sort((a,b)=>a.created_at?.localeCompare(b.created_at)); // oldest first = most urgent
+  const count=list.length;
+  document.getElementById('unassigned-count-label').textContent=count+' ticket'+(count!==1?'s':'')+' waiting to be assigned';
+  if(count>0){
+    const ub=document.getElementById('unassigned-badge');
+    if(ub){ub.textContent=count;ub.style.display='';}
+  }
+  function ageLabel(created) {
+    const mins=Math.round((Date.now()-new Date(created))/60000);
+    if(mins<60) return mins+'m ago';
+    if(mins<1440) return Math.round(mins/60)+'h ago';
+    return Math.round(mins/1440)+'d ago';
+  }
+  function ageColor(created) {
+    const hrs=(Date.now()-new Date(created))/3600000;
+    if(hrs>24) return 'var(--critical-text)';
+    if(hrs>8) return 'var(--high-text)';
+    return 'var(--text3)';
+  }
+  document.getElementById('unassigned-list').innerHTML=list.length?list.map(t=>`
+    <div class="tt-row" onclick="openPanel('${t.uid}')" style="background:#fffbfb">
+      <span class="tt-id">${t.id}</span>
+      <div class="tt-info">
+        <div class="tt-title">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</div>
+        <div class="tt-sub">${t.creator?.full_name||'—'}</div>
+      </div>
+      <div>${tagBadge(t.category)}</div>
+      <div>${prioBadge(t.priority)}</div>
+      <div>${statusBadge(t.status)}</div>
+      <span style="font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:${ageColor(t.created_at)}">${ageLabel(t.created_at)}</span>
+    </div>
+  `).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All tickets are assigned</div><div class="empty-sub">Great work!</div></div>';
 }
 
 // ── Open Panel ──────────────────────────────────────────────────
@@ -607,7 +692,7 @@ function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pend
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','mine'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
+['tickets','mine','unassigned'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
 </script>
 </body>
 </html>
