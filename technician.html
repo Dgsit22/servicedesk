@@ -212,8 +212,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         </select>
       </div>
       <div style="flex:1;overflow-y:auto;background:var(--surface)">
-        <div class="tt-head"><span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Requester</span></div>
-        <div id="ticket-list"><div class="loading">Loading…</div></div>
+        <div class="tt-head" style="grid-template-columns:36px 80px 1fr 120px 80px 90px 100px">
+        <span><input type="checkbox" id="select-all" onclick="toggleSelectAll()" style="accent-color:var(--accent)"></span>
+        <span>ID</span><span>Subject</span><span>Category</span><span>Priority</span><span>Status</span><span>Requester</span>
+      </div>
+      <div id="bulk-bar" style="display:none;padding:10px 16px;background:var(--accent-light);border-bottom:1px solid var(--medium-border);align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:var(--accent-text)" id="bulk-count">0 selected</span>
+        <select id="bulk-assign-sel" style="padding:5px 10px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">Assign to…</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="bulkAssign()">Assign Selected</button>
+        <button class="btn btn-sm" onclick="bulkClose()">Close Selected</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelection()">✕ Cancel</button>
+      </div>
+      <div id="ticket-list"><div class="loading">Loading…</div></div>
       </div>
     </div>
 
@@ -283,7 +295,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 let currentUser=null, currentProfile=null;
 let allTickets=[], techList=[], currentFilter='all', selectedId=null;
 const PORD={critical:0,high:1,medium:2,low:3};
-const HW_CATS=['Hardware','Onboarding','Offboarding'];
+const SLA_HOURS={critical:1,high:4,medium:8,low:24}; // SLA targets in hours
+
+function slaStatus(ticket) {
+  if(['resolved','closed'].includes(ticket.status)) return null;
+  const hrs=(Date.now()-new Date(ticket.created_at))/3600000;
+  const target=SLA_HOURS[ticket.priority]||24;
+  const pct=hrs/target;
+  if(pct>=1) return{label:'SLA Breached',color:'#a61e1e',bg:'#fff1f1',icon:'🚨'};
+  if(pct>=0.75) return{label:'SLA At Risk',color:'#8a4500',bg:'#fff8ec',icon:'⚠'};
+  return null;
+}
+
+function dueStatus(ticket) {
+  if(!ticket.due_date) return null;
+  const due=new Date(ticket.due_date);
+  const now=new Date();
+  const diffDays=Math.round((due-now)/86400000);
+  if(diffDays<0) return{label:'Overdue '+Math.abs(diffDays)+'d',color:'#a61e1e',bg:'#fff1f1'};
+  if(diffDays===0) return{label:'Due today',color:'#8a4500',bg:'#fff8ec'};
+  if(diffDays<=2) return{label:'Due in '+diffDays+'d',color:'#8a4500',bg:'#fff8ec'};
+  return{label:'Due '+ticket.due_date,color:'#6b6860',bg:'#f7f6f3'};
+}
 
 // ── Auth ────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
@@ -439,22 +472,30 @@ function renderList() {
   else if(sort==='date-asc') list.sort((a,b)=>a.created_at?.localeCompare(b.created_at));
   else list.sort((a,b)=>b.created_at?.localeCompare(a.created_at));
   document.getElementById('ticket-count-label').textContent=list.length+' ticket'+(list.length!==1?'s':'');
-  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>`
-    <div class="tt-row" onclick="openPanel('${t.uid}')" style="${HW_CATS.includes(t.category)||t.status==='pending_approval'?'background:#fdfcff':''}">
-      <span class="tt-id">${t.id}</span>
-      <div class="tt-info">
+  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>{
+    const sla=slaStatus(t);
+    const due=dueStatus(t);
+    const rowBg=sla?.bg||(HW_CATS.includes(t.category)||t.status==='pending_approval'?'#fdfcff':'');
+    return `
+    <div class="tt-row" id="row-${t.uid}" style="grid-template-columns:36px 80px 1fr 120px 80px 90px 100px;${rowBg?'background:'+rowBg:''}">
+      <span onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" value="${t.uid}" onchange="updateBulkBar()" style="accent-color:var(--accent)"></span>
+      <span class="tt-id" onclick="openPanel('${t.uid}')" style="cursor:pointer">${t.id}</span>
+      <div class="tt-info" onclick="openPanel('${t.uid}')" style="cursor:pointer">
         <div class="tt-title">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</div>
-        <div class="tt-sub" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px">
           ${t.assignee?.full_name
             ? `<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`
             : `<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">⚠ Unassigned</span>`}
-          <span style="color:var(--text3)">${t.creator?.full_name||''}</span>
+          ${sla?`<span style="background:${sla.bg};color:${sla.color};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${sla.icon} ${sla.label}</span>`:''}
+          ${due?`<span style="background:${due.bg};color:${due.color};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">📅 ${due.label}</span>`:''}
+          <span style="font-size:10px;color:var(--text3)">${t.creator?.full_name||''}</span>
         </div>
       </div>
-      <div>${tagBadge(t.category)}</div><div>${prioBadge(t.priority)}</div><div>${statusBadge(t.status)}</div>
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${t.created_at?.slice(0,10)}</span>
-    </div>
-  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
+      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${tagBadge(t.category)}</div>
+      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${prioBadge(t.priority)}</div>
+      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${statusBadge(t.status)}</div>
+      <span onclick="openPanel('${t.uid}')" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;cursor:pointer">${t.created_at?.slice(0,10)}</span>
+    </div>`}).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
 }
 
 function renderMine() {
@@ -568,6 +609,14 @@ async function openPanel(uid) {
 
   document.getElementById('dp-id').textContent=t.ticket_no;
   document.getElementById('dp-title').textContent=t.title;
+
+  // Pre-fill due date if set
+  const dueDateEl=document.getElementById('due-date-input');
+  if(dueDateEl) dueDateEl.value=t.due_date||'';
+
+  // Load requester history in background
+  if(t.creator?.id) loadRequesterHistory(t.creator.id, t.id, t.creator.full_name);
+
   document.getElementById('dp-body').innerHTML=`
     <div class="dp-section">
       <div class="dp-section-title">Status — click to change</div>
@@ -606,6 +655,10 @@ async function openPanel(uid) {
         </div>
       `).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
     </div>
+    <div class="dp-section" id="requester-history">
+      <div class="dp-section-title">Requester History</div>
+      <div style="font-size:12px;color:var(--text3)">Loading…</div>
+    </div>
   `;
   document.getElementById('dp-footer').innerHTML=`
     <div style="margin-bottom:10px">
@@ -615,6 +668,12 @@ async function openPanel(uid) {
           <option value="">— Unassigned —</option>${techOptions}
         </select>
         <button class="btn btn-sm" onclick="assignToSelf()" style="flex-shrink:0;font-size:11px">👤 Take It</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center">
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:4px">📅 Due Date (optional)</div>
+        <input type="date" id="due-date-input" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
       </div>
     </div>
     <textarea id="dp-comment" rows="2" placeholder="Add a work comment (visible to requester)…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;margin-bottom:6px"></textarea>
@@ -678,11 +737,17 @@ async function saveUpdate() {
 
   // ── Step 1: Core save — assigned_to + status (always safe columns)
   const cur = allTickets.find(t => t.uid === selectedId);
+  const dueDateVal = document.getElementById('due-date-input')?.value || null;
   const coreUpdate = { updated_at: now, assigned_to: assignedTo };
   if (assignedTo && cur?.status === 'open') coreUpdate.status = 'inprogress';
 
   const {error:saveErr} = await db.from('tickets').update(coreUpdate).eq('id', selectedId);
   if (saveErr) { toast('Error: ' + saveErr.message); return; }
+
+  // ── Step 1b: due_date — optional, separate update so it never blocks assignment
+  if (dueDateVal !== undefined) {
+    try { await db.from('tickets').update({ due_date: dueDateVal }).eq('id', selectedId); } catch(e) {}
+  }
 
   // ── Step 2: started_at — optional, ignore if column missing
   if (assignedTo && !cur?.started_at) {
@@ -755,6 +820,94 @@ async function rejectHardware(uid) {
 }
 
 function closePanel(){document.getElementById('detail-panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selectedId=null;}
+
+// ── Bulk Actions ───────────────────────────────────────────────
+let selectedRows=new Set();
+
+function toggleSelectAll() {
+  const all=document.querySelectorAll('.row-cb');
+  const checked=document.getElementById('select-all').checked;
+  all.forEach(cb=>{cb.checked=checked;if(checked)selectedRows.add(cb.value);else selectedRows.delete(cb.value);});
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const checked=[...document.querySelectorAll('.row-cb:checked')].map(cb=>cb.value);
+  selectedRows=new Set(checked);
+  const bar=document.getElementById('bulk-bar');
+  const count=document.getElementById('bulk-count');
+  bar.style.display=checked.length?'flex':'none'; if(checked.length) bar.style.alignItems='center';
+  if(count) count.textContent=checked.length+' selected';
+  // Populate assign dropdown
+  const sel=document.getElementById('bulk-assign-sel');
+  if(sel&&techList.length&&sel.options.length<2) {
+    techList.forEach(u=>{ const o=document.createElement('option'); o.value=u.id; o.textContent=u.full_name; sel.appendChild(o); });
+  }
+}
+
+function clearSelection() {
+  selectedRows.clear();
+  document.querySelectorAll('.row-cb').forEach(cb=>cb.checked=false);
+  const all=document.getElementById('select-all'); if(all) all.checked=false;
+  document.getElementById('bulk-bar').style.display='none';
+}
+
+async function bulkAssign() {
+  const assignId=document.getElementById('bulk-assign-sel').value;
+  if(!assignId){toast('Select a technician first');return;}
+  if(!selectedRows.size){toast('Select tickets first');return;}
+  const now=new Date().toISOString();
+  let done=0;
+  for(const uid of selectedRows) {
+    try {
+      await db.from('tickets').update({assigned_to:assignId,status:'inprogress',updated_at:now}).eq('id',uid);
+      done++;
+    } catch(e){}
+  }
+  toast('✓ '+done+' ticket'+(done!==1?'s':'')+' assigned');
+  clearSelection();
+  await loadTickets(); renderList(); renderMine();
+}
+
+async function bulkClose() {
+  if(!selectedRows.size){toast('Select tickets first');return;}
+  if(!confirm('Close '+selectedRows.size+' ticket(s)?')) return;
+  const now=new Date().toISOString();
+  let done=0;
+  for(const uid of selectedRows) {
+    try { await db.from('tickets').update({status:'closed',updated_at:now}).eq('id',uid); done++; } catch(e){}
+  }
+  toast('✓ '+done+' ticket'+(done!==1?'s':'')+' closed');
+  clearSelection();
+  await loadTickets(); renderList(); renderMine(); renderDash();
+}
+
+// ── Requester History ──────────────────────────────────────────
+async function loadRequesterHistory(creatorId, currentTicketId, name) {
+  try {
+    const {data}=await db.from('tickets')
+      .select('ticket_no,id,title,status,created_at')
+      .eq('created_by',creatorId)
+      .neq('id',currentTicketId)
+      .order('created_at',{ascending:false})
+      .limit(5);
+    const el=document.getElementById('requester-history');
+    if(!el) return;
+    if(!data?.length){
+      el.innerHTML='<div class="dp-section-title">Requester History</div><div style="font-size:12px;color:var(--text3);padding:4px 0">No previous tickets from '+name+'</div>';
+      return;
+    }
+    el.innerHTML='<div class="dp-section-title">'+name+' — Last '+data.length+' Tickets</div>'+
+      data.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer" onclick="openPanel('${t.id}')">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0">${t.ticket_no}</span>
+        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</span>
+        ${statusBadge(t.status)}
+      </div>`).join('');
+  } catch(e) {
+    const el=document.getElementById('requester-history');
+    if(el) el.innerHTML='<div class="dp-section-title">Requester History</div><div style="font-size:11px;color:var(--text3)">—</div>';
+  }
+}
 function prioBadge(p){return '<span class="badge b-'+p+'">'+cap(p)+'</span>';}
 function statusBadge(s){return '<span class="badge b-'+s+'" style="border:none">'+statusLabel(s)+'</span>';}
 function tagBadge(t){return '<span class="badge b-tag">'+t+'</span>';}

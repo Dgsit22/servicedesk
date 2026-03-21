@@ -6,6 +6,7 @@
 <title>ServiceDesk — Admin Panel</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="supabase.js"></script>
 <style>
 :root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06)}
@@ -126,6 +127,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       <button class="nav-btn" id="nav-hardware" onclick="show('hardware')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H2a2 2 0 01-2-2V4zm2-1a1 1 0 00-1 1v5a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H2zm6 8v2h3v1H5v-1h3v-2H8z"/></svg>
         Hardware Settings
+      </button>
+      <button class="nav-btn" id="nav-reports" onclick="show('reports')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 11a1 1 0 011-1h2a1 1 0 011 1v3a1 1 0 01-1 1H2a1 1 0 01-1-1v-3zm5-4a1 1 0 011-1h2a1 1 0 011 1v7a1 1 0 01-1 1H7a1 1 0 01-1-1V7zm5-5a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V2z"/></svg>
+        Reports
       </button>
       <button class="nav-btn" id="nav-settings" onclick="show('settings')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a4 4 0 100 8A4 4 0 008 4zm0 1.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM13.9 8.5a6 6 0 01-.6 2.5l1.3.8a7.5 7.5 0 000-6.6l-1.3.8a6 6 0 01.6 2.5zM2.1 8.5a6 6 0 00.6 2.5l-1.3.8a7.5 7.5 0 010-6.6l1.3.8a6 6 0 00-.6 2.5z"/></svg>
@@ -253,6 +258,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div id="hw-approver-list"><div class="loading">Loading…</div></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="view" id="view-reports">
+      <div class="topbar">
+        <div><div class="topbar-title">Reports</div><div class="topbar-sub">Ticket trends, SLA compliance, technician performance</div></div>
+        <button class="btn" onclick="loadReports()">&#8635; Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="exportReportPDF()">⬇ Export PDF</button>
+      </div>
+      <div class="scroll-area" id="reports-area">
+        <div class="loading">Loading reports…</div>
       </div>
     </div>
 
@@ -406,13 +423,14 @@ async function loadTickets_() {
 
 // ── Navigation ─────────────────────────────────────────────────
 function show(v) {
-  ['overview','users','tickets','templates','hardware','settings'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
+  ['overview','users','tickets','templates','hardware','settings','reports'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('view-'+v); if(el) el.style.cssText='display:flex;flex-direction:column;height:100%';
   const nb=document.getElementById('nav-'+v); if(nb) nb.classList.add('active');
   if(v==='tickets') renderTickets();
   if(v==='templates') loadTemplates();
   if(v==='hardware') loadHardwareSettings();
+  if(v==='reports') loadReports();
 }
 
 // ── Overview ───────────────────────────────────────────────────
@@ -587,7 +605,188 @@ function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pend
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
 
 document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
-['users','tickets','hardware','settings'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+['users','tickets','hardware','settings','reports','templates'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+
+// ── Reports ─────────────────────────────────────────────────────
+let reportCharts=[];
+
+async function loadReports() {
+  const el=document.getElementById('reports-area');
+  if(!el) return;
+  el.innerHTML='<div class="loading">Building reports…</div>';
+
+  // Destroy old charts
+  reportCharts.forEach(ch=>{try{ch.destroy();}catch(e){}});
+  reportCharts=[];
+
+  const tickets=allTickets;
+  if(!tickets.length){el.innerHTML='<div class="loading">No ticket data yet.</div>';return;}
+
+  // ── Compute weekly trend (last 8 weeks) ──────────────────────
+  const now=new Date();
+  const weeks=[];
+  for(let i=7;i>=0;i--) {
+    const d=new Date(now); d.setDate(d.getDate()-i*7);
+    weeks.push(d.toISOString().slice(0,10));
+  }
+  const weekLabels=weeks.slice(1).map((w,i)=>{
+    const d=new Date(weeks[i]); return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  });
+  const opened=new Array(7).fill(0);
+  const closed=new Array(7).fill(0);
+  tickets.forEach(t=>{
+    const cd=t.created_at?.slice(0,10);
+    for(let i=0;i<7;i++){if(cd>=weeks[i]&&cd<weeks[i+1]){opened[i]++;break;}}
+    if(t.status==='resolved'||t.status==='closed') {
+      const ud=t.updated_at?.slice(0,10);
+      for(let i=0;i<7;i++){if(ud>=weeks[i]&&ud<weeks[i+1]){closed[i]++;break;}}
+    }
+  });
+
+  // ── Compute SLA compliance ───────────────────────────────────
+  const SLA_H={critical:1,high:4,medium:8,low:24};
+  const slaPass={critical:0,high:0,medium:0,low:0};
+  const slaFail={critical:0,high:0,medium:0,low:0};
+  tickets.filter(t=>t.status==='resolved'||t.status==='closed').forEach(t=>{
+    const hrs=(new Date(t.updated_at)-new Date(t.created_at))/3600000;
+    const target=SLA_H[t.priority]||24;
+    if(hrs<=target) slaPass[t.priority]++; else slaFail[t.priority]++;
+  });
+  const slaPct={};
+  ['critical','high','medium','low'].forEach(p=>{
+    const tot=(slaPass[p]||0)+(slaFail[p]||0);
+    slaPct[p]=tot?Math.round(slaPass[p]/tot*100):100;
+  });
+
+  // ── Technician resolution times ──────────────────────────────
+  const techRes={};
+  tickets.filter(t=>t.assigned_to&&(t.status==='resolved'||t.status==='closed')).forEach(t=>{
+    const name=t.assignee?.full_name||'Unknown';
+    if(!techRes[name]) techRes[name]={total:0,sumHrs:0};
+    techRes[name].total++;
+    techRes[name].sumHrs+=(new Date(t.updated_at)-new Date(t.created_at))/3600000;
+  });
+  const techAvg=Object.entries(techRes).map(([n,d])=>({name:n,avg:Math.round(d.sumHrs/d.total*10)/10,count:d.total})).sort((a,b)=>a.avg-b.avg);
+
+  // ── Categories ───────────────────────────────────────────────
+  const cats={};
+  tickets.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
+  const catEntries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+
+  // ── Summary metrics ──────────────────────────────────────────
+  const totalResolved=tickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
+  const avgResHrs=totalResolved?Math.round(
+    tickets.filter(t=>t.status==='resolved'||t.status==='closed')
+      .reduce((s,t)=>s+(new Date(t.updated_at)-new Date(t.created_at))/3600000,0)/totalResolved*10)/10:0;
+  const slaOverall=tickets.filter(t=>t.status==='resolved'||t.status==='closed').length
+    ?Math.round(Object.values(slaPass).reduce((a,b)=>a+b,0)/
+      (Object.values(slaPass).reduce((a,b)=>a+b,0)+Object.values(slaFail).reduce((a,b)=>a+b,0))*100):100;
+
+  el.innerHTML=`
+    <div id="report-content">
+    <!-- Summary Strip -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+      <div class="metric-card"><div class="m-val">${tickets.length}</div><div class="m-lbl">Total Tickets</div></div>
+      <div class="metric-card"><div class="m-val" style="color:var(--closed-text)">${totalResolved}</div><div class="m-lbl">Resolved</div></div>
+      <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${avgResHrs}h</div><div class="m-lbl">Avg Resolution</div></div>
+      <div class="metric-card"><div class="m-val" style="color:${slaOverall>=80?'var(--closed-text)':'var(--critical-text)'}">${slaOverall}%</div><div class="m-lbl">SLA Compliance</div></div>
+    </div>
+
+    <!-- Trend + Categories -->
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div class="card-header"><h3>Weekly Ticket Trend (Last 8 Weeks)</h3></div>
+        <div style="padding:16px"><canvas id="trend-chart" height="120"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Tickets by Category</h3></div>
+        <div style="padding:16px"><canvas id="cat-chart" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SLA + Technician -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div class="card-header"><h3>SLA Compliance by Priority</h3></div>
+        <div style="padding:16px 20px">
+          ${['critical','high','medium','low'].map(p=>{
+            const pct=slaPct[p];
+            const tot=(slaPass[p]||0)+(slaFail[p]||0);
+            return `<div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
+                <span style="font-weight:600;text-transform:capitalize">${p}</span>
+                <span style="color:${pct>=80?'var(--closed-text)':'var(--critical-text)'};font-weight:700">${pct}%</span>
+              </div>
+              <div style="height:8px;background:var(--surface3);border-radius:8px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${pct>=80?'#16a34a':pct>=60?'#f59e0b':'#dc2626'};border-radius:8px;transition:width .5s"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">${slaPass[p]||0} on time · ${slaFail[p]||0} breached · ${tot} total</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Avg Resolution Time by Technician</h3></div>
+        <div style="padding:16px">
+          ${techAvg.length?techAvg.map(t=>`
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+                <span style="font-weight:500">${t.name}</span>
+                <span style="font-family:'DM Mono',monospace;color:var(--inprog-text);font-weight:700">${t.avg}h avg</span>
+              </div>
+              <div style="height:6px;background:var(--surface3);border-radius:6px;overflow:hidden">
+                <div style="height:100%;width:${Math.min(t.avg/48*100,100)}%;background:var(--accent);border-radius:6px"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);margin-top:1px">${t.count} ticket${t.count!==1?'s':''} resolved</div>
+            </div>
+          `).join(''):'<div style="font-size:12px;color:var(--text3)">No resolved tickets yet</div>'}
+        </div>
+      </div>
+    </div>
+    </div>
+  `;
+
+  // ── Draw trend chart ─────────────────────────────────────────
+  try {
+    const tCtx=document.getElementById('trend-chart')?.getContext('2d');
+    if(tCtx) {
+      const ch=new Chart(tCtx,{
+        type:'bar',
+        data:{
+          labels:weekLabels,
+          datasets:[
+            {label:'Opened',data:opened,backgroundColor:'rgba(26,86,219,.7)',borderRadius:4},
+            {label:'Closed',data:closed,backgroundColor:'rgba(20,83,45,.6)',borderRadius:4}
+          ]
+        },
+        options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{stepSize:1}}}}
+      });
+      reportCharts.push(ch);
+    }
+  } catch(e){}
+
+  // ── Draw category pie ────────────────────────────────────────
+  try {
+    const cCtx=document.getElementById('cat-chart')?.getContext('2d');
+    if(cCtx) {
+      const colors=['#1a56db','#FF1F8E','#F5C800','#00A3B4','#1B4FBA','#f59e0b','#16a34a','#dc2626'];
+      const ch=new Chart(cCtx,{
+        type:'doughnut',
+        data:{
+          labels:catEntries.map(([c])=>c),
+          datasets:[{data:catEntries.map(([,n])=>n),backgroundColor:colors,borderWidth:2}]
+        },
+        options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}}}
+      });
+      reportCharts.push(ch);
+    }
+  } catch(e){}
+}
+
+function exportReportPDF() {
+  window.print();
+  toast('Use browser Print → Save as PDF');
+}
 
 // ── Edit User ─────────────────────────────────────────────────
 let editingUserId=null;
