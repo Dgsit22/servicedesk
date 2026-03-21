@@ -8,40 +8,44 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
-:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--radius:10px;--radius-sm:6px;--critical-text:#a61e1e;--green:#14532d;--green-bg:#f0fdf4}
+:root {
+  --bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--border:#e2e0da;--border2:#d0cdc6;
+  --text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;
+  --accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;
+  --radius:10px;--radius-sm:6px;
+  --critical-text:#a61e1e;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
-body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 4px 32px rgba(0,0,0,0.08)}
-.logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 4px 32px rgba(0,0,0,0.08)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
 .logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center}
 .logo-icon svg{fill:#fff}
 .logo-text h1{font-size:17px;font-weight:600;letter-spacing:-0.3px}
 .logo-text p{font-size:12px;color:var(--text3);margin-top:1px}
-.domain-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid #bbf7d0;border-radius:20px;padding:4px 10px;font-size:11px;color:var(--green);font-weight:500;margin-bottom:20px}
-.domain-badge svg{width:12px;height:12px;fill:var(--green)}
-.divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
 .divider span{font-size:11px;color:var(--text3);white-space:nowrap}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .fg label{font-size:12px;font-weight:500;color:var(--text2)}
 .fg input{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);outline:none;transition:border .12s,background .12s}
 .fg input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
-.fg input.invalid{border-color:var(--critical-text);background:#fff8f8}
 .btn{width:100%;padding:10px;font-size:13px;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:hover{background:var(--surface2)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-primary:hover{background:#1648c0}
-.btn-google{background:#fff;border:1px solid var(--border2)}
-.err{font-size:12px;color:var(--critical-text);margin-top:8px;padding:8px 10px;background:#fff8f8;border:1px solid #ffc9c9;border-radius:var(--radius-sm);display:none;line-height:1.5}
-.ok{font-size:12px;color:var(--green);margin-top:8px;padding:8px 10px;background:var(--green-bg);border:1px solid #bbf7d0;border-radius:var(--radius-sm);display:none;line-height:1.5}
+.btn-google{background:#fff;border:1px solid var(--border2);color:var(--text)}
+.btn-google:hover{background:var(--surface2)}
+.err{font-size:12px;color:var(--critical-text);margin-top:8px;display:none}
+.footer-link{text-align:center;font-size:12px;color:var(--text3);margin-top:20px}
+.footer-link a{color:var(--accent);text-decoration:none;font-weight:500}
 .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-.tab-row{display:flex;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.tab-row{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
 .tab{flex:1;padding:8px;font-size:13px;font-weight:500;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;color:var(--text2);transition:all .12s}
 .tab.active{background:var(--accent-light);color:var(--accent-text)}
-.hint{font-size:11px;color:var(--text3);margin-top:4px}
 </style>
 </head>
 <body>
@@ -50,315 +54,125 @@ body{display:flex;align-items:center;justify-content:center;min-height:100vh;pad
     <div class="logo-icon">
       <svg width="18" height="18" viewBox="0 0 16 16"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>
     </div>
-    <div class="logo-text"><h1>ServiceDesk</h1><p>IT Help Portal</p></div>
-  </div>
-  <div class="domain-badge">
-    <svg viewBox="0 0 16 16"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm-.75 2.75a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0v-3.5zm.75 6a.75.75 0 100-1.5.75.75 0 000 1.5z"/></svg>
-    Restricted to @digiclarity.in &amp; @clarityrcm.com
+    <div class="logo-text">
+      <h1>ServiceDesk</h1>
+      <p>IT Help Portal</p>
+    </div>
   </div>
 
-  <div id="panel-main">
   <div class="tab-row">
     <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
     <button class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
   </div>
 
+  <!-- Google SSO -->
   <button class="btn btn-google" id="google-btn" onclick="googleSSO()">
     <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.2 0 5.9 1.1 8.1 3.2l6-6C34.5 3.2 29.7 1 24 1 14.9 1 7.2 6.4 3.8 14.1l7 5.4C12.5 13.2 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/><path fill="#FBBC05" d="M10.8 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7-5.4C2.5 17 1.5 20.4 1.5 24s1 7 2.3 9.9l7-5.4z"/><path fill="#34A853" d="M24 46.5c5.7 0 10.5-1.9 14-5.1l-7.4-5.7c-1.9 1.3-4.4 2.1-6.6 2.1-6.2 0-11.5-3.7-13.2-9.3l-7 5.4C7.2 41.6 14.9 46.5 24 46.5z"/></svg>
     Continue with Google
   </button>
-  <p id="google-err" class="err"></p>
 
-  <div class="divider"><span>or use email</span></div>
+  <div class="divider"><span>or sign in with email</span></div>
 
-  <!-- LOGIN -->
+  <!-- Login form -->
   <div id="form-login">
-    <div class="fg">
-      <label>Work Email</label>
-      <input id="l-email" type="email" placeholder="you@digiclarity.in" autocomplete="email" oninput="validateDomain('l-email','l-domain-hint')">
-      <span class="hint" id="l-domain-hint"></span>
-    </div>
-    <div class="fg">
-        <label style="display:flex;justify-content:space-between;align-items:center">
-          <span>Password</span>
-          <a href="#" onclick="showForgot();return false;" style="font-size:11px;color:var(--accent);text-decoration:none;font-weight:400">Forgot password?</a>
-        </label>
-        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="fg"><label>Email</label><input id="l-email" type="email" placeholder="you@company.com" autocomplete="email"></div>
+    <div class="fg"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     <p class="err" id="l-err"></p>
-    <button class="btn btn-primary" id="l-btn" onclick="emailLogin()" style="margin-top:4px">
-      <span id="l-text">Sign In</span><div class="spinner" id="l-spin"></div>
+    <button class="btn btn-primary" id="l-btn" onclick="emailLogin()" style="margin-top:8px">
+      <span id="l-text">Sign In</span>
+      <div class="spinner" id="l-spin"></div>
     </button>
   </div>
 
-  <!-- SIGNUP -->
+  <!-- Signup form -->
   <div id="form-signup" style="display:none">
     <div class="fg"><label>Full Name</label><input id="s-name" type="text" placeholder="e.g. Priya Sharma"></div>
-    <div class="fg">
-      <label>Work Email</label>
-      <input id="s-email" type="email" placeholder="you@digiclarity.in" autocomplete="email" oninput="validateDomain('s-email','s-domain-hint')">
-      <span class="hint" id="s-domain-hint"></span>
-    </div>
+    <div class="fg"><label>Email</label><input id="s-email" type="email" placeholder="you@company.com" autocomplete="email"></div>
     <div class="fg"><label>Password</label><input id="s-pass" type="password" placeholder="Min. 8 characters" autocomplete="new-password"></div>
-    <div class="fg">
-      <label>Department</label>
-      <select id="s-dept" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
-        <option value="">Select department…</option>
-        <option>Engineering</option><option>Marketing</option><option>Finance</option>
-        <option>HR</option><option>Operations</option><option>Management</option>
-        <option>IT</option><option>Sales</option><option>Other</option>
-      </select>
-    </div>
     <p class="err" id="s-err"></p>
-    <p class="ok" id="s-ok"></p>
-    <button class="btn btn-primary" id="s-btn" onclick="emailSignup()" style="margin-top:4px">
-      <span id="s-text">Create Account</span><div class="spinner" id="s-spin"></div>
-    </button>
-  </div>
-</div>
-
-  </div><!-- end panel-main -->
-
-  <!-- ── FORGOT PASSWORD PANEL ─────────────────── -->
-  <div id="panel-forgot" style="display:none">
-    <button onclick="showLogin()" style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:inherit;padding:0">
-      &#8592; Back to sign in
-    </button>
-    <div style="margin-bottom:18px">
-      <div style="font-size:16px;font-weight:600;margin-bottom:5px">Reset your password</div>
-      <div style="font-size:12px;color:var(--text3);line-height:1.5">Enter your work email and we will send you a link to reset your password.</div>
-    </div>
-    <div class="fg">
-      <label>Work Email</label>
-      <input id="r-email" type="email" placeholder="you@digiclarity.in" oninput="validateDomain('r-email','r-hint')">
-      <span class="hint" id="r-hint"></span>
-    </div>
-    <p class="err" id="r-err"></p>
-    <p class="ok" id="r-ok"></p>
-    <button class="btn btn-primary" id="r-btn" onclick="sendReset()">
-      <span id="r-text">Send Reset Link</span><div class="spinner" id="r-spin"></div>
+    <button class="btn btn-primary" id="s-btn" onclick="emailSignup()" style="margin-top:8px">
+      <span id="s-text">Create Account</span>
+      <div class="spinner" id="s-spin"></div>
     </button>
   </div>
 
-  <!-- ── NEW PASSWORD PANEL (after clicking email link) ── -->
-  <div id="panel-update" style="display:none">
-    <div style="margin-bottom:18px">
-      <div style="font-size:16px;font-weight:600;margin-bottom:5px">Set new password</div>
-      <div style="font-size:12px;color:var(--text3)">Enter and confirm your new password below.</div>
-    </div>
-    <div class="fg"><label>New Password</label><input id="u-pass" type="password" placeholder="Min. 8 characters"></div>
-    <div class="fg"><label>Confirm Password</label><input id="u-confirm" type="password" placeholder="Repeat new password"></div>
-    <p class="err" id="u-err"></p>
-    <p class="ok" id="u-ok"></p>
-    <button class="btn btn-primary" id="u-btn" onclick="updatePassword()">
-      <span id="u-text">Update Password</span><div class="spinner" id="u-spin"></div>
-    </button>
-  </div>
-
+  <div class="footer-link" id="msg-area"></div>
 </div>
 
 <script>
-// ── Panel switching ───────────────────────────────────────────
-function showForgot() {
-  document.getElementById('panel-main').style.display='none';
-  document.getElementById('panel-forgot').style.display='';
-  document.getElementById('panel-update').style.display='none';
-}
-function showLogin() {
-  document.getElementById('panel-main').style.display='';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-update').style.display='none';
-}
-function showUpdate() {
-  document.getElementById('panel-main').style.display='none';
-  document.getElementById('panel-forgot').style.display='none';
-  document.getElementById('panel-update').style.display='';
-}
-
-// ── Forgot password — send reset email ────────────────────────
-async function sendReset() {
-  const email = document.getElementById('r-email').value.trim();
-  const errEl = document.getElementById('r-err');
-  const okEl  = document.getElementById('r-ok');
-  errEl.style.display='none'; okEl.style.display='none';
-  if (!email) { errEl.textContent='Please enter your email.'; errEl.style.display=''; return; }
-  if (!getAllowedDomain(email)) {
-    errEl.textContent='Only @digiclarity.in and @clarityrcm.com are permitted.';
-    errEl.style.display=''; return;
-  }
-  setLoading('r', true);
-  // Supabase sends a magic link — user clicks it, lands back on index.html with #type=recovery in URL
-  const { error } = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: BASE_URL + 'index.html'
-  });
-  setLoading('r', false);
-  if (error) { errEl.textContent=error.message; errEl.style.display=''; return; }
-  okEl.textContent='✓ Reset link sent! Check your inbox (and spam folder). Click the link in the email to set a new password.';
-  okEl.style.display='';
-  document.getElementById('r-btn').disabled=true;
-}
-
-// ── Update password (user landed back after clicking reset link) ─
-async function updatePassword() {
-  const pass    = document.getElementById('u-pass').value;
-  const confirm = document.getElementById('u-confirm').value;
-  const errEl   = document.getElementById('u-err');
-  const okEl    = document.getElementById('u-ok');
-  errEl.style.display='none'; okEl.style.display='none';
-  if (pass.length < 8)  { errEl.textContent='Password must be at least 8 characters.'; errEl.style.display=''; return; }
-  if (pass !== confirm) { errEl.textContent='Passwords do not match.'; errEl.style.display=''; return; }
-  setLoading('u', true);
-  const { error } = await db.auth.updateUser({ password: pass });
-  setLoading('u', false);
-  if (error) { errEl.textContent=error.message; errEl.style.display=''; return; }
-  okEl.textContent='✓ Password updated! Redirecting to sign in…';
-  okEl.style.display='';
-  await db.auth.signOut();
-  setTimeout(()=>{ showLogin(); }, 2000);
-}
-
-// ── Allowed domains ────────────────────────────────────────────
-const ALLOWED_DOMAINS = ['digiclarity.in', 'clarityrcm.com'];
-
-function getAllowedDomain(email) {
-  const domain = email.split('@')[1]?.toLowerCase();
-  return ALLOWED_DOMAINS.includes(domain) ? domain : null;
-}
-
-function validateDomain(inputId, hintId) {
-  const input = document.getElementById(inputId);
-  const hint = document.getElementById(hintId);
-  const email = input.value.trim();
-  if (!email.includes('@')) { hint.textContent = ''; input.classList.remove('invalid'); return; }
-  const ok = getAllowedDomain(email);
-  if (ok) {
-    hint.style.color = 'var(--green)';
-    hint.textContent = '✓ Valid company email';
-    input.classList.remove('invalid');
-  } else {
-    hint.style.color = 'var(--critical-text)';
-    hint.textContent = '✗ Only @digiclarity.in or @clarityrcm.com allowed';
-    input.classList.add('invalid');
-  }
-}
-
-// ── Tab switch ─────────────────────────────────────────────────
+// ── Tab switch ────────────────────────────────────────────────
 function switchTab(t) {
   document.getElementById('tab-login').classList.toggle('active', t==='login');
   document.getElementById('tab-signup').classList.toggle('active', t==='signup');
   document.getElementById('form-login').style.display = t==='login' ? '' : 'none';
   document.getElementById('form-signup').style.display = t==='signup' ? '' : 'none';
-  document.getElementById('google-err').style.display = 'none';
 }
 
-// ── On load: handle OAuth return ───────────────────────────────
+// ── On load: check if already signed in (e.g. returning from Google OAuth) ─
 window.addEventListener('load', async () => {
-  // If user landed here from a password reset email, show the update panel
-  // Supabase appends #access_token=...&type=recovery to the URL
-  const hashStr = window.location.hash || '';
-  const params = new URLSearchParams(hashStr.replace('#',''));
-  if (params.get('type') === 'recovery' || hashStr.includes('type=recovery')) {
-    // Let Supabase process the hash tokens
-    await new Promise(r => setTimeout(r, 500));
-    const { data: { session } } = await db.auth.getSession();
-    if (session) {
-      // Clean the URL hash so it's not reused
-      history.replaceState(null, '', window.location.pathname);
-      showUpdate(); return;
-    }
-  }
   const session = await getSession();
-  if (session) {
-    // Domain check for Google SSO users
-    const email = session.user.email || '';
-    if (!getAllowedDomain(email)) {
-      await db.auth.signOut();
-      const errEl = document.getElementById('google-err');
-      errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses are permitted.';
-      errEl.style.display = '';
-      return;
-    }
-    await redirectByRole(session.user.id);
-  }
+  if (session) await redirectByRole(session.user.id);
 });
 
-// ── Google SSO ─────────────────────────────────────────────────
+// ── Google SSO ────────────────────────────────────────────────
 async function googleSSO() {
   document.getElementById('google-btn').disabled = true;
-  document.getElementById('google-err').style.display = 'none';
   await db.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: BASE_URL + 'index.html' }
   });
 }
 
-// ── Email login ────────────────────────────────────────────────
+// ── Email login ───────────────────────────────────────────────
 async function emailLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   const errEl = document.getElementById('l-err');
   errEl.style.display = 'none';
-  if (!email || !pass) { errEl.textContent='Please enter your email and password.'; errEl.style.display=''; return; }
-  if (!getAllowedDomain(email)) {
-    errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses are permitted.';
-    errEl.style.display = ''; return;
-  }
+  if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; errEl.style.display = ''; return; }
   setLoading('l', true);
   const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-  if (error) {
-    const msg = error.message.includes('Invalid login') ? 'Incorrect email or password. Try again or use Forgot Password.' :
-                error.message.includes('Email not confirmed') ? 'Please confirm your email first — check your inbox for a verification email.' :
-                error.message;
-    errEl.textContent=msg; errEl.style.display=''; setLoading('l', false); return;
-  }
+  if (error) { errEl.textContent = error.message; errEl.style.display = ''; setLoading('l', false); return; }
   await redirectByRole(data.user.id);
 }
 
-// ── Email signup ───────────────────────────────────────────────
+// ── Email signup ──────────────────────────────────────────────
 async function emailSignup() {
   const name  = document.getElementById('s-name').value.trim();
   const email = document.getElementById('s-email').value.trim();
   const pass  = document.getElementById('s-pass').value;
-  const dept  = document.getElementById('s-dept').value;
   const errEl = document.getElementById('s-err');
-  const okEl  = document.getElementById('s-ok');
-  errEl.style.display = 'none'; okEl.style.display = 'none';
-
-  if (!name)  { errEl.textContent='Please enter your full name.'; errEl.style.display=''; return; }
-  if (!email) { errEl.textContent='Please enter your work email.'; errEl.style.display=''; return; }
-  if (!getAllowedDomain(email)) {
-    errEl.textContent = 'Access denied. Only @digiclarity.in and @clarityrcm.com email addresses can sign up.';
-    errEl.style.display = ''; return;
-  }
-  if (pass.length < 8) { errEl.textContent='Password must be at least 8 characters.'; errEl.style.display=''; return; }
-
+  errEl.style.display = 'none';
+  if (!name || !email || !pass) { errEl.textContent = 'Please fill in all fields.'; errEl.style.display = ''; return; }
+  if (pass.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = ''; return; }
   setLoading('s', true);
   const { data, error } = await db.auth.signUp({
     email, password: pass,
-    options: { data: { full_name: name, department: dept } }
+    options: { data: { full_name: name } }
   });
+  if (error) { errEl.textContent = error.message; errEl.style.display = ''; setLoading('s', false); return; }
+  document.getElementById('msg-area').innerHTML = '✅ Check your email to confirm your account, then sign in.';
   setLoading('s', false);
-  if (error) { errEl.textContent = error.message; errEl.style.display=''; return; }
-  okEl.textContent = '✓ Account created! Check your email and click the confirmation link, then sign in.';
-  okEl.style.display = '';
-  // Clear form
-  ['s-name','s-email','s-pass'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('s-dept').value = '';
-  setTimeout(() => switchTab('login'), 3000);
 }
 
-// ── Role-based redirect ────────────────────────────────────────
+// ── Role-based redirect ───────────────────────────────────────
 async function redirectByRole(uid) {
   const profile = await getProfile(uid);
-  if (!profile) { await new Promise(r=>setTimeout(r,1200)); return redirectByRole(uid); }
+  if (!profile) { 
+    // Profile not yet created (new signup before DB trigger fires) — wait briefly
+    await new Promise(r => setTimeout(r, 1200));
+    return redirectByRole(uid);
+  }
   if      (profile.role === 'admin')      location.href = 'admin.html';
   else if (profile.role === 'technician') location.href = 'technician.html';
   else                                    location.href = 'employee.html';
 }
 
-function setLoading(p, on) {
-  document.getElementById(p+'-btn').disabled = on;
-  document.getElementById(p+'-text').style.display = on ? 'none' : '';
-  document.getElementById(p+'-spin').style.display = on ? '' : 'none';
+// ── Helpers ───────────────────────────────────────────────────
+function setLoading(prefix, on) {
+  document.getElementById(prefix+'-btn').disabled = on;
+  document.getElementById(prefix+'-text').style.display = on ? 'none' : '';
+  document.getElementById(prefix+'-spin').style.display = on ? '' : 'none';
 }
 </script>
 </body>
