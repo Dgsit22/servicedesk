@@ -101,6 +101,21 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .p-opt-label{font-size:11px;font-weight:600;margin-top:5px}.p-opt-desc{font-size:10px;color:var(--text3);margin-top:2px}.p-opt-icon{font-size:18px}
 .form-actions{display:flex;gap:10px;align-items:center}
 .char-count{font-size:11px;color:var(--text3);margin-top:3px}
+/* Ticket type cards */
+.ticket-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.ticket-type-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ttc-header{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ttc-header-left{display:flex;align-items:center;gap:8px}
+.ttc-icon{font-size:18px}
+.ttc-title{font-size:13px;font-weight:600}
+.ttc-count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace}
+.ttc-count.hw{background:#f5f3ff;color:#5b21b6}
+.ttc-count.gen{background:var(--accent-light);color:var(--accent-text)}
+.ttc-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s}
+.ttc-item:last-child{border-bottom:none}
+.ttc-item:hover{background:var(--surface2)}
+.ttc-item-title{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttc-empty{padding:20px 16px;text-align:center;font-size:12px;color:var(--text3)}
 /* Detail panel */
 .detail-panel{position:absolute;right:0;top:0;height:100%;width:460px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
 .detail-panel.open{transform:translateX(0)}
@@ -182,8 +197,24 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
       <div class="scroll-area">
         <div class="dash-metrics" id="dash-metrics"><div class="loading">Loading…</div></div>
+        <div class="ticket-cards-grid">
+          <div class="ticket-type-card">
+            <div class="ttc-header">
+              <div class="ttc-header-left"><span class="ttc-icon">🖥️</span><span class="ttc-title">Hardware Requests</span></div>
+              <span class="ttc-count hw" id="hw-count">0</span>
+            </div>
+            <div id="hw-cards"><div class="ttc-empty">No hardware requests</div></div>
+          </div>
+          <div class="ticket-type-card">
+            <div class="ttc-header">
+              <div class="ttc-header-left"><span class="ttc-icon">⚙️</span><span class="ttc-title">General IT Requests</span></div>
+              <span class="ttc-count gen" id="gen-count">0</span>
+            </div>
+            <div id="gen-cards"><div class="ttc-empty">No general requests</div></div>
+          </div>
+        </div>
         <div class="card">
-          <div class="card-header"><h3>Recent Requests</h3><button class="btn btn-ghost btn-sm" onclick="show('tickets')">View all &rarr;</button></div>
+          <div class="card-header"><h3>All Recent Requests</h3><button class="btn btn-ghost btn-sm" onclick="show('tickets')">View all &rarr;</button></div>
           <div id="dash-recent"><div class="loading">Loading…</div></div>
         </div>
       </div>
@@ -225,7 +256,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="form-grid-2">
               <div class="fg"><label>Full Name <span>*</span></label><input id="f-name" type="text" placeholder="Your name" readonly></div>
               <div class="fg"><label>Email</label><input id="f-email" type="email" placeholder="Your email" readonly></div>
-              <div class="fg"><label>Department</label><input id="f-dept-display" type="text" placeholder="Your department" readonly></div>
+              <div class="fg"><label>Employee ID</label><input id="f-empid-display" type="text" placeholder="Your employee ID" readonly></div>
               <div class="fg"><label>Phone (optional)</label><input id="f-phone" type="tel" placeholder="+91 98000 00000"></div>
             </div>
           </div>
@@ -246,10 +277,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           <div class="form-section">
             <div class="form-section-title">Priority Level</div>
             <div class="priority-picker">
-              <div class="p-opt" id="popt-low" onclick="selectPriority('low')"><div class="p-opt-icon">??</div><div class="p-opt-label" style="color:var(--low-text)">Low</div><div class="p-opt-desc">Minor inconvenience</div></div>
-              <div class="p-opt sel-medium" id="popt-medium" onclick="selectPriority('medium')"><div class="p-opt-icon">??</div><div class="p-opt-label" style="color:var(--medium-text)">Medium</div><div class="p-opt-desc">Work is impacted</div></div>
-              <div class="p-opt" id="popt-high" onclick="selectPriority('high')"><div class="p-opt-icon">??</div><div class="p-opt-label" style="color:var(--high-text)">High</div><div class="p-opt-desc">Blocking work</div></div>
-              <div class="p-opt" id="popt-critical" onclick="selectPriority('critical')"><div class="p-opt-icon">??</div><div class="p-opt-label" style="color:var(--critical-text)">Critical</div><div class="p-opt-desc">System / team down</div></div>
+              <div class="p-opt" id="popt-low" onclick="selectPriority('low')"><div class="p-opt-icon">🟢</div><div class="p-opt-label" style="color:var(--low-text)">Low</div><div class="p-opt-desc">Minor inconvenience</div></div>
+              <div class="p-opt sel-medium" id="popt-medium" onclick="selectPriority('medium')"><div class="p-opt-icon">🔵</div><div class="p-opt-label" style="color:var(--medium-text)">Medium</div><div class="p-opt-desc">Work is impacted</div></div>
+              <div class="p-opt" id="popt-high" onclick="selectPriority('high')"><div class="p-opt-icon">🟡</div><div class="p-opt-label" style="color:var(--high-text)">High</div><div class="p-opt-desc">Blocking work</div></div>
+              <div class="p-opt" id="popt-critical" onclick="selectPriority('critical')"><div class="p-opt-icon">🔴</div><div class="p-opt-label" style="color:var(--critical-text)">Critical</div><div class="p-opt-desc">System / team down</div></div>
             </div>
           </div>
           <div class="form-actions">
@@ -296,10 +327,10 @@ window.addEventListener('load', async () => {
   const initials = (currentProfile.full_name || 'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('sb-avatar').textContent = initials;
   document.getElementById('sb-name').textContent = currentProfile.full_name || currentProfile.email;
-  document.getElementById('sb-dept').textContent = currentProfile.department || 'Employee';
+  document.getElementById('sb-dept').textContent = currentProfile.employee_id ? 'ID: '+currentProfile.employee_id : (currentProfile.department || 'Employee');
   document.getElementById('f-name').value = currentProfile.full_name || '';
   document.getElementById('f-email').value = currentProfile.email || '';
-  document.getElementById('f-dept-display').value = currentProfile.department || '';
+  document.getElementById('f-empid-display').value = currentProfile.employee_id || '';
   await loadTickets();
   renderDash();
 });
@@ -468,7 +499,7 @@ async function submitTicket() {
     category: document.getElementById('f-cat').value,
     priority: selectedPriority,
     created_by: currentUser.id,
-    department: currentProfile.department,
+    department: currentProfile.department || null,
     asset_tag: document.getElementById('f-asset').value.trim()
   }).select('ticket_no').single();
   btn.disabled=false; btn.textContent='↪ Submit Request';
