@@ -138,6 +138,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         My Assigned
         <span class="nav-badge nb-blue" id="mine-badge">0</span>
       </button>
+      <button class="nav-btn" id="nav-obex" onclick="show('obex')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h8v2H2v-2z"/></svg>
+        Onboarding / Exit
+        <span class="nav-badge nb-blue" id="obex-badge">0</span>
+      </button>
       <button class="nav-btn" id="nav-unassigned" onclick="show('unassigned')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1-1-1-2a7 7 0 0114 0c0 1-1 2-1 2H2z" opacity=".3"/><path d="M10.5 6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM12 13a4 4 0 00-8 0h8z" stroke="currentColor" stroke-width="1" fill="none"/><line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="1.5"/></svg>
         Unassigned
@@ -224,6 +229,31 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
     </div>
 
+    <!-- ONBOARDING / EXIT -->
+    <div class="view" id="view-obex">
+      <div class="topbar">
+        <div><div class="topbar-title">Onboarding &amp; Exit Tickets</div><div class="topbar-sub" id="obex-count-label">Loading…</div></div>
+        <button class="btn" onclick="loadTickets().then(renderObex)">&#8635; Refresh</button>
+      </div>
+      <div class="scroll-area" style="padding:0">
+        <!-- Onboarding section -->
+        <div style="padding:16px 24px 10px;background:var(--surface);border-bottom:2px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;font-weight:600">📋 Onboarding <span id="ob-ticket-count" style="font-size:11px;font-weight:400;color:var(--text3)"></span></div>
+          </div>
+        </div>
+        <div id="ob-ticket-list" style="background:var(--surface)"></div>
+
+        <!-- Exit section -->
+        <div style="padding:16px 24px 10px;background:var(--surface);border-top:1px solid var(--border);border-bottom:2px solid var(--border);margin-top:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;font-weight:600">🚪 Exit / Offboarding <span id="ex-ticket-count" style="font-size:11px;font-weight:400;color:var(--text3)"></span></div>
+          </div>
+        </div>
+        <div id="ex-ticket-list" style="background:var(--surface)"></div>
+      </div>
+    </div>
+
     <!-- UNASSIGNED -->
     <div class="view" id="view-unassigned">
       <div class="topbar">
@@ -298,6 +328,9 @@ async function loadTickets() {
   const open=allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
   const mine=allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
   const unassigned=allTickets.filter(t=>!t.assigned_to&&!['resolved','closed'].includes(t.status)).length;
+  const obexCount=allTickets.filter(t=>['Onboarding','Offboarding'].includes(t.category)&&!['resolved','closed'].includes(t.status)).length;
+  const obexBadge=document.getElementById('obex-badge');
+  if(obexBadge){obexBadge.textContent=obexCount;obexBadge.style.display=obexCount?'':'none';}
   const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge'), ub=document.getElementById('unassigned-badge');
   if(ob){ob.textContent=open; ob.style.display=open?'':'none';}
   if(mb){mb.textContent=mine; mb.style.display=mine?'':'none';}
@@ -313,7 +346,7 @@ async function loadTechList() {
 
 // ── Navigation ──────────────────────────────────────────────────
 function show(v) {
-  ['dashboard','tickets','mine','unassigned'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
+  ['dashboard','tickets','mine','unassigned','obex'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+v).style.cssText='display:flex;flex-direction:column;height:100%';
   document.getElementById('nav-'+v).classList.add('active');
@@ -322,6 +355,7 @@ function show(v) {
   if(v==='tickets') renderList();
   if(v==='mine') renderMine();
   if(v==='unassigned') renderUnassigned();
+  if(v==='obex') renderObex();
 }
 
 // ── Dashboard ───────────────────────────────────────────────────
@@ -330,6 +364,9 @@ function renderDash() {
   const open=allTickets.filter(t=>t.status==='open').length;
   const inp=allTickets.filter(t=>t.status==='inprogress').length;
   const unassigned=allTickets.filter(t=>!t.assigned_to&&!['resolved','closed'].includes(t.status)).length;
+  const obexCount=allTickets.filter(t=>['Onboarding','Offboarding'].includes(t.category)&&!['resolved','closed'].includes(t.status)).length;
+  const obexBadge=document.getElementById('obex-badge');
+  if(obexBadge){obexBadge.textContent=obexCount;obexBadge.style.display=obexCount?'':'none';}
   const crit=allTickets.filter(t=>t.priority==='critical'&&!['resolved','closed'].includes(t.status)).length;
   const closed=allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
   document.getElementById('dash-metrics').innerHTML=`
@@ -431,6 +468,41 @@ function renderMine() {
       <span style="font-size:12px;color:var(--text2)">${t.creator?.full_name||'—'}</span>
     </div>
   `).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No tickets assigned to you</div></div>';
+}
+
+function renderObex() {
+  const obTickets = allTickets.filter(t => t.category === 'Onboarding').sort((a,b) => b.created_at?.localeCompare(a.created_at));
+  const exTickets = allTickets.filter(t => t.category === 'Offboarding').sort((a,b) => b.created_at?.localeCompare(a.created_at));
+
+  document.getElementById('obex-count-label').textContent =
+    obTickets.length + ' onboarding · ' + exTickets.length + ' exit tickets';
+
+  document.getElementById('ob-ticket-count').textContent = '(' + obTickets.length + ')';
+  document.getElementById('ex-ticket-count').textContent = '(' + exTickets.length + ')';
+
+  const rowHtml = (t) => `
+    <div onclick="openPanel('${t.uid}')" style="display:grid;grid-template-columns:80px 1fr 130px 90px 100px 120px;padding:12px 24px;border-bottom:1px solid var(--border);cursor:pointer;align-items:center;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${t.id}</span>
+      <div style="overflow:hidden">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.creator?.full_name||''}</div>
+      </div>
+      <div>${tagBadge(t.category)}</div>
+      <div>${prioBadge(t.priority)}</div>
+      <div>${statusBadge(t.status)}</div>
+      <div style="font-size:11px">
+        ${t.assignee?.full_name
+          ? `<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`
+          : `<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">⚠ Unassigned</span>`}
+      </div>
+    </div>`;
+
+  const emptyHtml = (msg) => `<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">${msg}</div>`;
+
+  document.getElementById('ob-ticket-list').innerHTML =
+    obTickets.length ? obTickets.map(rowHtml).join('') : emptyHtml('No onboarding tickets');
+  document.getElementById('ex-ticket-list').innerHTML =
+    exTickets.length ? exTickets.map(rowHtml).join('') : emptyHtml('No exit / offboarding tickets');
 }
 
 function renderUnassigned() {
@@ -692,7 +764,7 @@ function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pend
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','mine','unassigned'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+['tickets','mine','unassigned','obex'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
 </script>
 </body>
 </html>

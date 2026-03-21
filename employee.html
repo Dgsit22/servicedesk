@@ -175,6 +175,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
         New Request
       </button>
+      <!-- Manager/TL only -->
+      <div id="mgr-nav" style="display:none">
+        <div class="sb-nav-label" style="margin-top:8px">Manager</div>
+        <button class="nav-btn" id="nav-onboarding" onclick="show('onboarding')">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 012 2v1h2a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1h2V3a2 2 0 012-2zm0 1.5A.5.5 0 007.5 3v1h1V3A.5.5 0 008 2.5zM5 6v8h6V6H5zm2 2h2v1H7V8zm0 2h2v1H7v-1z"/></svg>
+          Onboarding
+        </button>
+        <button class="nav-btn" id="nav-exit" onclick="show('exit')">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6 12.5a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-9a.5.5 0 00-.5-.5h-7a.5.5 0 00-.5.5v2a.5.5 0 001 0V4h6v8h-6v-1.5a.5.5 0 00-1 0v2zM.146 8.354a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L1.707 7.5H10.5a.5.5 0 010 1H1.707l2.147 2.146a.5.5 0 01-.708.708l-3-3z"/></svg>
+          Exit / Offboarding
+        </button>
+      </div>
     </nav>
     <div class="sb-footer">
       <div class="sb-user">
@@ -292,6 +304,76 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
     </div>
 
+    <!-- ONBOARDING FORM (Manager/TL only) -->
+    <div class="view" id="view-onboarding">
+      <div class="topbar">
+        <div><div class="topbar-title">New Employee Onboarding</div><div class="topbar-sub">Submit IT setup tasks for a new joiner</div></div>
+        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+      </div>
+      <div class="scroll-area">
+        <div class="form-wrap">
+          <div class="form-section">
+            <div class="form-section-title">New Employee Details</div>
+            <div class="form-grid-2">
+              <div class="fg"><label>Full Name <span>*</span></label><input id="ob-name" type="text" placeholder="e.g. Priya Sharma"></div>
+              <div class="fg"><label>Employee ID</label><input id="ob-empid" type="text" placeholder="e.g. EMP-042"></div>
+              <div class="fg"><label>Email <span>*</span></label><input id="ob-email" type="email" placeholder="priya@company.com"></div>
+              <div class="fg"><label>Start Date <span>*</span></label><input id="ob-date" type="date"></div>
+              <div class="fg"><label>Department</label><select id="ob-dept"><option value="">Select…</option><option>Engineering</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Management</option><option>IT</option><option>Sales</option><option>Other</option></select></div>
+              <div class="fg"><label>Reporting Manager</label><input id="ob-manager" type="text" placeholder="Manager name" readonly></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">IT Setup Checklist <span style="font-size:10px;font-weight:400;color:var(--text3)">(uncheck items not needed)</span></div>
+            <div id="ob-tasks-list"><div class="loading">Loading tasks…</div></div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Additional Notes</div>
+            <div class="fg"><label>Special requirements or notes</label><textarea id="ob-notes" rows="3" placeholder="Any special software, access requirements, equipment preferences…"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="ob-submit-btn" onclick="submitOnboarding()">📋 Submit Onboarding Request</button>
+            <span id="ob-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXIT FORM (Manager/TL only) -->
+    <div class="view" id="view-exit">
+      <div class="topbar">
+        <div><div class="topbar-title">Employee Exit / Offboarding</div><div class="topbar-sub">Submit IT offboarding tasks for a departing employee</div></div>
+        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+      </div>
+      <div class="scroll-area">
+        <div class="form-wrap">
+          <div class="form-section">
+            <div class="form-section-title">Departing Employee Details</div>
+            <div class="form-grid-2">
+              <div class="fg"><label>Full Name <span>*</span></label><input id="ex-name" type="text" placeholder="e.g. Raj Kumar"></div>
+              <div class="fg"><label>Employee ID</label><input id="ex-empid" type="text" placeholder="e.g. EMP-018"></div>
+              <div class="fg"><label>Email <span>*</span></label><input id="ex-email" type="email" placeholder="raj@company.com"></div>
+              <div class="fg"><label>Last Working Day <span>*</span></label><input id="ex-date" type="date"></div>
+              <div class="fg"><label>Department</label><select id="ex-dept"><option value="">Select…</option><option>Engineering</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Management</option><option>IT</option><option>Sales</option><option>Other</option></select></div>
+              <div class="fg"><label>Reporting Manager</label><input id="ex-manager" type="text" placeholder="Manager name" readonly></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Exit Checklist <span style="font-size:10px;font-weight:400;color:var(--text3)">(uncheck items not applicable)</span></div>
+            <div id="ex-tasks-list"><div class="loading">Loading tasks…</div></div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Additional Notes</div>
+            <div class="fg"><label>Any special instructions or notes for IT</label><textarea id="ex-notes" rows="3" placeholder="e.g. Employee has company MacBook, 2 monitors, access badge, parking pass…"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="ex-submit-btn" onclick="submitExit()">📋 Submit Exit Request</button>
+            <span id="ex-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay" id="overlay" onclick="closePanel()"></div>
     <div class="detail-panel" id="detail-panel">
       <div class="dp-header">
@@ -316,8 +398,8 @@ window.addEventListener('load', async () => {
   if (!session) { location.href = 'index.html'; return; }
   currentUser = session.user;
   currentProfile = await getProfile(currentUser.id);
-  if (!currentProfile || currentProfile.role !== 'employee') {
-    // Redirect to correct portal if wrong role
+  const allowedRoles = ['employee','manager','tl'];
+  if (!currentProfile || (!allowedRoles.includes(currentProfile.role) && currentProfile.role !== 'admin')) {
     if (currentProfile?.role === 'admin') location.href = 'admin.html';
     else if (currentProfile?.role === 'technician') location.href = 'technician.html';
     else location.href = 'index.html';
@@ -331,6 +413,16 @@ window.addEventListener('load', async () => {
   document.getElementById('f-name').value = currentProfile.full_name || '';
   document.getElementById('f-email').value = currentProfile.email || '';
   document.getElementById('f-empid-display').value = currentProfile.employee_id || '';
+  // Show Manager/TL nav items
+  if (['manager','tl','admin'].includes(currentProfile.role)) {
+    document.getElementById('mgr-nav').style.display = '';
+  }
+  // Set manager field on forms
+  const mgrName = currentProfile.full_name || currentProfile.email;
+  const obm = document.getElementById('ob-manager');
+  const exm = document.getElementById('ex-manager');
+  if(obm) obm.value = mgrName;
+  if(exm) exm.value = mgrName;
   await loadTickets();
   renderDash();
 });
@@ -355,7 +447,7 @@ async function loadTickets() {
 
 // ── Navigation ────────────────────────────────────────────────
 function show(v) {
-  ['dashboard','tickets','new'].forEach(x => { document.getElementById('view-'+x).style.display='none'; });
+  ['dashboard','tickets','new','onboarding','exit'].forEach(x => { const e=document.getElementById('view-'+x); if(e) e.style.display='none'; });
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+v).style.display='flex';
   document.getElementById('view-'+v).style.flexDirection='column';
@@ -363,6 +455,8 @@ function show(v) {
   closePanel();
   if (v==='dashboard') renderDash();
   if (v==='tickets') renderList();
+  if (v==='onboarding') loadOnboardingTasks();
+  if (v==='exit') loadExitTasks();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -521,7 +615,138 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 
 // Initialise view
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','new'].forEach(v=>{document.getElementById('view-'+v).style.display='none';});
+['tickets','new','onboarding','exit'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+
+// ── Onboarding/Exit task loading ────────────────────────────────
+async function loadOnboardingTasks() {
+  const el = document.getElementById('ob-tasks-list');
+  if (!el) return;
+  try {
+    const {data, error} = await db.from('task_templates').select('*').eq('type','onboarding').order('sort_order');
+    if (error || !data?.length) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">No onboarding tasks found. Ask admin to add tasks in Admin → Task Templates.</div>';
+      return;
+    }
+    el.innerHTML = data.map(t => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="ob-task-${t.id}" ${t.checked ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0">
+        <label for="ob-task-${t.id}" style="font-size:13px;cursor:pointer;flex:1">${t.label}</label>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--critical-text)">Error loading tasks: ' + e.message + '</div>';
+  }
+}
+
+async function loadExitTasks() {
+  const el = document.getElementById('ex-tasks-list');
+  if (!el) return;
+  try {
+    const {data, error} = await db.from('task_templates').select('*').eq('type','exit').order('sort_order');
+    if (error || !data?.length) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">No exit tasks found. Ask admin to add tasks in Admin → Task Templates.</div>';
+      return;
+    }
+    el.innerHTML = data.map(t => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="ex-task-${t.id}" ${t.checked ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0">
+        <label for="ex-task-${t.id}" style="font-size:13px;cursor:pointer;flex:1">${t.label}</label>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--critical-text)">Error loading tasks: ' + e.message + '</div>';
+  }
+}
+
+async function submitOnboarding() {
+  const name = document.getElementById('ob-name').value.trim();
+  const email = document.getElementById('ob-email').value.trim();
+  const date = document.getElementById('ob-date').value;
+  const errEl = document.getElementById('ob-err');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Please enter the employee name.'; errEl.style.display=''; return; }
+  if (!email) { errEl.textContent = 'Please enter the employee email.'; errEl.style.display=''; return; }
+  if (!date) { errEl.textContent = 'Please select the start date.'; errEl.style.display=''; return; }
+
+  // Build checklist from checked tasks
+  const checkboxes = document.querySelectorAll('[id^="ob-task-"]');
+  const tasks = [...checkboxes].map(cb => (cb.checked ? '☑' : '☐') + ' ' + cb.nextElementSibling.textContent);
+  const notes = document.getElementById('ob-notes').value.trim();
+  const dept = document.getElementById('ob-dept').value;
+  const empid = document.getElementById('ob-empid').value.trim();
+  const mgr = document.getElementById('ob-manager').value;
+
+  const desc = `New Employee: ${name}${empid?' ('+empid+')':''}
+Email: ${email}
+Department: ${dept||'—'}
+Start Date: ${date}
+Requested by: ${mgr}
+
+IT Setup Checklist:
+${tasks.join('\n')}${notes ? '\n\nNotes: ' + notes : ''}`;
+
+  const btn = document.getElementById('ob-submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  const {data, error} = await db.from('tickets').insert({
+    title: 'Onboarding: ' + name + ' — starts ' + date,
+    description: desc,
+    category: 'Onboarding',
+    priority: 'medium',
+    created_by: currentUser.id,
+    department: dept || currentProfile.department
+  }).select('ticket_no').single();
+  btn.disabled = false; btn.textContent = '📋 Submit Onboarding Request';
+  if (error) { errEl.textContent = error.message; errEl.style.display=''; return; }
+  toast('✓ Onboarding ticket ' + data.ticket_no + ' created!');
+  // Reset form
+  ['ob-name','ob-empid','ob-email','ob-date','ob-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('ob-dept').value = '';
+  await loadTickets(); show('tickets');
+}
+
+async function submitExit() {
+  const name = document.getElementById('ex-name').value.trim();
+  const email = document.getElementById('ex-email').value.trim();
+  const date = document.getElementById('ex-date').value;
+  const errEl = document.getElementById('ex-err');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Please enter the employee name.'; errEl.style.display=''; return; }
+  if (!email) { errEl.textContent = 'Please enter the employee email.'; errEl.style.display=''; return; }
+  if (!date) { errEl.textContent = 'Please select the last working day.'; errEl.style.display=''; return; }
+
+  const checkboxes = document.querySelectorAll('[id^="ex-task-"]');
+  const tasks = [...checkboxes].map(cb => (cb.checked ? '☑' : '☐') + ' ' + cb.nextElementSibling.textContent);
+  const notes = document.getElementById('ex-notes').value.trim();
+  const dept = document.getElementById('ex-dept').value;
+  const empid = document.getElementById('ex-empid').value.trim();
+  const mgr = document.getElementById('ex-manager').value;
+
+  const desc = `Departing Employee: ${name}${empid?' ('+empid+')':''}
+Email: ${email}
+Department: ${dept||'—'}
+Last Working Day: ${date}
+Requested by: ${mgr}
+
+Exit / IT Offboarding Checklist:
+${tasks.join('\n')}${notes ? '\n\nNotes: ' + notes : ''}`;
+
+  const btn = document.getElementById('ex-submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  const {data, error} = await db.from('tickets').insert({
+    title: 'Exit: ' + name + ' — last day ' + date,
+    description: desc,
+    category: 'Offboarding',
+    priority: 'medium',
+    created_by: currentUser.id,
+    department: dept || currentProfile.department
+  }).select('ticket_no').single();
+  btn.disabled = false; btn.textContent = '📋 Submit Exit Request';
+  if (error) { errEl.textContent = error.message; errEl.style.display=''; return; }
+  toast('✓ Exit ticket ' + data.ticket_no + ' created!');
+  ['ex-name','ex-empid','ex-email','ex-date','ex-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('ex-dept').value = '';
+  await loadTickets(); show('tickets');
+}
 </script>
 </body>
 </html>
