@@ -321,7 +321,7 @@ function renderDash() {
       <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
       <div style="flex:1;overflow:hidden">
         <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.id} — ${t.title}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} <span>${t.creator?.full_name||''}</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} ${t.assignee?.full_name?`<span style="background:var(--low-bg);color:var(--low-text);padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`:'<span style="color:var(--text3);font-size:10px">Unassigned</span>'}</div>
       </div>
       <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
     </div>
@@ -512,59 +512,68 @@ async function quickStatus(s) {
 
 // ── Save Update ─────────────────────────────────────────────────
 async function saveUpdate() {
-  const assignId=document.getElementById('assign-sel').value||null;
-  let comment=document.getElementById('dp-comment').value.trim();
-  const isInternal=document.getElementById('is-internal')?.checked||false;
-  const fileInput=document.getElementById('screenshot-upload');
-  const now=new Date().toISOString();
-  const updates={updated_at:now};
+  // Read dropdown directly — whatever shows is what we save
+  const selEl = document.getElementById('assign-sel');
+  const assignedTo = selEl ? (selEl.value || null) : null;
+
+  let comment = document.getElementById('dp-comment').value.trim();
+  const isInternal = document.getElementById('is-internal')?.checked || false;
+  const fileInput = document.getElementById('screenshot-upload');
+  const now = new Date().toISOString();
+
+  // Build update — always include assigned_to so it never silently reverts
+  const updates = { updated_at: now, assigned_to: assignedTo };
+
+  // Auto-set status to inprogress when first assigned
+  if (assignedTo) {
+    const {data:cur} = await db.from('tickets').select('status,started_at').eq('id',selectedId).single();
+    if (cur?.status === 'open') updates.status = 'inprogress';
+    if (!cur?.started_at) updates.started_at = now;
+  }
 
   // Screenshot upload
-  if(fileInput?.files?.length) {
-    const file=fileInput.files[0];
-    document.getElementById('upload-status').textContent='Uploading…';
+  if (fileInput?.files?.length) {
+    const file = fileInput.files[0];
+    document.getElementById('upload-status').textContent = 'Uploading…';
     try {
-      const ext=file.name.split('.').pop();
-      const path='tickets/'+selectedId+'/'+Date.now()+'.'+ext;
-      const {error:upErr}=await db.storage.from('ticket-attachments').upload(path,file,{upsert:true});
-      if(upErr) throw upErr;
-      const {data:urlData}=db.storage.from('ticket-attachments').getPublicUrl(path);
-      comment=(comment?comment+' | ':'')+('Screenshot: '+urlData.publicUrl);
-      document.getElementById('upload-status').textContent='✓ Uploaded';
-    } catch(e){ document.getElementById('upload-status').textContent='Upload failed: '+e.message; }
+      const ext = file.name.split('.').pop();
+      const path = 'tickets/' + selectedId + '/' + Date.now() + '.' + ext;
+      const {error:upErr} = await db.storage.from('ticket-attachments').upload(path, file, {upsert:true});
+      if (upErr) throw upErr;
+      const {data:urlData} = db.storage.from('ticket-attachments').getPublicUrl(path);
+      comment = (comment ? comment + ' | ' : '') + 'Screenshot: ' + urlData.publicUrl;
+      document.getElementById('upload-status').textContent = '✓ Uploaded';
+    } catch(e) { document.getElementById('upload-status').textContent = 'Upload failed: ' + e.message; }
   }
 
-  // Assignment
-  if(assignId!==undefined) {
-    updates.assigned_to=assignId||null;
-    if(assignId) {
-      const {data:tc}=await db.from('tickets').select('started_at,status').eq('id',selectedId).single();
-      if(!tc?.started_at&&tc?.status==='open') { updates.started_at=now; updates.status='inprogress'; }
-    }
-  }
-  await db.from('tickets').update(updates).eq('id',selectedId);
+  // Save to DB
+  const {error:saveErr} = await db.from('tickets').update(updates).eq('id', selectedId);
+  if (saveErr) { toast('Error: ' + saveErr.message); return; }
 
-  // Comment
-  if(comment) {
-    await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment,is_internal:isInternal});
-    if(!isInternal) {
-      const {data:t2}=await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
-      try{ await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); }catch(e){}
+  // Save comment
+  if (comment) {
+    await db.from('comments').insert({ticket_id: selectedId, author_id: currentUser.id, body: comment, is_internal: isInternal});
+    if (!isInternal) {
+      const {data:t2} = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+      try { await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); } catch(e) {}
     }
   }
 
-  // Notify assignee
-  if(assignId) {
-    const {data:tech}=await db.from('profiles').select('full_name,email').eq('id',assignId).single();
-    const {data:tkt}=await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
-    if(tech?.email!==currentProfile.email) {
-      try{ await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); }catch(e){}
+  // Notify new assignee
+  if (assignedTo) {
+    const {data:tech} = await db.from('profiles').select('full_name,email').eq('id',assignedTo).single();
+    const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
+    if (tech && tech.email !== currentProfile.email) {
+      try { await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); } catch(e) {}
     }
   }
 
-  toast('Ticket updated');
-  await loadTickets(); openPanel(selectedId); renderList(); renderMine();
-  if(document.getElementById('view-dashboard').style.display!=='none') renderDash();
+  toast('✓ Ticket saved');
+  await loadTickets();
+  openPanel(selectedId);
+  renderList();
+  renderMine();
+  if (document.getElementById('view-dashboard').style.display !== 'none') renderDash();
 }
 
 // ── Hardware Approve/Reject ─────────────────────────────────────
