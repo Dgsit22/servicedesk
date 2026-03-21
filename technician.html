@@ -197,11 +197,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <button class="filter-chip on" id="fc-all" onclick="setFilter('all','fc')">All</button>
         <button class="filter-chip" id="fc-open" onclick="setFilter('open','fc')">Open</button>
         <button class="filter-chip" id="fc-inprogress" onclick="setFilter('inprogress','fc')">In Progress</button>
-        <button class="filter-chip" id="fc-waiting_for_info" onclick="setFilter('waiting_for_info','fc')">⏳ Waiting</button>
-        <button class="filter-chip" id="fc-pending_approval" onclick="setFilter('pending_approval','fc')">🔐 Pending Approval</button>
         <button class="filter-chip" id="fc-resolved" onclick="setFilter('resolved','fc')">Resolved</button>
         <button class="filter-chip crit" id="fc-critical" onclick="setFilter('critical','fc')">⚡ Critical</button>
-        <button class="filter-chip" id="fc-hardware" onclick="setFilter('hardware','fc')">🖥️ Hardware</button>
         <div class="filter-sep"></div>
         <select class="sort-select" id="sort-sel" onchange="renderList()">
           <option value="date-desc">Newest first</option>
@@ -261,55 +258,42 @@ window.addEventListener('load', async () => {
 });
 
 async function loadTickets() {
-  // Try full query first; fall back to basic query if new columns don't exist
-  let data, error;
-
-  const fullQuery = db.from('tickets').select(`
-    ticket_no, id, title, category, priority, status,
-    created_at, updated_at, assigned_to,
-    started_at, resolved_at, resolution_minutes,
-    creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,open_cabin,phone),
-    assignee:profiles!assigned_to(full_name,email),
-    comments(id)
-  `).order('created_at',{ascending:false});
-
-  const basicQuery = db.from('tickets').select(`
-    ticket_no, id, title, category, priority, status,
-    created_at, updated_at, assigned_to,
-    creator:profiles!created_by(id,full_name,email),
-    assignee:profiles!assigned_to(full_name,email),
-    comments(id)
-  `).order('created_at',{ascending:false});
-
-  ({ data, error } = await fullQuery);
-  if (error) {
-    console.warn('Full query failed, trying basic:', error.message);
-    ({ data, error } = await basicQuery);
-  }
+  const { data, error } = await db
+    .from('tickets')
+    .select(`
+      ticket_no, id, title, category, priority, status,
+      created_at, updated_at, assigned_to,
+      started_at, resolved_at, resolution_minutes,
+      creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,open_cabin,phone),
+      assignee:profiles!assigned_to(full_name,email),
+      comments(id)
+    `)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('loadTickets error:', error.message);
-    document.getElementById('dash-recent').innerHTML =
-      `<div style="padding:16px;color:var(--critical-text);font-size:12px;line-height:1.8">
-        ⚠ Cannot load tickets: <strong>${error.message}</strong><br>
-        This is usually an RLS (permissions) issue.<br>
-        <strong>Fix: Run SETUP-run-first.sql in Supabase → SQL Editor</strong>
-      </div>`;
-    document.getElementById('dash-metrics').innerHTML =
-      `<div style="grid-column:span 4;padding:16px;color:var(--critical-text);font-size:12px">Run SETUP-run-first.sql to fix permissions</div>`;
+    // Show error to user
+    const el = document.getElementById('dash-recent');
+    if (el) el.innerHTML = `<div style="padding:16px;color:var(--critical-text);font-size:12px">
+      Error loading tickets: ${error.message}<br>
+      <strong>Please run SETUP-run-first.sql in Supabase SQL Editor.</strong>
+    </div>`;
     return;
   }
 
   allTickets = (data||[]).map(t => ({
-    ...t, id: t.ticket_no, uid: t.id,
+    ...t,
+    id: t.ticket_no,
+    uid: t.id,
     comment_count: t.comments?.length || 0
   }));
 
-  const open = allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
-  const mine = allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
-  const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge');
-  if(ob){ob.textContent=open; ob.style.display=open?'':'none';}
-  if(mb){mb.textContent=mine; mb.style.display=mine?'':'none';}
+  const open = allTickets.filter(t => !['resolved','closed'].includes(t.status)).length;
+  const mine = allTickets.filter(t => t.assigned_to === currentUser.id && !['resolved','closed'].includes(t.status)).length;
+  const ob = document.getElementById('open-badge');
+  const mb = document.getElementById('mine-badge');
+  if (ob) { ob.textContent = open; ob.style.display = open ? '' : 'none'; }
+  if (mb) { mb.textContent = mine; mb.style.display = mine ? '' : 'none'; }
 }
 
 async function loadTechList() {
@@ -381,9 +365,7 @@ function renderDash() {
 
 function setFilter(f,prefix) {
   currentFilter=f;
-  ['all','open','inprogress','waiting_for_info','pending_approval','resolved','critical','hardware'].forEach(k=>{
-    const el=document.getElementById(prefix+'-'+k); if(el)el.classList.toggle('on',k===f);
-  });
+  ['all','open','inprogress','resolved','critical'].forEach(k=>{const el=document.getElementById(prefix+'-'+k);if(el)el.classList.toggle('on',k===f);});
   renderList();
 }
 
@@ -393,9 +375,8 @@ function renderList() {
   let list=allTickets.filter(t=>{
     if(currentFilter==='critical') return t.priority==='critical';
     if(currentFilter==='pending_approval') return t.status==='pending_approval';
-    if(currentFilter==='waiting_for_info') return t.status==='waiting_for_info';
-    if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
-    if(currentFilter==='hardware') return ['Hardware','Onboarding','Offboarding'].includes(t.category)||t.status==='pending_approval';
+  if(currentFilter==='waiting_for_info') return t.status==='waiting_for_info';
+  if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
     if(currentFilter!=='all') return t.status===currentFilter;
     return true;
   }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q));
@@ -403,26 +384,19 @@ function renderList() {
   else if(sort==='date-asc') list.sort((a,b)=>a.created_at?.localeCompare(b.created_at));
   else list.sort((a,b)=>b.created_at?.localeCompare(a.created_at));
   document.getElementById('ticket-count-label').textContent=list.length+' ticket'+(list.length!==1?'s':'');
-  const hwCategories = ['Hardware','Onboarding','Offboarding'];
-  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>{
-    const isHw = hwCategories.includes(t.category) || t.status==='pending_approval';
-    const typeIcon = isHw ? '🖥️' : '⚙️';
-    const typeBg = isHw ? '#f5f3ff' : 'var(--surface)';
-    return `<div class="tt-row" onclick="openPanel('${t.uid}')" style="background:${typeBg}">
+  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>`
+    <div class="tt-row" onclick="openPanel('${t.uid}')">
       <span class="tt-id">${t.id}</span>
-      <div class="tt-info">
-        <div class="tt-title">${typeIcon} ${t.title}</div>
-        <div class="tt-sub">${t.assignee?.full_name||'Unassigned'} · ${t.creator?.full_name||''}</div>
-      </div>
+      <div class="tt-info"><div class="tt-title">${t.title}</div><div class="tt-sub">${t.assignee?.full_name||'Unassigned'}</div></div>
       <div>${tagBadge(t.category)}</div><div>${prioBadge(t.priority)}</div><div>${statusBadge(t.status)}</div>
-      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${t.created_at?.slice(0,10)}</span>
-    </div>`;
-  }).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust your search or filters</div></div>';
+      <span style="font-size:12px;color:var(--text2)">${t.creator?.full_name||'—'}</span>
+    </div>
+  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
 }
 
 function renderMine() {
   const mine=allTickets.filter(t=>t.assigned_to===currentUser.id);
-  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s':'');
+  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s'+''):'';
   document.getElementById('mine-list').innerHTML=mine.length?mine.map(t=>`
     <div class="tt-row" onclick="openPanel('${t.uid}')">
       <span class="tt-id">${t.id}</span>
@@ -526,7 +500,7 @@ async function openPanel(uid) {
         <select id="assign-sel" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
           <option value="">— Unassigned —</option>${techOptions}
         </select>
-        <button class="btn btn-sm" onclick="assignToSelf()" style="flex-shrink:0;font-size:11px;white-space:nowrap">👤 Take It</button>
+        <button class="btn btn-sm" onclick="assignToSelf()" title="Assign to yourself" style="flex-shrink:0;font-size:11px">Take It</button>
       </div>
     </div>
     <div style="margin-bottom:6px">
@@ -534,15 +508,10 @@ async function openPanel(uid) {
     </div>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
       <input type="checkbox" id="is-internal" style="accent-color:var(--accent)">
-      <label for="is-internal" style="font-size:11px;color:var(--text3);cursor:pointer">🔒 Internal note (hidden from requester)</label>
-    </div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">📎 Attach screenshot</div>
-      <input type="file" id="screenshot-upload" accept="image/*" style="font-size:11px;color:var(--text2);width:100%">
-      <div id="upload-status" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+      <label for="is-internal" style="font-size:11px;color:var(--text3);cursor:pointer">Internal note only (not shown to requester)</label>
     </div>
     <div class="dp-footer-row">
-      <button class="btn btn-primary btn-sm" onclick="saveUpdate()">💾 Save Update</button>
+      <button class="btn btn-primary btn-sm" onclick="saveUpdate()">Save Update</button>
       <button class="btn btn-sm" onclick="closePanel()">Cancel</button>
     </div>
   `;
@@ -606,28 +575,10 @@ async function quickStatus(s) {
 
 async function saveUpdate() {
   const assignId   = document.getElementById('assign-sel').value || null;
-  let   comment    = document.getElementById('dp-comment').value.trim();
+  const comment    = document.getElementById('dp-comment').value.trim();
   const isInternal = document.getElementById('is-internal')?.checked || false;
-  const fileInput  = document.getElementById('screenshot-upload');
   const now        = new Date().toISOString();
   const updates    = { updated_at: now };
-
-  // Upload screenshot if attached
-  if (fileInput?.files?.length) {
-    const file = fileInput.files[0];
-    document.getElementById('upload-status').textContent = 'Uploading…';
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `tickets/${selectedId}/${Date.now()}.${ext}`;
-      const { data: upData, error: upErr } = await db.storage.from('ticket-attachments').upload(path, file, {upsert:true});
-      if (upErr) throw upErr;
-      const { data: urlData } = db.storage.from('ticket-attachments').getPublicUrl(path);
-      comment = (comment ? comment + ' | ' : '') + 'Screenshot: ' + urlData.publicUrl;
-      document.getElementById('upload-status').textContent = '✓ Uploaded';
-    } catch(e) {
-      document.getElementById('upload-status').textContent = '⚠ Upload failed: '+e.message+' (comment saved without image)';
-    }
-  }
 
   // Handle assignment — check for external approver (id starts with 'ext:')
   if (assignId !== undefined) {
