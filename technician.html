@@ -519,19 +519,17 @@ async function saveUpdate() {
   const fileInput = document.getElementById('screenshot-upload');
   const now = new Date().toISOString();
 
-  // ── Step 1: Save assigned_to + status ONLY (safe columns that always exist)
+  // ── Step 1: Core save — assigned_to + status (always safe columns)
   const cur = allTickets.find(t => t.uid === selectedId);
   const coreUpdate = { updated_at: now, assigned_to: assignedTo };
   if (assignedTo && cur?.status === 'open') coreUpdate.status = 'inprogress';
 
   const {error:saveErr} = await db.from('tickets').update(coreUpdate).eq('id', selectedId);
-  if (saveErr) { toast('Error saving: ' + saveErr.message); return; }
+  if (saveErr) { toast('Error: ' + saveErr.message); return; }
 
-  // ── Step 2: Try to save started_at separately (column may not exist if SQL not run)
+  // ── Step 2: started_at — optional, ignore if column missing
   if (assignedTo && !cur?.started_at) {
-    try {
-      await db.from('tickets').update({ started_at: now }).eq('id', selectedId);
-    } catch(e) {} // silently ignore if column missing
+    try { await db.from('tickets').update({ started_at: now }).eq('id', selectedId); } catch(e) {}
   }
 
   // ── Step 3: Screenshot upload
@@ -549,22 +547,26 @@ async function saveUpdate() {
     } catch(e) { document.getElementById('upload-status').textContent = 'Upload failed: ' + e.message; }
   }
 
-  // ── Step 4: Save comment
+  // ── Step 4: Comment — wrapped so it never blocks
   if (comment) {
-    await db.from('comments').insert({ ticket_id: selectedId, author_id: currentUser.id, body: comment, is_internal: isInternal });
-    if (!isInternal) {
-      const {data:t2} = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
-      try { await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); } catch(e) {}
-    }
+    try {
+      await db.from('comments').insert({ ticket_id: selectedId, author_id: currentUser.id, body: comment, is_internal: isInternal });
+      if (!isInternal) {
+        try {
+          const {data:t2} = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+          await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2?.ticket_no,title:t2?.title,requester_email:t2?.creator?.email,requester_name:t2?.creator?.full_name,commenter_name:currentProfile.full_name,comment}});
+        } catch(e) {}
+      }
+    } catch(e) {}
   }
 
-  // ── Step 5: Notify new assignee
+  // ── Step 5: Notify assignee — fully wrapped, never blocks
   if (assignedTo) {
     try {
       const {data:tech} = await db.from('profiles').select('full_name,email').eq('id',assignedTo).single();
       const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
       if (tech && tech.email !== currentProfile.email) {
-        await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}});
+        await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt?.ticket_no,title:tkt?.title,category:tkt?.category,priority:tkt?.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt?.creator?.full_name}});
       }
     } catch(e) {}
   }
@@ -582,7 +584,7 @@ async function approveHardware(uid) {
   const reason=prompt('Approval note (optional):')||'';
   const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
   await db.from('tickets').update({status:'open',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
-  try{ await db.functions.invoke('send-notification',{body:{type:'hardware_approved',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); }catch(e){}
+  try { await db.functions.invoke('send-notification',{body:{type:'hardware_approved',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); } catch(e) {}
   toast('Hardware request approved'); await loadTickets(); openPanel(uid); renderList();
 }
 
@@ -591,7 +593,7 @@ async function rejectHardware(uid) {
   if(!reason) return;
   const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
   await db.from('tickets').update({status:'closed',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
-  try{ await db.functions.invoke('send-notification',{body:{type:'hardware_rejected',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); }catch(e){}
+  try { await db.functions.invoke('send-notification',{body:{type:'hardware_rejected',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); } catch(e) {}
   toast('Hardware request rejected'); await loadTickets(); openPanel(uid); renderList();
 }
 
