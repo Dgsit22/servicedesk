@@ -248,7 +248,7 @@ window.addEventListener('load', async () => {
   if (!session) { location.href='index.html'; return; }
   currentUser = session.user;
   currentProfile = await getProfile(currentUser.id);
-  if (!currentProfile || !['technician','admin'].includes(currentProfile.role)) { location.href='index.html'; return; }
+  if (!currentProfile || !['technician','admin','manager','tl'].includes(currentProfile.role)) { location.href='index.html'; return; }
   const initials = (currentProfile.full_name||'T').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('sb-avatar').textContent = initials;
   document.getElementById('sb-name').textContent = currentProfile.full_name || currentProfile.email;
@@ -258,33 +258,63 @@ window.addEventListener('load', async () => {
 });
 
 async function loadTickets() {
-  // Technicians see ALL tickets — RLS policy must allow this (see SQL setup)
-  const { data, error } = await db.from('tickets')
-    .select(`ticket_no, id, title, category, priority, status, created_at, updated_at,
-             assigned_to, started_at, resolved_at, resolution_minutes,
-             creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,phone),
-             assignee:profiles!assigned_to(full_name,email),
-             comments(id)`)
+  const { data, error } = await db
+    .from('tickets')
+    .select(`
+      ticket_no, id, title, category, priority, status,
+      created_at, updated_at, assigned_to,
+      started_at, resolved_at, resolution_minutes,
+      creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,open_cabin,phone),
+      assignee:profiles!assigned_to(full_name,email),
+      comments(id)
+    `)
     .order('created_at', { ascending: false });
 
-  if (error) { console.error('loadTickets error:', error.message); }
-  allTickets = (data||[]).map(t=>({...t, id:t.ticket_no, uid:t.id, comment_count:t.comments?.length||0}));
+  if (error) {
+    console.error('loadTickets error:', error.message);
+    // Show error to user
+    const el = document.getElementById('dash-recent');
+    if (el) el.innerHTML = `<div style="padding:16px;color:var(--critical-text);font-size:12px">
+      Error loading tickets: ${error.message}<br>
+      <strong>Please run SETUP-run-first.sql in Supabase SQL Editor.</strong>
+    </div>`;
+    return;
+  }
 
-  const open = allTickets.filter(t=>t.status==='open'||t.status==='inprogress'||t.status==='waiting_for_info').length;
-  const mine = allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
-  const ob=document.getElementById('open-badge'); ob.textContent=open; ob.style.display=open?'':'none';
-  const mb=document.getElementById('mine-badge'); mb.textContent=mine; mb.style.display=mine?'':'none';
+  allTickets = (data||[]).map(t => ({
+    ...t,
+    id: t.ticket_no,
+    uid: t.id,
+    comment_count: t.comments?.length || 0
+  }));
+
+  const open = allTickets.filter(t => !['resolved','closed'].includes(t.status)).length;
+  const mine = allTickets.filter(t => t.assigned_to === currentUser.id && !['resolved','closed'].includes(t.status)).length;
+  const ob = document.getElementById('open-badge');
+  const mb = document.getElementById('mine-badge');
+  if (ob) { ob.textContent = open; ob.style.display = open ? '' : 'none'; }
+  if (mb) { mb.textContent = mine; mb.style.display = mine ? '' : 'none'; }
 }
 
 async function loadTechList() {
-  // Load technicians + admins + managers/TLs (for cross-assignment)
-  const [{ data: techData }, { data: approverData }] = await Promise.all([
-    db.from('profiles').select('id,full_name,role').in('role',['technician','admin','manager','tl']).order('full_name'),
-    db.from('hw_approvers').select('id,name,email').eq('active',true).order('name').catch(()=>({data:[]}))
-  ]);
-  techList = techData||[];
-  // Add external approvers as virtual entries (email-only, no profile id)
-  approverList = (approverData?.data||[]).map(a=>({id:'ext:'+a.email, full_name:a.name+' (Approver)', role:'approver', email:a.email}));
+  try {
+    const { data: techData } = await db.from('profiles')
+      .select('id,full_name,role')
+      .in('role',['technician','admin','manager','tl'])
+      .order('full_name');
+    techList = techData || [];
+  } catch(e) { techList = []; }
+
+  try {
+    const { data: approverData } = await db.from('hw_approvers')
+      .select('id,name,email').eq('active',true).order('name');
+    approverList = (approverData||[]).map(a => ({
+      id: 'ext:'+a.email,
+      full_name: a.name + ' (Approver)',
+      role: 'approver',
+      email: a.email
+    }));
+  } catch(e) { approverList = []; }
 }
 
 function show(v) {
@@ -308,17 +338,23 @@ function renderDash() {
     <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--critical-text)">${crit}</div><div class="m-lbl">Critical</div></div>
   `;
-  const recent=allTickets.slice(0,7);
-  document.getElementById('dash-recent').innerHTML=recent.map(t=>`
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
+  const recent = allTickets.slice(0, 8);
+  document.getElementById('dash-recent').innerHTML = recent.length ? recent.map(t => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"
+      onclick="openPanel('${t.uid}')">
       <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
       <div style="flex:1;overflow:hidden">
         <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.id} — ${t.title}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} <span style="color:var(--text3)">${t.creator?.full_name||''}</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">
+          ${tagBadge(t.category)} ${statusBadge(t.status)}
+          <span>${t.creator?.full_name||''}</span>
+        </div>
       </div>
       <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
     </div>
-  `).join('');
+  `).join('') :
+  '<div style="padding:32px;text-align:center;color:var(--text3);font-size:12px">No tickets yet. Run SETUP-run-first.sql to add sample data.</div>';
   const cats={};
   allTickets.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
   const maxC=Math.max(...Object.values(cats),1);

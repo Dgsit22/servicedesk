@@ -846,162 +846,156 @@ async function deleteTask(id, type) {
   renderTaskList(type, type + '-tasks');
 }
 
-// ── Hardware Settings ─────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// ── Hardware Settings ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════
 async function loadHardwareSettings() {
-  await loadHwCategoryList();
-  await loadApproverList();
+  loadHwCategoryList();
+  loadApproverList();
 }
 
-// ── Hardware Categories ────────────────────────────────────────
+// ── HW Categories ──────────────────────────────────────────
 async function loadHwCategoryList() {
   const el = document.getElementById('hw-cat-list');
   if (!el) return;
   el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Loading…</div>';
   const { data, error } = await db.from('hw_categories').select('*').order('sort_order');
   if (error) {
-    el.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--critical-text)">Error: ${error.message}<br><br><strong>Run the SQL setup first</strong> — paste run-this-sql-in-supabase.sql into Supabase SQL Editor and click Run.</div>`;
+    el.innerHTML = `<div style="padding:14px 16px;font-size:12px;color:var(--critical-text)">
+      ⚠ ${error.message}<br><br>Please run <strong>SETUP-run-first.sql</strong> in Supabase SQL Editor first.
+    </div>`;
     return;
   }
-  if (!data || !data.length) {
-    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">No categories yet. Click + Add to create one.</div>';
+  if (!data?.length) {
+    el.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--text3)">No categories yet. Click + Add to create your first one.</div>';
     return;
   }
-  el.innerHTML = data.map(cat => `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:12px">
-      <label style="position:relative;width:36px;height:20px;flex-shrink:0">
-        <input type="checkbox" ${cat.active ? 'checked' : ''} onchange="toggleHwCat('${cat.id}',this.checked)"
-          style="opacity:0;width:0;height:0;position:absolute">
-        <span style="position:absolute;inset:0;background:${cat.active ? 'var(--accent)' : 'var(--border2)'};border-radius:20px;cursor:pointer;transition:background .2s">
-          <span style="position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:${cat.active ? '19px' : '3px'};transition:left .2s"></span>
-        </span>
-      </label>
-      <span style="flex:1;${!cat.active ? 'color:var(--text3);text-decoration:line-through' : ''}">${cat.name}</span>
-      <div style="display:flex;gap:4px">
-        <button onclick="editHwCat('${cat.id}','${cat.name.replace(/'/g,"\'").replace(/"/g,'&quot;')}')"
-          style="padding:3px 8px;font-size:11px;border:0.5px solid var(--border);border-radius:4px;cursor:pointer;background:var(--surface2)">Edit</button>
-        <button onclick="deleteHwCat('${cat.id}','${cat.name.replace(/'/g,"\'")}')"
-          style="padding:3px 8px;font-size:11px;border:0.5px solid var(--critical-border);border-radius:4px;cursor:pointer;background:var(--critical-bg);color:var(--critical-text)">Delete</button>
-      </div>
-    </div>
-  `).join('');
+  el.innerHTML = data.map(cat => {
+    const name = (cat.name||'').replace(/'/g,"\'");
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px">
+      <span style="flex:1;${!cat.active?'color:var(--text3);text-decoration:line-through':''}">${cat.name}</span>
+      <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;
+        background:${cat.active?'var(--low-bg)':'var(--surface3)'};
+        color:${cat.active?'var(--low-text)':'var(--text3)'}">${cat.active?'Active':'Hidden'}</span>
+      <button onclick="toggleHwCat('${cat.id}',${!cat.active})"
+        style="padding:3px 9px;font-size:11px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2);color:var(--text2)">
+        ${cat.active?'Hide':'Show'}</button>
+      <button onclick="editHwCat('${cat.id}','${name}')"
+        style="padding:3px 9px;font-size:11px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2)">Edit</button>
+      <button onclick="deleteHwCat('${cat.id}','${name}')"
+        style="padding:3px 9px;font-size:11px;border:1px solid var(--critical-border);border-radius:5px;cursor:pointer;background:var(--critical-bg);color:var(--critical-text)">Delete</button>
+    </div>`;
+  }).join('');
 }
 
 async function addHwCategory() {
-  const name = prompt('New hardware category name:');
-  if (!name || !name.trim()) return;
-  const { data: last } = await db.from('hw_categories').select('sort_order').order('sort_order',{ascending:false}).limit(1).single().catch(()=>({data:null}));
-  const { error } = await db.from('hw_categories').insert({ name: name.trim(), active: true, sort_order: (last?.sort_order||0)+1 });
+  const name = prompt('New hardware category name (e.g. "MacBook Air M3"):');
+  if (!name?.trim()) return;
+  const { data: rows } = await db.from('hw_categories').select('sort_order').order('sort_order',{ascending:false}).limit(1);
+  const next = (rows?.[0]?.sort_order || 0) + 1;
+  const { error } = await db.from('hw_categories').insert({name:name.trim(),active:true,sort_order:next});
   if (error) { toast('Error: '+error.message); return; }
-  toast('Category added'); loadHwCategoryList();
+  toast('✓ Category "'+name.trim()+'" added'); loadHwCategoryList();
 }
 
 async function editHwCat(id, current) {
-  const name = prompt('Edit category name:', current);
-  if (!name || !name.trim() || name.trim() === current) return;
-  const { error } = await db.from('hw_categories').update({ name: name.trim() }).eq('id', id);
+  const name = prompt('Rename category:', current);
+  if (!name?.trim() || name.trim()===current) return;
+  const { error } = await db.from('hw_categories').update({name:name.trim()}).eq('id',id);
   if (error) { toast('Error: '+error.message); return; }
-  toast('Category updated'); loadHwCategoryList();
+  toast('✓ Renamed to "'+name.trim()+'"'); loadHwCategoryList();
 }
 
 async function deleteHwCat(id, name) {
-  if (!confirm('Delete "'+name+'"? It will no longer appear in hardware requests.')) return;
-  const { error } = await db.from('hw_categories').delete().eq('id', id);
+  if (!confirm('Delete "'+name+'"?
+
+It will no longer appear in hardware request forms.')) return;
+  const { error } = await db.from('hw_categories').delete().eq('id',id);
   if (error) { toast('Error: '+error.message); return; }
-  toast('Category deleted'); loadHwCategoryList();
+  toast('✓ Category deleted'); loadHwCategoryList();
 }
 
 async function toggleHwCat(id, active) {
-  const { error } = await db.from('hw_categories').update({ active }).eq('id', id);
+  const { error } = await db.from('hw_categories').update({active}).eq('id',id);
   if (error) { toast('Error: '+error.message); return; }
-  toast(active ? 'Category activated' : 'Category hidden from employees');
-  loadHwCategoryList();
+  toast(active ? '✓ Category now visible to employees' : '✓ Category hidden'); loadHwCategoryList();
 }
 
-// ── Hardware Approvers ─────────────────────────────────────────
+// ── HW Approvers ───────────────────────────────────────────
 async function loadApproverList() {
   const el = document.getElementById('hw-approver-list');
   if (!el) return;
   el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Loading…</div>';
-  // Load dedicated approvers from hw_approvers table + show existing manager/TL users
-  const [{ data: approvers, error }, { data: mgrUsers }] = await Promise.all([
+
+  const [apRes, mgrRes] = await Promise.all([
     db.from('hw_approvers').select('id,name,email,active').order('name'),
-    db.from('profiles').select('full_name,email,role').in('role',['manager','tl','admin']).order('full_name')
+    db.from('profiles').select('full_name,email,role').in('role',['manager','tl']).order('full_name')
   ]);
 
   let html = '';
+  const roleL = {manager:'Manager',tl:'Team Lead'};
 
-  // Dedicated approvers section
-  if (!error && approvers?.length) {
-    html += approvers.map(a => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:12px">
-        <div style="width:28px;height:28px;border-radius:50%;background:${a.active?'var(--accent-light)':'var(--surface3)'};color:${a.active?'var(--accent-text)':'var(--text3)'};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          ${(a.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-        </div>
+  // Dedicated approvers
+  if (apRes.data?.length) {
+    html += '<div style="padding:6px 16px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2)">Dedicated Approvers</div>';
+    html += apRes.data.map(a => {
+      const nm = (a.name||'').replace(/'/g,"\'");
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          ${(a.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
         <div style="flex:1">
-          <div style="font-weight:500;${!a.active?'color:var(--text3)':''}">${a.name}</div>
+          <div style="font-weight:500">${a.name}</div>
           <div style="font-size:11px;color:var(--text3)">${a.email}</div>
         </div>
-        <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:${a.active?'var(--accent-light)':'var(--surface3)'};color:${a.active?'var(--accent-text)':'var(--text3)'}">
-          ${a.active?'Active':'Inactive'}
-        </span>
-        <div style="display:flex;gap:4px">
-          <button onclick="toggleApprover('${a.id}',${!a.active})"
-            style="padding:3px 8px;font-size:11px;border:0.5px solid var(--border);border-radius:4px;cursor:pointer;background:var(--surface2)">
-            ${a.active?'Disable':'Enable'}
-          </button>
-          <button onclick="deleteApprover('${a.id}','${(a.name||'').replace(/'/g,"\'")}')"
-            style="padding:3px 8px;font-size:11px;border:0.5px solid var(--critical-border);border-radius:4px;cursor:pointer;background:var(--critical-bg);color:var(--critical-text)">Remove</button>
-        </div>
-      </div>
-    `).join('');
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${a.active?'var(--low-bg)':'var(--surface3)'};color:${a.active?'var(--low-text)':'var(--text3)'}">${a.active?'Active':'Off'}</span>
+        <button onclick="toggleApprover('${a.id}',${!a.active})" style="padding:3px 9px;font-size:11px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2)">${a.active?'Disable':'Enable'}</button>
+        <button onclick="deleteApprover('${a.id}','${nm}')" style="padding:3px 9px;font-size:11px;border:1px solid var(--critical-border);border-radius:5px;cursor:pointer;background:var(--critical-bg);color:var(--critical-text)">Remove</button>
+      </div>`;
+    }).join('');
   }
 
-  // Manager/TL users from profiles (auto-included)
-  if (mgrUsers?.length) {
-    const roleLabel = {manager:'Manager',tl:'Team Lead',admin:'Admin'};
-    html += `<div style="padding:8px 16px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:0.5px solid var(--border)">Auto-included (from user roles)</div>`;
-    html += mgrUsers.map(u => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:12px;opacity:.8">
+  // Auto-included managers/TLs
+  if (mgrRes.data?.length) {
+    html += '<div style="padding:6px 16px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2)">Auto-included from User Roles</div>';
+    html += mgrRes.data.map(u => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px">
         <div style="width:28px;height:28px;border-radius:50%;background:var(--surface3);color:var(--text2);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          ${(u.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-        </div>
+          ${(u.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
         <div style="flex:1">
           <div style="font-weight:500">${u.full_name||'—'}</div>
           <div style="font-size:11px;color:var(--text3)">${u.email}</div>
         </div>
-        <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--accent-light);color:var(--accent-text)">${roleLabel[u.role]||u.role}</span>
-      </div>
-    `).join('');
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--accent-light);color:var(--accent-text)">${roleL[u.role]||u.role}</span>
+      </div>`).join('');
   }
 
-  if (!html) {
-    html = '<div style="padding:16px;font-size:12px;color:var(--text3)">No approvers yet. Click + Add Approver or assign Manager/TL roles to users.</div>';
-  }
-
+  if (!html) html = '<div style="padding:16px;font-size:12px;color:var(--text3)">No approvers yet. Click + Add Approver, or assign Manager / TL roles to users in User Management.</div>';
   el.innerHTML = html;
 }
 
 async function addApprover() {
   const name = prompt('Approver full name:');
-  if (!name || !name.trim()) return;
-  const email = prompt('Approver email:');
-  if (!email || !email.trim()) return;
-  const { error } = await db.from('hw_approvers').insert({ name: name.trim(), email: email.trim().toLowerCase(), active: true });
-  if (error) { toast('Error: '+error.message+' — Run the SQL setup first.'); return; }
-  toast('Approver added'); loadApproverList();
+  if (!name?.trim()) return;
+  const email = prompt('Approver email address:');
+  if (!email?.trim() || !email.includes('@')) { toast('Please enter a valid email'); return; }
+  const { error } = await db.from('hw_approvers').insert({name:name.trim(),email:email.trim().toLowerCase(),active:true});
+  if (error) { toast('Error: '+error.message); return; }
+  toast('✓ Approver "'+name.trim()+'" added'); loadApproverList();
 }
 
 async function toggleApprover(id, active) {
-  const { error } = await db.from('hw_approvers').update({ active }).eq('id', id);
+  const { error } = await db.from('hw_approvers').update({active}).eq('id',id);
   if (error) { toast('Error: '+error.message); return; }
-  toast(active ? 'Approver enabled' : 'Approver disabled'); loadApproverList();
+  toast(active ? '✓ Approver enabled' : '✓ Approver disabled'); loadApproverList();
 }
 
 async function deleteApprover(id, name) {
-  if (!confirm('Remove "'+name+'" from approvers list?')) return;
-  const { error } = await db.from('hw_approvers').delete().eq('id', id);
+  if (!confirm('Remove "'+name+'" from approvers?
+
+They will no longer appear in hardware request forms.')) return;
+  const { error } = await db.from('hw_approvers').delete().eq('id',id);
   if (error) { toast('Error: '+error.message); return; }
-  toast('Approver removed'); loadApproverList();
+  toast('✓ Approver removed'); loadApproverList();
 }
 
 document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
