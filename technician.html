@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
-:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06)}
+:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06);--pending-bg:#f5f3ff;--pending-text:#5b21b6}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 .shell{display:flex;height:100vh;overflow:hidden}
@@ -38,13 +38,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .topbar-title{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
 .topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;font-weight:400}
 .btn{padding:7px 15px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
-.btn:hover{background:var(--surface2)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:#1648c0}
-.btn-sm{padding:5px 11px;font-size:12px}
-.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
-.btn-ghost:hover{background:var(--surface2)}
+.btn:hover{background:var(--surface2)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn-primary:hover{background:#1648c0}
+.btn-sm{padding:5px 11px;font-size:12px}.btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}.btn-ghost:hover{background:var(--surface2)}
 .scroll-area{flex:1;overflow-y:auto;padding:22px 24px}
 .dash-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 .metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
@@ -64,26 +60,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .filter-chip.on{background:var(--accent-light);color:var(--accent-text);border-color:var(--medium-border);font-weight:600}
 .filter-chip.crit.on{background:var(--critical-bg);color:var(--critical-text);border-color:var(--critical-border)}
 .filter-sep{width:1px;height:20px;background:var(--border)}
-.sort-select,.action-select{padding:5px 10px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;outline:none}
+.sort-select{padding:5px 10px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;outline:none}
 .tt-head{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 120px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
 .tt-head span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
 .tt-row{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 120px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;align-items:center;background:var(--surface)}
-.tt-row:last-child{border-bottom:none}
-.tt-row:hover{background:var(--surface2)}
+.tt-row:last-child{border-bottom:none}.tt-row:hover{background:var(--surface2)}
 .tt-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);font-weight:500}
 .tt-info{overflow:hidden}
 .tt-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .tt-sub{font-size:11px;color:var(--text3)}
-.tt-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%}
 .b-critical{background:var(--critical-bg);color:var(--critical-text);border:1px solid var(--critical-border)}.b-critical::before{background:var(--critical-text)}
 .b-high{background:var(--high-bg);color:var(--high-text);border:1px solid var(--high-border)}.b-high::before{background:var(--high-text)}
 .b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
 .b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
-.b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
+.b-open{background:var(--open-bg);color:var(--open-text)}.b-open::before{background:var(--open-text)}
+.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-inprogress::before{background:var(--inprog-text)}
+.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}.b-closed::before,.b-resolved::before{background:var(--closed-text)}
+.b-pending_approval{background:var(--pending-bg);color:var(--pending-text)}.b-pending_approval::before{background:var(--pending-text)}
+.b-waiting_for_info{background:#fff8ec;color:#8a4500}.b-waiting_for_info::before{background:#8a4500}
 .b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
-.detail-panel{position:absolute;right:0;top:0;height:100%;width:480px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
+.detail-panel{position:absolute;right:0;top:0;height:100%;width:500px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
 .detail-panel.open{transform:translateX(0)}
 .dp-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
 .dp-header-info{flex:1;overflow:hidden}
@@ -93,19 +91,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .dp-section{padding:14px 18px;border-bottom:1px solid var(--border)}
 .dp-section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
 .dp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.dp-row:last-child{border:none}
-.dp-row-label{color:var(--text3)}
-.dp-row-val{font-weight:500;text-align:right}
+.dp-row:last-child{border:none}.dp-row-label{color:var(--text3)}.dp-row-val{font-weight:500;text-align:right}
 .dp-desc{font-size:12px;color:var(--text2);line-height:1.7}
 .comment-item{padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;border-left:2px solid var(--accent)}
+.comment-item.internal{border-left-color:#f59e0b;background:#fffbeb}
 .comment-item:last-child{margin-bottom:0}
 .comment-meta{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:'DM Mono',monospace}
 .comment-text{font-size:12px;color:var(--text);line-height:1.6}
-.status-chip{padding:4px 10px;font-size:11px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;border:1.5px solid transparent;transition:all .12s}
-.sc-open{background:var(--open-bg);color:var(--open-text);border-color:var(--high-border)}
-.sc-inprogress{background:var(--inprog-bg);color:var(--inprog-text);border-color:var(--medium-border)}
-.sc-resolved{background:var(--closed-bg);color:var(--closed-text);border-color:var(--low-border)}
-.status-chip.current{box-shadow:0 0 0 2px currentColor}
 .dp-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0}
 .dp-footer textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;transition:border .12s}
 .dp-footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
@@ -118,6 +110,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .empty-icon{font-size:32px;margin-bottom:10px}.empty-title{font-size:14px;font-weight:600;margin-bottom:4px}.empty-sub{font-size:12px;color:var(--text3)}
 .loading{padding:40px;text-align:center;color:var(--text3);font-size:13px}
 .cat-item{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border)}.cat-item:last-child{border-bottom:none}.cat-name{flex:1;font-size:12px}.cat-count{font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text2);min-width:20px;text-align:right}.cat-bar-wrap{width:50px;height:4px;background:var(--surface3);border-radius:4px;overflow:hidden}.cat-bar{height:100%;background:var(--accent);border-radius:4px}
+.sbar{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid transparent;transition:all .12s}
+.sbar:hover{opacity:.8}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
 </style>
 </head>
@@ -194,8 +188,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <button class="filter-chip on" id="fc-all" onclick="setFilter('all','fc')">All</button>
         <button class="filter-chip" id="fc-open" onclick="setFilter('open','fc')">Open</button>
         <button class="filter-chip" id="fc-inprogress" onclick="setFilter('inprogress','fc')">In Progress</button>
+        <button class="filter-chip" id="fc-waiting_for_info" onclick="setFilter('waiting_for_info','fc')">⏳ Waiting</button>
+        <button class="filter-chip" id="fc-pending_approval" onclick="setFilter('pending_approval','fc')">🔐 Approval</button>
         <button class="filter-chip" id="fc-resolved" onclick="setFilter('resolved','fc')">Resolved</button>
         <button class="filter-chip crit" id="fc-critical" onclick="setFilter('critical','fc')">⚡ Critical</button>
+        <button class="filter-chip" id="fc-hardware" onclick="setFilter('hardware','fc')">🖥️ Hardware</button>
         <div class="filter-sep"></div>
         <select class="sort-select" id="sort-sel" onchange="renderList()">
           <option value="date-desc">Newest first</option>
@@ -238,38 +235,63 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 let currentUser=null, currentProfile=null;
 let allTickets=[], techList=[], currentFilter='all', selectedId=null;
 const PORD={critical:0,high:1,medium:2,low:3};
+const HW_CATS=['Hardware','Onboarding','Offboarding'];
 
-// ── Auth guard ─────────────────────────────────────────────────
+// ── Auth ────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   const session = await getSession();
   if (!session) { location.href='index.html'; return; }
   currentUser = session.user;
   currentProfile = await getProfile(currentUser.id);
-  if (!currentProfile || !['technician','admin'].includes(currentProfile.role)) { location.href='index.html'; return; }
-  const initials = (currentProfile.full_name||'T').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('sb-avatar').textContent = initials;
-  document.getElementById('sb-name').textContent = currentProfile.full_name || currentProfile.email;
+  if (!currentProfile || !['technician','admin','manager','tl'].includes(currentProfile.role)) {
+    location.href='index.html'; return;
+  }
+  const initials=(currentProfile.full_name||'T').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('sb-avatar').textContent=initials;
+  document.getElementById('sb-name').textContent=currentProfile.full_name||currentProfile.email;
   await loadTickets();
   await loadTechList();
   renderDash();
 });
 
+// ── Load tickets ────────────────────────────────────────────────
 async function loadTickets() {
-  const { data } = await db.from('tickets')
-    .select(`*, creator:profiles!created_by(full_name,email), assignee:profiles!assigned_to(full_name,email), comments(id)`)
-    .order('created_at', { ascending: false });
-  allTickets = (data||[]).map(t=>({...t, id:t.ticket_no, uid:t.id}));
-  const open = allTickets.filter(t=>t.status==='open'||t.status==='inprogress').length;
-  const mine = allTickets.filter(t=>t.assigned_to===currentUser.id&&(t.status==='open'||t.status==='inprogress')).length;
-  const ob=document.getElementById('open-badge'); ob.textContent=open; ob.style.display=open>0?'':'none';
-  const mb=document.getElementById('mine-badge'); mb.textContent=mine; mb.style.display=mine>0?'':'none';
+  const {data,error} = await db.from('tickets')
+    .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assigned_to,started_at,resolved_at,resolution_minutes,creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,phone),assignee:profiles!assigned_to(full_name,email),comments(id)')
+    .order('created_at',{ascending:false});
+
+  if (error) {
+    // fallback query without new columns
+    const {data:d2,error:e2} = await db.from('tickets')
+      .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assigned_to,creator:profiles!created_by(id,full_name,email),assignee:profiles!assigned_to(full_name,email),comments(id)')
+      .order('created_at',{ascending:false});
+    if (e2) {
+      console.error('loadTickets:', e2.message);
+      const el=document.getElementById('dash-recent');
+      if(el) el.innerHTML='<div style="padding:16px;color:var(--critical-text);font-size:12px"><strong>Cannot load tickets.</strong><br>Please run SETUP-run-first.sql in Supabase SQL Editor.</div>';
+      document.getElementById('dash-metrics').innerHTML='<div style="grid-column:span 4;padding:16px;color:var(--critical-text);font-size:12px">Run SETUP-run-first.sql to fix permissions</div>';
+      return;
+    }
+    allTickets=(d2||[]).map(t=>({...t,id:t.ticket_no,uid:t.id}));
+  } else {
+    allTickets=(data||[]).map(t=>({...t,id:t.ticket_no,uid:t.id}));
+  }
+
+  const open=allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
+  const mine=allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
+  const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge');
+  if(ob){ob.textContent=open; ob.style.display=open?'':'none';}
+  if(mb){mb.textContent=mine; mb.style.display=mine?'':'none';}
 }
 
 async function loadTechList() {
-  const { data } = await db.from('profiles').select('id,full_name').in('role',['technician','admin']).order('full_name');
-  techList = data||[];
+  try {
+    const {data}=await db.from('profiles').select('id,full_name,role').in('role',['technician','admin','manager','tl']).order('full_name');
+    techList=data||[];
+  } catch(e){techList=[];}
 }
 
+// ── Navigation ──────────────────────────────────────────────────
 function show(v) {
   ['dashboard','tickets','mine'].forEach(x=>{document.getElementById('view-'+x).style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -281,27 +303,29 @@ function show(v) {
   if(v==='mine') renderMine();
 }
 
+// ── Dashboard ───────────────────────────────────────────────────
 function renderDash() {
-  const total=allTickets.length, open=allTickets.filter(t=>t.status==='open').length,
-    inp=allTickets.filter(t=>t.status==='inprogress').length, crit=allTickets.filter(t=>t.priority==='critical'&&t.status!=='resolved'&&t.status!=='closed').length,
-    res=allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
+  const total=allTickets.length,
+    open=allTickets.filter(t=>t.status==='open').length,
+    inp=allTickets.filter(t=>t.status==='inprogress').length,
+    crit=allTickets.filter(t=>t.priority==='critical'&&!['resolved','closed'].includes(t.status)).length;
   document.getElementById('dash-metrics').innerHTML=`
     <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Tickets</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--critical-text)">${crit}</div><div class="m-lbl">Critical</div></div>
   `;
-  const recent=allTickets.slice(0,7);
-  document.getElementById('dash-recent').innerHTML=recent.map(t=>`
+  const recent=allTickets.slice(0,8);
+  document.getElementById('dash-recent').innerHTML=recent.length?recent.map(t=>`
     <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
       <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
       <div style="flex:1;overflow:hidden">
-        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.id} — ${t.title}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} <span style="color:var(--text3)">${t.creator?.full_name||''}</span></div>
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.id} — ${t.title}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} <span>${t.creator?.full_name||''}</span></div>
       </div>
       <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
     </div>
-  `).join('');
+  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Run SETUP-run-first.sql to add sample data</div></div>';
   const cats={};
   allTickets.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
   const maxC=Math.max(...Object.values(cats),1);
@@ -310,9 +334,12 @@ function renderDash() {
   `).join('');
 }
 
+// ── Filter & List ───────────────────────────────────────────────
 function setFilter(f,prefix) {
   currentFilter=f;
-  ['all','open','inprogress','resolved','critical'].forEach(k=>{const el=document.getElementById(prefix+'-'+k);if(el)el.classList.toggle('on',k===f);});
+  ['all','open','inprogress','waiting_for_info','pending_approval','resolved','critical','hardware'].forEach(k=>{
+    const el=document.getElementById(prefix+'-'+k); if(el) el.classList.toggle('on',k===f);
+  });
   renderList();
 }
 
@@ -321,7 +348,10 @@ function renderList() {
   const sort=document.getElementById('sort-sel')?.value||'date-desc';
   let list=allTickets.filter(t=>{
     if(currentFilter==='critical') return t.priority==='critical';
+    if(currentFilter==='pending_approval') return t.status==='pending_approval';
+    if(currentFilter==='waiting_for_info') return t.status==='waiting_for_info';
     if(currentFilter==='resolved') return t.status==='resolved'||t.status==='closed';
+    if(currentFilter==='hardware') return HW_CATS.includes(t.category)||t.status==='pending_approval';
     if(currentFilter!=='all') return t.status===currentFilter;
     return true;
   }).filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q));
@@ -330,18 +360,21 @@ function renderList() {
   else list.sort((a,b)=>b.created_at?.localeCompare(a.created_at));
   document.getElementById('ticket-count-label').textContent=list.length+' ticket'+(list.length!==1?'s':'');
   document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>`
-    <div class="tt-row" onclick="openPanel('${t.uid}')">
+    <div class="tt-row" onclick="openPanel('${t.uid}')" style="${HW_CATS.includes(t.category)||t.status==='pending_approval'?'background:#fdfcff':''}">
       <span class="tt-id">${t.id}</span>
-      <div class="tt-info"><div class="tt-title">${t.title}</div><div class="tt-sub">${t.assignee?.full_name||'Unassigned'}</div></div>
+      <div class="tt-info">
+        <div class="tt-title">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</div>
+        <div class="tt-sub">${t.assignee?.full_name||'Unassigned'} · ${t.creator?.full_name||''}</div>
+      </div>
       <div>${tagBadge(t.category)}</div><div>${prioBadge(t.priority)}</div><div>${statusBadge(t.status)}</div>
-      <span style="font-size:12px;color:var(--text2)">${t.creator?.full_name||'—'}</span>
+      <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${t.created_at?.slice(0,10)}</span>
     </div>
-  `).join(''):'<div class="empty"><div class="empty-icon">??</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
+  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
 }
 
 function renderMine() {
   const mine=allTickets.filter(t=>t.assigned_to===currentUser.id);
-  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s'+''):'';
+  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s':'');
   document.getElementById('mine-list').innerHTML=mine.length?mine.map(t=>`
     <div class="tt-row" onclick="openPanel('${t.uid}')">
       <span class="tt-id">${t.id}</span>
@@ -352,20 +385,39 @@ function renderMine() {
   `).join(''):'<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No tickets assigned to you</div></div>';
 }
 
+// ── Open Panel ──────────────────────────────────────────────────
 async function openPanel(uid) {
   selectedId=uid;
-  const {data:t}=await db.from('tickets').select(`*,creator:profiles!created_by(full_name,email,department,phone),assignee:profiles!assigned_to(full_name,email),comments(id,body,created_at,author:profiles!author_id(full_name))`).eq('id',uid).single();
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,open_cabin,phone),assignee:profiles!assigned_to(full_name,email),comments(id,body,created_at,is_internal,author:profiles!author_id(full_name,role))').eq('id',uid).single();
   if(!t) return;
-  const techOptions=techList.map(tech=>`<option value="${tech.id}"${t.assigned_to===tech.id?' selected':''}>${tech.full_name}</option>`).join('');
+
+  const roleLabel={technician:'Technician',admin:'Admin',manager:'Manager',tl:'TL'};
+  const techOptions=techList.map(u=>`<option value="${u.id}"${t.assigned_to===u.id?' selected':''}>${u.full_name} (${roleLabel[u.role]||u.role})</option>`).join('');
+
+  const resTime=t.resolution_minutes
+    ?(t.resolution_minutes<60?t.resolution_minutes+'m':Math.round(t.resolution_minutes/60*10)/10+'h')
+    :t.started_at?calcElapsed(t.started_at)+' (ongoing)':'—';
+
+  const statusBtns=[
+    {v:'open',l:'Open',bg:'var(--open-bg)',color:'var(--open-text)',border:'var(--high-border)'},
+    {v:'inprogress',l:'Working',bg:'var(--inprog-bg)',color:'var(--inprog-text)',border:'var(--medium-border)'},
+    {v:'waiting_for_info',l:'Waiting for Info',bg:'#fff8ec',color:'#8a4500',border:'#ffd89a'},
+    {v:'resolved',l:'Resolved',bg:'var(--closed-bg)',color:'var(--closed-text)',border:'var(--low-border)'},
+    {v:'closed',l:'Closed',bg:'var(--surface3)',color:'var(--text2)',border:'var(--border2)'},
+  ].map(s=>{
+    const active=t.status===s.v;
+    return `<button onclick="quickStatus('${s.v}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:${active?'600':'400'};background:${active?s.bg:'var(--surface2)'};color:${active?s.color:'var(--text2)'};border:1px solid ${active?s.border:'var(--border2)'};">${s.l}</button>`;
+  }).join('');
+
   document.getElementById('dp-id').textContent=t.ticket_no;
   document.getElementById('dp-title').textContent=t.title;
   document.getElementById('dp-body').innerHTML=`
     <div class="dp-section">
       <div class="dp-section-title">Status — click to change</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="status-chip sc-open${t.status==='open'?' current':''}" onclick="quickStatus('open')">Open</button>
-        <button class="status-chip sc-inprogress${t.status==='inprogress'?' current':''}" onclick="quickStatus('inprogress')">In Progress</button>
-        <button class="status-chip sc-resolved${t.status==='resolved'?' current':''}" onclick="quickStatus('resolved')">Resolved</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${statusBtns}
+        ${t.status==='pending_approval'?`
+          <button onclick="approveHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0">✓ Approve</button>
+          <button onclick="rejectHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9">✗ Reject</button>`:''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${tagBadge(t.category)}</div>
     </div>
@@ -373,59 +425,173 @@ async function openPanel(uid) {
       <div class="dp-section-title">Requester</div>
       <div class="dp-row"><span class="dp-row-label">Name</span><span class="dp-row-val">${t.creator?.full_name||'—'}</span></div>
       <div class="dp-row"><span class="dp-row-label">Email</span><span class="dp-row-val">${t.creator?.email||'—'}</span></div>
-      <div class="dp-row"><span class="dp-row-label">Department</span><span class="dp-row-val">${t.creator?.department||'—'}</span></div>
+      ${t.creator?.employee_id?`<div class="dp-row"><span class="dp-row-label">Emp ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.creator.employee_id}</span></div>`:''}
+      ${t.creator?.phone?`<div class="dp-row"><span class="dp-row-label">Phone</span><span class="dp-row-val">${t.creator.phone}</span></div>`:''}
+      ${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).length?`<div class="dp-row"><span class="dp-row-label">Location</span><span class="dp-row-val">${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).join(' · ')}</span></div>`:''}
       ${t.asset_tag?`<div class="dp-row"><span class="dp-row-label">Asset</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.asset_tag}</span></div>`:''}
       <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
     </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Resolution Time</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Started</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.started_at?t.started_at.slice(0,16).replace('T',' '):'Not started'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Resolved</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.resolved_at?t.resolved_at.slice(0,16).replace('T',' '):'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Total</div><div style="font-size:14px;font-weight:600;color:var(--accent)">${resTime}</div></div>
+      </div>
+    </div>
     <div class="dp-section"><div class="dp-section-title">Description</div><div class="dp-desc">${t.description}</div></div>
-    ${t.comments?.length?`<div class="dp-section"><div class="dp-section-title">Comments (${t.comments.length})</div>${t.comments.map(c=>`<div class="comment-item"><div class="comment-meta">${c.author?.full_name||'Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="comment-text">${c.body}</div></div>`).join('')}</div>`:''}
+    <div class="dp-section">
+      <div class="dp-section-title">Comments</div>
+      ${t.comments?.length?t.comments.map(c=>`
+        <div class="comment-item${c.is_internal?' internal':''}">
+          <div class="comment-meta">${c.author?.full_name||'Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}${c.is_internal?' <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px">Internal</span>':''}</div>
+          <div class="comment-text">${c.body}</div>
+        </div>
+      `).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
+    </div>
   `;
   document.getElementById('dp-footer').innerHTML=`
     <div style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Assign to</div>
-      <select id="assign-sel" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
-        <option value="">— Unassigned —</option>${techOptions}
-      </select>
+      <div style="display:flex;gap:8px">
+        <select id="assign-sel" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">— Unassigned —</option>${techOptions}
+        </select>
+        <button class="btn btn-sm" onclick="assignToSelf()" style="flex-shrink:0;font-size:11px">👤 Take It</button>
+      </div>
     </div>
-    <textarea id="dp-comment" rows="2" placeholder="Add a comment or update for the requester…"></textarea>
+    <textarea id="dp-comment" rows="2" placeholder="Add a work comment (visible to requester)…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;margin-bottom:6px"></textarea>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+      <input type="checkbox" id="is-internal" style="accent-color:var(--accent)">
+      <label for="is-internal" style="font-size:11px;color:var(--text3);cursor:pointer">🔒 Internal note (hidden from requester)</label>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">📎 Attach screenshot (optional)</div>
+      <input type="file" id="screenshot-upload" accept="image/*" style="font-size:11px;color:var(--text2);width:100%">
+      <div id="upload-status" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+    </div>
     <div class="dp-footer-row">
-      <button class="btn btn-primary btn-sm" onclick="saveUpdate()">Save Update</button>
+      <button class="btn btn-primary btn-sm" onclick="saveUpdate()">💾 Save Update</button>
+      <button class="btn btn-sm" onclick="closePanel()">Cancel</button>
     </div>
   `;
   document.getElementById('detail-panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
 }
 
-async function quickStatus(s) {
-  await db.from('tickets').update({status:s,updated_at:new Date().toISOString()}).eq('id',selectedId);
-  toast('Status → '+statusLabel(s));
-  await loadTickets();
-  openPanel(selectedId);
-  renderList();
+function calcElapsed(s) {
+  const m=Math.round((Date.now()-new Date(s))/60000);
+  return m<60?m+'m':Math.round(m/60*10)/10+'h';
 }
 
+function assignToSelf() {
+  const sel=document.getElementById('assign-sel');
+  const opt=[...sel.options].find(o=>o.value===currentUser.id);
+  if(opt){sel.value=currentUser.id; toast('Set to yourself — click Save Update to confirm');}
+  else toast('Your profile not found in list');
+}
+
+// ── Quick Status ────────────────────────────────────────────────
+async function quickStatus(s) {
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+  const now=new Date().toISOString();
+  const updates={status:s,updated_at:now};
+  if(s==='inprogress'&&!t.started_at) updates.started_at=now;
+  if((s==='resolved'||s==='closed')&&!t.resolved_at) {
+    updates.resolved_at=now;
+    if(t.started_at) updates.resolution_minutes=Math.round((new Date(now)-new Date(t.started_at))/60000);
+  }
+  if(s==='open'&&(t.status==='resolved'||t.status==='closed')) {
+    updates.resolved_at=null; updates.resolution_minutes=null;
+  }
+  await db.from('tickets').update(updates).eq('id',selectedId);
+  try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
+  toast('Status → '+statusLabel(s));
+  await loadTickets(); openPanel(selectedId); renderList();
+}
+
+// ── Save Update ─────────────────────────────────────────────────
 async function saveUpdate() {
   const assignId=document.getElementById('assign-sel').value||null;
-  const comment=document.getElementById('dp-comment').value.trim();
-  const updates={updated_at:new Date().toISOString()};
-  if(assignId!==undefined) updates.assigned_to=assignId||null;
+  let comment=document.getElementById('dp-comment').value.trim();
+  const isInternal=document.getElementById('is-internal')?.checked||false;
+  const fileInput=document.getElementById('screenshot-upload');
+  const now=new Date().toISOString();
+  const updates={updated_at:now};
+
+  // Screenshot upload
+  if(fileInput?.files?.length) {
+    const file=fileInput.files[0];
+    document.getElementById('upload-status').textContent='Uploading…';
+    try {
+      const ext=file.name.split('.').pop();
+      const path='tickets/'+selectedId+'/'+Date.now()+'.'+ext;
+      const {error:upErr}=await db.storage.from('ticket-attachments').upload(path,file,{upsert:true});
+      if(upErr) throw upErr;
+      const {data:urlData}=db.storage.from('ticket-attachments').getPublicUrl(path);
+      comment=(comment?comment+' | ':'')+('Screenshot: '+urlData.publicUrl);
+      document.getElementById('upload-status').textContent='✓ Uploaded';
+    } catch(e){ document.getElementById('upload-status').textContent='Upload failed: '+e.message; }
+  }
+
+  // Assignment
+  if(assignId!==undefined) {
+    updates.assigned_to=assignId||null;
+    if(assignId) {
+      const {data:tc}=await db.from('tickets').select('started_at,status').eq('id',selectedId).single();
+      if(!tc?.started_at&&tc?.status==='open') { updates.started_at=now; updates.status='inprogress'; }
+    }
+  }
   await db.from('tickets').update(updates).eq('id',selectedId);
-  if(comment) await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment});
+
+  // Comment
+  if(comment) {
+    await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment,is_internal:isInternal});
+    if(!isInternal) {
+      const {data:t2}=await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+      try{ await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); }catch(e){}
+    }
+  }
+
+  // Notify assignee
+  if(assignId) {
+    const {data:tech}=await db.from('profiles').select('full_name,email').eq('id',assignId).single();
+    const {data:tkt}=await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
+    if(tech?.email!==currentProfile.email) {
+      try{ await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); }catch(e){}
+    }
+  }
+
   toast('Ticket updated');
-  await loadTickets();
-  openPanel(selectedId);
-  renderList();
-  if(document.getElementById('view-dashboard').classList.contains('active')) renderDash();
+  await loadTickets(); openPanel(selectedId); renderList();
+  if(document.getElementById('view-dashboard').style.display!=='none') renderDash();
+}
+
+// ── Hardware Approve/Reject ─────────────────────────────────────
+async function approveHardware(uid) {
+  const reason=prompt('Approval note (optional):')||'';
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'open',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  try{ await db.functions.invoke('send-notification',{body:{type:'hardware_approved',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); }catch(e){}
+  toast('Hardware request approved'); await loadTickets(); openPanel(uid); renderList();
+}
+
+async function rejectHardware(uid) {
+  const reason=prompt('Reason for rejection (required):');
+  if(!reason) return;
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'closed',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  try{ await db.functions.invoke('send-notification',{body:{type:'hardware_rejected',ticket_no:t.ticket_no,title:t.title,requester_email:t.creator.email,requester_name:t.creator.full_name,manager_name:currentProfile.full_name,reason}}); }catch(e){}
+  toast('Hardware request rejected'); await loadTickets(); openPanel(uid); renderList();
 }
 
 function closePanel(){document.getElementById('detail-panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selectedId=null;}
-
-function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}
-function statusBadge(s){return`<span class="badge b-${s}" style="border:none">${statusLabel(s)}</span>`;}
-function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
+function prioBadge(p){return '<span class="badge b-'+p+'">'+cap(p)+'</span>';}
+function statusBadge(s){return '<span class="badge b-'+s+'" style="border:none">'+statusLabel(s)+'</span>';}
+function tagBadge(t){return '<span class="badge b-tag">'+t+'</span>';}
 function pDot(p){return{critical:'#a61e1e',high:'#8a4500',medium:'#1e40af',low:'#14532d'}[p]||'#aaa';}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
+function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pending Approval',waiting_for_info:'Waiting for Info'};return m[s]||cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
