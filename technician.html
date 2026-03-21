@@ -239,7 +239,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 
 <script>
 let currentUser=null, currentProfile=null;
-let allTickets=[], techList=[], currentFilter='all', selectedId=null;
+let allTickets=[], techList=[], approverList=[], currentFilter='all', selectedId=null;
 const PORD={critical:0,high:1,medium:2,low:3};
 
 // ── Auth guard ─────────────────────────────────────────────────
@@ -258,19 +258,33 @@ window.addEventListener('load', async () => {
 });
 
 async function loadTickets() {
-  const { data } = await db.from('tickets')
-    .select(`*, creator:profiles!created_by(full_name,email), assignee:profiles!assigned_to(full_name,email), comments(id)`)
+  // Technicians see ALL tickets — RLS policy must allow this (see SQL setup)
+  const { data, error } = await db.from('tickets')
+    .select(`ticket_no, id, title, category, priority, status, created_at, updated_at,
+             assigned_to, started_at, resolved_at, resolution_minutes,
+             creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,phone),
+             assignee:profiles!assigned_to(full_name,email),
+             comments(id)`)
     .order('created_at', { ascending: false });
-  allTickets = (data||[]).map(t=>({...t, id:t.ticket_no, uid:t.id}));
-  const open = allTickets.filter(t=>t.status==='open'||t.status==='inprogress').length;
-  const mine = allTickets.filter(t=>t.assigned_to===currentUser.id&&(t.status==='open'||t.status==='inprogress')).length;
-  const ob=document.getElementById('open-badge'); ob.textContent=open; ob.style.display=open>0?'':'none';
-  const mb=document.getElementById('mine-badge'); mb.textContent=mine; mb.style.display=mine>0?'':'none';
+
+  if (error) { console.error('loadTickets error:', error.message); }
+  allTickets = (data||[]).map(t=>({...t, id:t.ticket_no, uid:t.id, comment_count:t.comments?.length||0}));
+
+  const open = allTickets.filter(t=>t.status==='open'||t.status==='inprogress'||t.status==='waiting_for_info').length;
+  const mine = allTickets.filter(t=>t.assigned_to===currentUser.id&&!['resolved','closed'].includes(t.status)).length;
+  const ob=document.getElementById('open-badge'); ob.textContent=open; ob.style.display=open?'':'none';
+  const mb=document.getElementById('mine-badge'); mb.textContent=mine; mb.style.display=mine?'':'none';
 }
 
 async function loadTechList() {
-  const { data } = await db.from('profiles').select('id,full_name').in('role',['technician','admin']).order('full_name');
-  techList = data||[];
+  // Load technicians + admins + managers/TLs (for cross-assignment)
+  const [{ data: techData }, { data: approverData }] = await Promise.all([
+    db.from('profiles').select('id,full_name,role').in('role',['technician','admin','manager','tl']).order('full_name'),
+    db.from('hw_approvers').select('id,name,email').eq('active',true).order('name').catch(()=>({data:[]}))
+  ]);
+  techList = techData||[];
+  // Add external approvers as virtual entries (email-only, no profile id)
+  approverList = (approverData?.data||[]).map(a=>({id:'ext:'+a.email, full_name:a.name+' (Approver)', role:'approver', email:a.email}));
 }
 
 function show(v) {
@@ -358,88 +372,226 @@ function renderMine() {
 }
 
 async function openPanel(uid) {
-  selectedId=uid;
-  const {data:t}=await db.from('tickets').select(`*,creator:profiles!created_by(full_name,email,department,phone),assignee:profiles!assigned_to(full_name,email),comments(id,body,created_at,author:profiles!author_id(full_name))`).eq('id',uid).single();
-  if(!t) return;
-  const techOptions=techList.map(tech=>`<option value="${tech.id}"${t.assigned_to===tech.id?' selected':''}>${tech.full_name}</option>`).join('');
-  document.getElementById('dp-id').textContent=t.ticket_no;
-  document.getElementById('dp-title').textContent=t.title;
-  document.getElementById('dp-body').innerHTML=`
+  selectedId = uid;
+  const { data:t } = await db.from('tickets').select(`
+    *,
+    creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,open_cabin,phone),
+    assignee:profiles!assigned_to(full_name,email),
+    comments(id,body,created_at,is_internal,author:profiles!author_id(full_name,role))
+  `).eq('id', uid).single();
+  if (!t) return;
+
+  // Resolution time display
+  const resTime = t.resolution_minutes
+    ? (t.resolution_minutes < 60 ? t.resolution_minutes+'m' : Math.round(t.resolution_minutes/60*10)/10+'h')
+    : t.started_at ? calcElapsed(t.started_at) + ' (ongoing)' : '—';
+
+  // Build assignee options — technicians + admins + managers/TLs + external approvers
+  const allAssignees = [
+    ...techList.map(u => ({ id:u.id, label:`${u.full_name} (${u.role==='tl'?'TL':u.role==='manager'?'Mgr':cap(u.role)})` })),
+    ...approverList.map(u => ({ id:u.id, label:`${u.full_name}` }))
+  ];
+  const techOptions = allAssignees.map(u =>
+    `<option value="${u.id}"${t.assigned_to===u.id?' selected':''}>${u.label}</option>`
+  ).join('');
+
+  document.getElementById('dp-id').textContent = t.ticket_no;
+  document.getElementById('dp-title').textContent = t.title;
+
+  document.getElementById('dp-body').innerHTML = `
     <div class="dp-section">
       <div class="dp-section-title">Status — click to change</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="status-chip sc-open${t.status==='open'?' current':''}" onclick="quickStatus('open')">Open</button>
-        <button class="status-chip sc-inprogress${t.status==='inprogress'?' current':''}" onclick="quickStatus('inprogress')">Working</button>
-        <button class="status-chip" style="background:${t.status==='waiting_for_info'?'#fff8ec':'var(--surface2)'};color:${t.status==='waiting_for_info'?'#8a4500':'var(--text2)'};border:1px solid ${t.status==='waiting_for_info'?'#ffd89a':'var(--border2)'};padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit" onclick="quickStatus('waiting_for_info')">Waiting for Info</button>
-        <button class="status-chip sc-resolved${t.status==='resolved'?' current':''}" onclick="quickStatus('resolved')">Resolved</button>
-        <button class="status-chip" style="background:${t.status==='closed'?'var(--closed-bg)':'var(--surface2)'};color:${t.status==='closed'?'var(--closed-text)':'var(--text2)'};border:1px solid ${t.status==='closed'?'var(--low-border)':'var(--border2)'};padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit" onclick="quickStatus('closed')">Closed</button>
-        ${t.status==='pending_approval'?`<button class="status-chip" style="background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit" onclick="approveHardware('${t.id}')">✓ Approve Hardware</button><button class="status-chip" style="background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:2px" onclick="rejectHardware('${t.id}')">✗ Reject</button>`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+        ${['open','inprogress','waiting_for_info','resolved','closed'].map(s => {
+          const labels = {open:'Open',inprogress:'Working',waiting_for_info:'Waiting for Info',resolved:'Resolved',closed:'Closed'};
+          const colors = {
+            open:'var(--open-bg)/var(--open-text)/#ffd89a',
+            inprogress:'var(--inprog-bg)/var(--inprog-text)/var(--medium-border)',
+            waiting_for_info:'#fff8ec/#8a4500/#ffd89a',
+            resolved:'var(--closed-bg)/var(--closed-text)/var(--low-border)',
+            closed:'#f1f0eb/var(--text2)/var(--border2)'
+          }[s].split('/');
+          const active = t.status===s;
+          return `<button onclick="quickStatus('${s}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:${active?'600':'400'};background:${active?colors[0]:'var(--surface2)'};color:${active?colors[1]:'var(--text2)'};border:1px solid ${active?colors[2]:'var(--border2)'}">
+            ${labels[s]}
+          </button>`;
+        }).join('')}
+        ${t.status==='pending_approval'?`
+          <button onclick="approveHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0">✓ Approve</button>
+          <button onclick="rejectHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9">✗ Reject</button>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${tagBadge(t.category)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${tagBadge(t.category)} ${statusBadge(t.status)}</div>
     </div>
+
     <div class="dp-section">
       <div class="dp-section-title">Requester</div>
       <div class="dp-row"><span class="dp-row-label">Name</span><span class="dp-row-val">${t.creator?.full_name||'—'}</span></div>
       <div class="dp-row"><span class="dp-row-label">Email</span><span class="dp-row-val">${t.creator?.email||'—'}</span></div>
-      <div class="dp-row"><span class="dp-row-label">Department</span><span class="dp-row-val">${t.creator?.department||'—'}</span></div>
+      ${t.creator?.employee_id?`<div class="dp-row"><span class="dp-row-label">Emp ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.creator.employee_id}</span></div>`:''}
+      ${t.creator?.phone?`<div class="dp-row"><span class="dp-row-label">Phone</span><span class="dp-row-val">${t.creator.phone}</span></div>`:''}
+      ${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin,t.creator?.open_cabin].filter(Boolean).length?
+        `<div class="dp-row"><span class="dp-row-label">Location</span><span class="dp-row-val">${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin,t.creator?.open_cabin].filter(Boolean).join(' · ')}</span></div>`:''}
       ${t.asset_tag?`<div class="dp-row"><span class="dp-row-label">Asset</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.asset_tag}</span></div>`:''}
       <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
     </div>
+
+    <div class="dp-section">
+      <div class="dp-section-title">Resolution Time</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Started</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.started_at?t.started_at.slice(0,16).replace('T',' '):'Not started'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Resolved</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.resolved_at?t.resolved_at.slice(0,16).replace('T',' '):'—'}</div></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Total Time</div><div style="font-size:14px;font-weight:600;color:var(--accent)">${resTime}</div></div>
+      </div>
+    </div>
+
     <div class="dp-section"><div class="dp-section-title">Description</div><div class="dp-desc">${t.description}</div></div>
-    ${t.comments?.length?`<div class="dp-section"><div class="dp-section-title">Comments (${t.comments.length})</div>${t.comments.map(c=>`<div class="comment-item"><div class="comment-meta">${c.author?.full_name||'Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="comment-text">${c.body}</div></div>`).join('')}</div>`:''}
+
+    <div class="dp-section">
+      <div class="dp-section-title">Comments & Updates</div>
+      ${t.comments?.length ? t.comments.map(cm=>`
+        <div class="comment-item" style="${cm.is_internal?'border-left-color:#f59e0b;background:#fffbeb':''}" title="${cm.is_internal?'Internal note — not visible to requester':'Visible to requester'}">
+          <div class="comment-meta">${cm.author?.full_name||'Staff'} · ${cm.created_at?.slice(0,16).replace('T',' ')} ${cm.is_internal?'<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px;margin-left:4px">Internal</span>':''}</div>
+          <div class="comment-text">${cm.body}</div>
+        </div>
+      `).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
+    </div>
   `;
+
   document.getElementById('dp-footer').innerHTML=`
     <div style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Assign to</div>
-      <select id="assign-sel" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
-        <option value="">— Unassigned —</option>${techOptions}
-      </select>
+      <div style="display:flex;gap:8px">
+        <select id="assign-sel" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+          <option value="">— Unassigned —</option>${techOptions}
+        </select>
+        <button class="btn btn-sm" onclick="assignToSelf()" title="Assign to yourself" style="flex-shrink:0;font-size:11px">Take It</button>
+      </div>
     </div>
-    <textarea id="dp-comment" rows="2" placeholder="Add a comment or update for the requester…"></textarea>
+    <div style="margin-bottom:6px">
+      <textarea id="dp-comment" rows="2" placeholder="Add a work comment (visible to requester)…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5"></textarea>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+      <input type="checkbox" id="is-internal" style="accent-color:var(--accent)">
+      <label for="is-internal" style="font-size:11px;color:var(--text3);cursor:pointer">Internal note only (not shown to requester)</label>
+    </div>
     <div class="dp-footer-row">
       <button class="btn btn-primary btn-sm" onclick="saveUpdate()">Save Update</button>
+      <button class="btn btn-sm" onclick="closePanel()">Cancel</button>
     </div>
   `;
   document.getElementById('detail-panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
 }
 
+function calcElapsed(startedAt) {
+  const mins = Math.round((Date.now() - new Date(startedAt)) / 60000);
+  return mins < 60 ? mins+'m' : Math.round(mins/60*10)/10+'h';
+}
+
+function assignToSelf() {
+  const sel = document.getElementById('assign-sel');
+  const myOption = [...sel.options].find(o => o.value === currentUser.id);
+  if (myOption) { sel.value = currentUser.id; toast('Set to yourself — click Save Update to confirm'); }
+  else toast('Your profile not found in technician list');
+}
+
 async function quickStatus(s) {
-  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
-  const {data:comment_latest} = await db.from('comments').select('body').eq('ticket_id',selectedId).order('created_at',{ascending:false}).limit(1).single().catch(()=>({data:null}));
-  await db.from('tickets').update({status:s,updated_at:new Date().toISOString()}).eq('id',selectedId);
-  // Email requester about status change
+  const { data:t } = await db.from('tickets')
+    .select('*,creator:profiles!created_by(full_name,email)')
+    .eq('id', selectedId).single();
+
+  const now = new Date().toISOString();
+  const updates = { status:s, updated_at:now };
+
+  // Track started_at when technician first starts working
+  if (s === 'inprogress' && !t.started_at) {
+    updates.started_at = now;
+  }
+
+  // Calculate resolution time when closed or resolved
+  if ((s === 'resolved' || s === 'closed') && !t.resolved_at) {
+    updates.resolved_at = now;
+    if (t.started_at) {
+      updates.resolution_minutes = Math.round((new Date(now) - new Date(t.started_at)) / 60000);
+    }
+  }
+
+  // If reopened, clear resolution fields
+  if (s === 'open' && (t.status === 'resolved' || t.status === 'closed')) {
+    updates.resolved_at = null;
+    updates.resolution_minutes = null;
+  }
+
+  await db.from('tickets').update(updates).eq('id', selectedId);
+
+  // Email requester
   try {
-    await db.functions.invoke('send-notification',{body:{
+    await db.functions.invoke('send-notification', { body:{
       type:'status_changed', ticket_no:t.ticket_no, title:t.title,
       new_status:s, requester_email:t.creator?.email, requester_name:t.creator?.full_name,
-      technician_name:currentProfile.full_name, comment:comment_latest?.body||null
+      technician_name:currentProfile.full_name
     }});
   } catch(e){}
+
   toast('Status → '+statusLabel(s));
   await loadTickets(); openPanel(selectedId); renderList();
 }
 
 async function saveUpdate() {
-  const assignId=document.getElementById('assign-sel').value||null;
-  const comment=document.getElementById('dp-comment').value.trim();
-  const updates={updated_at:new Date().toISOString()};
-  if(assignId!==undefined) updates.assigned_to=assignId||null;
-  await db.from('tickets').update(updates).eq('id',selectedId);
-  if(comment) {
-    await db.from('comments').insert({ticket_id:selectedId,author_id:currentUser.id,body:comment});
-    // Email requester about comment
-    const {data:t2} = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
-    try { await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); } catch(e){}
+  const assignId   = document.getElementById('assign-sel').value || null;
+  const comment    = document.getElementById('dp-comment').value.trim();
+  const isInternal = document.getElementById('is-internal')?.checked || false;
+  const now        = new Date().toISOString();
+  const updates    = { updated_at: now };
+
+  // Handle assignment — check for external approver (id starts with 'ext:')
+  if (assignId !== undefined) {
+    if (assignId && assignId.startsWith('ext:')) {
+      // External approver — store their email in a note, don't update assigned_to
+      const approverEmail = assignId.replace('ext:', '');
+      await db.from('comments').insert({
+        ticket_id: selectedId, author_id: currentUser.id,
+        body: `Ticket forwarded to approver: ${approverEmail}`,
+        is_internal: true
+      });
+    } else {
+      updates.assigned_to = assignId || null;
+      // Auto-start if assigning and not yet started
+      const { data: tc } = await db.from('tickets').select('started_at,status').eq('id',selectedId).single();
+      if (assignId && !tc?.started_at && tc?.status === 'open') {
+        updates.started_at = now;
+        updates.status = 'inprogress';
+      }
+    }
   }
-  if(assignId) {
-    const {data:tech} = await db.from('profiles').select('full_name,email').eq('id',assignId).single();
-    const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
-    try { await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); } catch(e){}
+
+  await db.from('tickets').update(updates).eq('id', selectedId);
+
+  // Add comment
+  if (comment) {
+    await db.from('comments').insert({
+      ticket_id: selectedId, author_id: currentUser.id,
+      body: comment, is_internal: isInternal
+    });
+    // Only email requester if not internal
+    if (!isInternal) {
+      const { data:t2 } = await db.from('tickets').select('ticket_no,title,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+      try { await db.functions.invoke('send-notification',{body:{type:'comment_added',ticket_no:t2.ticket_no,title:t2.title,requester_email:t2.creator?.email,requester_name:t2.creator?.full_name,commenter_name:currentProfile.full_name,comment}}); } catch(e){}
+    }
   }
+
+  // Notify assigned person
+  if (assignId && !assignId.startsWith('ext:')) {
+    const { data:tech } = await db.from('profiles').select('full_name,email').eq('id',assignId).single();
+    const { data:tkt }  = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
+    if (tech?.email !== currentProfile.email) { // don't notify self
+      try { await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt.ticket_no,title:tkt.title,category:tkt.category,priority:tkt.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt.creator?.full_name}}); } catch(e){}
+    }
+  }
+
   toast('Ticket updated');
   await loadTickets(); openPanel(selectedId); renderList();
-  if(document.getElementById('view-dashboard').classList.contains('active')) renderDash();
+  if (document.getElementById('view-dashboard').style.display!=='none') renderDash();
 }
 
 function closePanel(){document.getElementById('detail-panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selectedId=null;}
