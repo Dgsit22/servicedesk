@@ -422,7 +422,7 @@ function renderList() {
 
 function renderMine() {
   const mine=allTickets.filter(t=>t.assigned_to===currentUser.id);
-  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s'+''):'';
+  document.getElementById('mine-count-label').textContent=mine.length+' ticket'+(mine.length!==1?'s':'');
   document.getElementById('mine-list').innerHTML=mine.length?mine.map(t=>`
     <div class="tt-row" onclick="openPanel('${t.uid}')">
       <span class="tt-id">${t.id}</span>
@@ -622,8 +622,7 @@ async function saveUpdate() {
       const { data: upData, error: upErr } = await db.storage.from('ticket-attachments').upload(path, file, {upsert:true});
       if (upErr) throw upErr;
       const { data: urlData } = db.storage.from('ticket-attachments').getPublicUrl(path);
-      comment = (comment ? comment + '
-' : '') + '📎 Screenshot: ' + urlData.publicUrl;
+      comment = (comment ? comment + ' | ' : '') + 'Screenshot: ' + urlData.publicUrl;
       document.getElementById('upload-status').textContent = '✓ Uploaded';
     } catch(e) {
       document.getElementById('upload-status').textContent = '⚠ Upload failed: '+e.message+' (comment saved without image)';
