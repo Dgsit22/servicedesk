@@ -91,6 +91,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .b-open{background:var(--open-bg);color:var(--open-text)}.b-open::before{background:var(--open-text)}
 .b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-inprogress::before{background:var(--inprog-text)}
 .b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}.b-closed::before,.b-resolved::before{background:var(--closed-text)}
+.b-waiting_for_info{background:#fff8ec;color:#8a4500}.b-waiting_for_info::before{background:#8a4500}
 .b-pending_approval{background:var(--pending-bg);color:var(--pending-text)}.b-pending_approval::before{background:var(--pending-text)}
 .b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
 /* Forms */
@@ -326,7 +327,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
                 <select id="hw-qty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
               </div>
               <div class="fg"><label>Required By</label><input id="hw-date" type="date"></div>
-              <div class="fg"><label>Budget (₹)</label><input id="hw-budget" placeholder="e.g. 80,000"></div>
+              <div class="fg"><label>Priority</label>
+                <select id="hw-priority"><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option><option value="low">Low</option></select>
+              </div>
               <div class="fg full"><label>Business Justification <span>*</span></label><textarea id="hw-just" rows="3" placeholder="Why is this hardware needed?"></textarea></div>
               <div class="fg full"><label>Preferred Specs (optional)</label><textarea id="hw-specs" rows="2" placeholder="e.g. 16GB RAM, 512GB SSD"></textarea></div>
             </div>
@@ -534,6 +537,7 @@ function setF(f){
 function renderCards() {
   const q=(document.getElementById('srch')?.value||'').toLowerCase();
   let list=tickets.filter(t=>{
+    if(filter==='waiting_for_info') return t.status==='waiting_for_info';
     if(filter==='closed') return t.status==='closed'||t.status==='resolved';
     if(filter!=='all') return t.status===filter;
     return true;
@@ -581,7 +585,16 @@ async function openPanel(uid) {
     <div class="ps"><div class="ps-title">Description</div><div class="pdesc">${t.description}</div></div>
     ${t.comments?.length?`<div class="ps"><div class="ps-title">Updates (${t.comments.length})</div>${t.comments.map(c=>`<div class="cmt"><div class="cmt-meta">${c.author?.full_name||'IT Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}</div><div class="cmt-body">${c.body}</div></div>`).join('')}</div>`:''}
   `;
+  const canReopen = t.status==='closed'||t.status==='resolved';
+  const isWaiting = t.status==='waiting_for_info';
   document.getElementById('p-foot').innerHTML=`
+    ${canReopen?`<div style="margin-bottom:10px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span style="font-size:12px;color:var(--text2)">This ticket is ${t.status}. Need more help?</span>
+      <button class="btn btn-sm btn-primary" onclick="reopenTicket('${t.id}','${t.ticket_no}')">↩ Reopen</button>
+    </div>`:''}
+    ${isWaiting?`<div style="margin-bottom:10px;padding:10px;background:#fff8ec;border:1px solid #ffd89a;border-radius:var(--radius-sm)">
+      <span style="font-size:12px;color:#8a4500">⏳ IT is waiting for more information from you. Please reply below.</span>
+    </div>`:''}
     <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Add a comment</div>
     <textarea id="p-cmt" rows="2" placeholder="Ask a question or provide more details…"></textarea>
     <div class="panel-foot-row"><button class="btn btn-primary btn-sm" onclick="addComment()">Send</button></div>
@@ -667,7 +680,7 @@ async function submitHardware() {
   const desc=`Hardware: ${type}\nQty: ${qty}\nRequired By: ${document.getElementById('hw-date').value||'ASAP'}\nBudget: ₹${document.getElementById('hw-budget').value||'Not specified'}\nSpecs: ${document.getElementById('hw-specs').value||'Standard'}\n\nJustification:\n${just}`;
   const {data,error}=await db.from('tickets').insert({
     title:`Hardware Request — ${type} (x${qty})`,description:desc,
-    category:'Hardware',priority:'medium',status:'pending_approval',
+    category:'Hardware',priority:hwPrio,status:'pending_approval',
     created_by:user.id,department:profile.department
   }).select('ticket_no,id').single();
   document.getElementById('hw-btn').disabled=false;
@@ -719,6 +732,38 @@ async function submitExit() {
   toast('✓ Exit request '+data.ticket_no+' submitted.'); await loadTickets(); show('tickets');
 }
 
+// ── Hardware approve/reject (manager/TL from employee portal) ──
+async function approveHardwareMgr(uid, ticketNo) {
+  const reason = prompt('Approval note (optional):') || 'Approved';
+  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'open',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  await db.from('comments').insert({ticket_id:uid,author_id:user.id,body:'Hardware request approved by '+profile.full_name+'. Reason: '+reason});
+  await notify('hardware_approved',{ticket_no:t.ticket_no,title:t.title,requester_email:t.creator?.email,requester_name:t.creator?.full_name,manager_name:profile.full_name,reason});
+  toast('✓ Hardware approved — IT will process the request.');
+  await loadTickets(); openPanel(uid);
+}
+
+async function rejectHardwareMgr(uid, ticketNo) {
+  const reason = prompt('Reason for rejection (required):');
+  if(!reason) return;
+  const {data:t} = await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await db.from('tickets').update({status:'closed',approval_reason:reason,updated_at:new Date().toISOString()}).eq('id',uid);
+  await db.from('comments').insert({ticket_id:uid,author_id:user.id,body:'Hardware request rejected by '+profile.full_name+'. Reason: '+reason});
+  await notify('hardware_rejected',{ticket_no:t.ticket_no,title:t.title,requester_email:t.creator?.email,requester_name:t.creator?.full_name,manager_name:profile.full_name,reason});
+  toast('Hardware request rejected — requester notified.');
+  await loadTickets(); closePanel();
+}
+
+// ── Reopen ticket ──────────────────────────────────────────────
+async function reopenTicket(uid, ticketNo) {
+  if (!confirm('Reopen ticket '+ticketNo+'? IT will be notified.')) return;
+  await db.from('tickets').update({status:'open',updated_at:new Date().toISOString()}).eq('id',uid);
+  await db.from('comments').insert({ticket_id:uid,author_id:user.id,body:'Requester reopened this ticket.'});
+  toast('✓ Ticket '+ticketNo+' reopened — IT has been notified.');
+  await loadTickets();
+  closePanel();
+}
+
 // ── Email notification helper ──────────────────────────────────
 async function notify(type, payload) {
   try { await db.functions.invoke('send-notification',{body:{type,...payload}}); }
@@ -727,7 +772,7 @@ async function notify(type, payload) {
 
 // ── Helpers ────────────────────────────────────────────────────
 function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}
-function stBadge(s){const m={open:'Open',inprogress:'In Progress',closed:'Closed',resolved:'Resolved',pending_approval:'Pending Approval'};return`<span class="badge b-${s}" style="border:none">${m[s]||cap(s)}</span>`;}
+function stBadge(s){const m={open:'Open',inprogress:'In Progress',closed:'Closed',resolved:'Resolved',pending_approval:'Pending Approval',waiting_for_info:'Waiting for Info'};return`<span class="badge b-${s}" style="border:none">${m[s]||cap(s)}</span>`;}
 function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
