@@ -507,7 +507,7 @@ async function quickStatus(s) {
   await db.from('tickets').update(updates).eq('id',selectedId);
   try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
   toast('Status → '+statusLabel(s));
-  await loadTickets(); openPanel(selectedId); renderList();
+  await loadTickets(); openPanel(selectedId); renderList(); renderMine();
 }
 
 // ── Save Update ─────────────────────────────────────────────────
@@ -563,7 +563,7 @@ async function saveUpdate() {
   }
 
   toast('Ticket updated');
-  await loadTickets(); openPanel(selectedId); renderList();
+  await loadTickets(); openPanel(selectedId); renderList(); renderMine();
   if(document.getElementById('view-dashboard').style.display!=='none') renderDash();
 }
 
