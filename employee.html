@@ -655,14 +655,37 @@ async function loadHwCategories() {
   }
 }
 
-// ── Load approvers (managers/TLs/admins) from profiles ────────
+// ── Load approvers from hw_approvers table + manager/TL profiles ─
 async function loadApprovers() {
   const sel = document.getElementById('hw-approver');
-  const { data } = await db.from('profiles').select('id,full_name,email,role').in('role',['manager','tl','admin']).order('full_name');
-  if (data && data.length) {
-    sel.innerHTML = '<option value="">Select approver…</option>' + data.map(u=>`<option value="${u.email}" data-name="${u.full_name}">${u.full_name} (${u.role === 'tl' ? 'Team Lead' : u.role === 'admin' ? 'Admin' : 'Manager'})</option>`).join('');
+  sel.innerHTML = '<option value="">Loading approvers…</option>';
+
+  const [{ data: dedicated }, { data: roleUsers }] = await Promise.all([
+    db.from('hw_approvers').select('name,email').eq('active', true).order('name'),
+    db.from('profiles').select('full_name,email,role').in('role',['manager','tl','admin']).order('full_name')
+  ]);
+
+  // Merge both, deduplicate by email
+  const seen = new Set();
+  const all = [];
+
+  (dedicated||[]).forEach(a => {
+    if (!seen.has(a.email)) { seen.add(a.email); all.push({ name: a.name, email: a.email, tag: 'Approver' }); }
+  });
+
+  (roleUsers||[]).forEach(u => {
+    if (!seen.has(u.email)) {
+      seen.add(u.email);
+      const tag = u.role==='tl'?'Team Lead':u.role==='admin'?'Admin':'Manager';
+      all.push({ name: u.full_name, email: u.email, tag });
+    }
+  });
+
+  if (all.length) {
+    sel.innerHTML = '<option value="">Select approver…</option>' +
+      all.map(a => `<option value="${a.email}" data-name="${a.name}">${a.name} (${a.tag})</option>`).join('');
   } else {
-    sel.innerHTML = '<option value="">No approvers found — ask admin to assign manager/TL roles</option>';
+    sel.innerHTML = '<option value="">No approvers found — contact admin</option>';
   }
 }
 
