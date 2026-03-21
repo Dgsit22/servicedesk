@@ -310,21 +310,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="fgrid">
               <div class="fg"><label>Full Name</label><input id="hw-name" readonly></div>
               <div class="fg"><label>Email</label><input id="hw-email" type="email" readonly></div>
-              <div class="fg"><label>Department</label><input id="hw-dept" readonly></div>
-              <div class="fg"><label>Manager Email <span>*</span></label><input id="hw-mgr" type="email" placeholder="manager@digiclarity.in"></div>
+              <div class="fg"><label>Employee ID</label><input id="hw-empid" readonly></div>
+              <div class="fg"><label>Approver <span>*</span></label>
+                <select id="hw-approver"><option value="">Loading approvers…</option></select>
+              </div>
             </div>
           </div>
           <div class="fsec">
             <div class="fsec-title">Hardware Details</div>
             <div class="fgrid">
               <div class="fg"><label>Hardware Type <span>*</span></label>
-                <select id="hw-type">
-                  <option value="">Select…</option>
-                  <option>Laptop — Windows</option><option>Laptop — MacBook</option><option>Desktop Computer</option>
-                  <option>Monitor</option><option>iPhone</option><option>Android Phone</option>
-                  <option>Keyboard / Mouse</option><option>Headset</option><option>Webcam</option>
-                  <option>Docking Station</option><option>Printer</option><option>Other</option>
-                </select>
+                <select id="hw-type"><option value="">Loading categories…</option></select>
               </div>
               <div class="fg"><label>Quantity</label>
                 <select id="hw-qty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
@@ -356,9 +352,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="fgrid">
               <div class="fg"><label>Employee Name <span>*</span></label><input id="ob-name" placeholder="Full name"></div>
               <div class="fg"><label>Employee Email <span>*</span></label><input id="ob-email" type="email" placeholder="new.joiner@digiclarity.in"></div>
-              <div class="fg"><label>Department <span>*</span></label>
-                <select id="ob-dept"><option value="">Select…</option><option>Engineering</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Management</option><option>IT</option><option>Sales</option><option>Other</option></select>
-              </div>
+              <div class="fg"><label>Employee ID (optional)</label><input id="ob-empid" placeholder="EMP-001"></div>
               <div class="fg"><label>Joining Date <span>*</span></label><input id="ob-date" type="date"></div>
               <div class="fg"><label>Reporting Manager</label><input id="ob-mgr" placeholder="Manager name"></div>
               <div class="fg"><label>Work Location</label>
@@ -465,7 +459,10 @@ window.addEventListener('load', async () => {
   // Prefill forms
   ['f-name','hw-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.full_name||'';});
   ['f-email','hw-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.email||'';});
-  ['f-dept','hw-dept'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.department||'';});
+  ['f-empid','hw-empid'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=profile.employee_id||'—';});
+  // Load hardware categories and approvers from DB
+  await loadHwCategories();
+  await loadApprovers();
 
   const h=new Date().getHours();
   document.getElementById('greeting').textContent=(h<12?'Good morning':'h'<17?'Good afternoon':'Good evening')+', '+(profile.full_name?.split(' ')[0]||'');
@@ -619,7 +616,7 @@ async function submitGeneral() {
   document.getElementById('f-btn').disabled=true;
   const {data,error}=await db.from('tickets').insert({
     title,description:desc,category:document.getElementById('f-cat').value,
-    priority:prio,created_by:user.id,department:profile.department,
+    priority:prio,created_by:user.id,
     asset_tag:document.getElementById('f-asset').value.trim()
   }).select('ticket_no,id').single();
   document.getElementById('f-btn').disabled=false;
@@ -627,6 +624,33 @@ async function submitGeneral() {
   await notify('ticket_created',{ticket_no:data.ticket_no,title,requester_email:profile.email,requester_name:profile.full_name});
   toast('✓ Request '+data.ticket_no+' submitted — you will receive an email confirmation.');
   clearForm(); await loadTickets(); show('tickets');
+}
+
+// ── Load hardware categories from DB ──────────────────────────
+async function loadHwCategories() {
+  const sel = document.getElementById('hw-type');
+  const { data } = await db.from('hw_categories').select('name').eq('active', true).order('sort_order');
+  if (data && data.length) {
+    sel.innerHTML = '<option value="">Select hardware type…</option>' + data.map(c=>`<option>${c.name}</option>`).join('');
+  } else {
+    // fallback if table doesn't exist yet
+    sel.innerHTML = `<option value="">Select…</option>
+      <option>Laptop — Windows</option><option>Laptop — MacBook</option><option>Desktop Computer</option>
+      <option>Monitor</option><option>iPhone</option><option>Android Phone</option>
+      <option>Keyboard / Mouse</option><option>Headset</option><option>Webcam</option>
+      <option>Docking Station</option><option>Printer</option><option>Other</option>`;
+  }
+}
+
+// ── Load approvers (managers/TLs/admins) from profiles ────────
+async function loadApprovers() {
+  const sel = document.getElementById('hw-approver');
+  const { data } = await db.from('profiles').select('id,full_name,email,role').in('role',['manager','tl','admin']).order('full_name');
+  if (data && data.length) {
+    sel.innerHTML = '<option value="">Select approver…</option>' + data.map(u=>`<option value="${u.email}" data-name="${u.full_name}">${u.full_name} (${u.role === 'tl' ? 'Team Lead' : u.role === 'admin' ? 'Admin' : 'Manager'})</option>`).join('');
+  } else {
+    sel.innerHTML = '<option value="">No approvers found — ask admin to assign manager/TL roles</option>';
+  }
 }
 
 // ── Submit Hardware ────────────────────────────────────────────
