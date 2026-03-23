@@ -14,7 +14,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px}
 body{
   display:flex;align-items:center;justify-content:center;
   min-height:100vh;
-  background:linear-gradient(135deg,#1a56db 0%,#00A3B4 100%);
+  background:linear-gradient(135deg,#1B4DB8 0%,#00A8B4 100%);
 }
 
 /* ── Outer card ── */
@@ -28,7 +28,8 @@ body{
 /* ── LEFT PANEL ── */
 .left{
   flex:1;position:relative;overflow:hidden;
-  background:linear-gradient(145deg,#1a56db 0%,#0e3fa8 50%,#00A3B4 100%);
+  background:linear-gradient(145deg,#1B4DB8 0%,#F0177A 55%,#F5C200 100%);
+  border-top:5px solid #F0177A;
   padding:48px 44px;display:flex;flex-direction:column;justify-content:space-between;
 }
 
@@ -52,7 +53,7 @@ body{
 }
 .shape-2{
   position:absolute;width:100px;height:100px;border-radius:50%;
-  background:rgba(0,163,180,.35);
+  background:rgba(245,194,0,.3);
   top:60px;right:30px;
 }
 .shape-3{
@@ -92,7 +93,7 @@ body{
   width:42px;height:42px;border-radius:50%;
   background:#fff;display:flex;align-items:center;justify-content:center;
 }
-.logo-circle svg{fill:#1a56db}
+.logo-circle svg{fill:#1B4DB8}
 .logo-name{color:#fff;font-size:16px;font-weight:700;letter-spacing:-.3px}
 .logo-name span{color:rgba(255,255,255,.6);font-weight:400;font-size:12px;display:block;margin-top:1px}
 
@@ -113,12 +114,13 @@ body{
   display:grid;grid-template-columns:repeat(5,1fr);gap:7px;
   z-index:1;
 }
-.dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3)}.dot:nth-child(3n+1){background:rgba(245,194,0,.6)}.dot:nth-child(3n+2){background:rgba(240,23,122,.5)}.dot:nth-child(3n+3){background:rgba(0,168,180,.5)}
 
 /* ── RIGHT PANEL ── */
 .right{
   width:360px;flex-shrink:0;
   background:#fff;
+  border-top:5px solid #F5C200;
   display:flex;flex-direction:column;justify-content:center;
   padding:52px 44px;
 }
@@ -138,12 +140,12 @@ body{
   transition:all .15s;position:relative;
   box-shadow:0 1px 4px rgba(0,0,0,.06);
 }
-.btn-google:hover{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1);transform:translateY(-1px)}
+.btn-google:hover{border-color:#1B4DB8;box-shadow:0 0 0 3px rgba(27,77,184,.12);transform:translateY(-1px)}
 .btn-google:active{transform:translateY(0);box-shadow:none}
 .btn-google:disabled{opacity:.55;cursor:not-allowed;transform:none}
 .btn-spinner{
   display:none;width:17px;height:17px;
-  border:2px solid rgba(26,86,219,.2);border-top-color:#1a56db;
+  border:2px solid rgba(26,86,219,.2);border-top-color:#1B4DB8;
   border-radius:50%;animation:spin .7s linear infinite;
   position:absolute;right:18px;
 }
@@ -159,11 +161,11 @@ body{
 
 /* Info box */
 .info-box{
-  background:#f7f9ff;border:1px solid #e8effd;border-radius:10px;
+  background:#fff9f0;border:1px solid #fde68a;border-radius:10px;
   padding:14px 16px;
 }
 .info-box p{font-size:12px;color:#6b6860;line-height:1.6}
-.info-box strong{color:#1a56db;font-weight:600}
+.info-box strong{color:#1B4DB8;font-weight:600}
 
 /* Status message */
 #msg{
@@ -184,7 +186,7 @@ body{
 /* Page loader */
 #page-loader{
   position:fixed;inset:0;
-  background:linear-gradient(135deg,#1a56db,#00A3B4);
+  background:linear-gradient(135deg,#1B4DB8,#F0177A);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:18px;z-index:100;transition:opacity .3s;
 }
