@@ -472,30 +472,44 @@ function renderList() {
   else if(sort==='date-asc') list.sort((a,b)=>a.created_at?.localeCompare(b.created_at));
   else list.sort((a,b)=>b.created_at?.localeCompare(a.created_at));
   document.getElementById('ticket-count-label').textContent=list.length+' ticket'+(list.length!==1?'s':'');
-  document.getElementById('ticket-list').innerHTML=list.length?list.map(t=>{
-    const sla=slaStatus(t);
-    const due=dueStatus(t);
-    const rowBg=sla?.bg||(HW_CATS.includes(t.category)||t.status==='pending_approval'?'#fdfcff':'');
-    return `
-    <div class="tt-row" id="row-${t.uid}" style="grid-template-columns:36px 80px 1fr 120px 80px 90px 100px;${rowBg?'background:'+rowBg:''}">
-      <span onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" value="${t.uid}" onchange="updateBulkBar()" style="accent-color:var(--accent)"></span>
-      <span class="tt-id" onclick="openPanel('${t.uid}')" style="cursor:pointer">${t.id}</span>
-      <div class="tt-info" onclick="openPanel('${t.uid}')" style="cursor:pointer">
-        <div class="tt-title">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</div>
-        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px">
-          ${t.assignee?.full_name
-            ? `<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`
-            : `<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">⚠ Unassigned</span>`}
-          ${sla?`<span style="background:${sla.bg};color:${sla.color};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">${sla.icon} ${sla.label}</span>`:''}
-          ${due?`<span style="background:${due.bg};color:${due.color};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">📅 ${due.label}</span>`:''}
-          <span style="font-size:10px;color:var(--text3)">${t.creator?.full_name||''}</span>
-        </div>
-      </div>
-      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${tagBadge(t.category)}</div>
-      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${prioBadge(t.priority)}</div>
-      <div onclick="openPanel('${t.uid}')" style="cursor:pointer">${statusBadge(t.status)}</div>
-      <span onclick="openPanel('${t.uid}')" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;cursor:pointer">${t.created_at?.slice(0,10)}</span>
-    </div>`}).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
+  document.getElementById('ticket-list').innerHTML = (function(){
+  if (!list.length) return '<div class="empty"><div class="empty-icon">&#128194;</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
+  var rows = '';
+  for (var i=0; i<list.length; i++) {
+    var t = list[i];
+    var sla = slaStatus(t);
+    var due = dueStatus(t);
+    var isHw = HW_CATS.includes(t.category) || t.status === 'pending_approval';
+    var rowBg = sla ? sla.bg : isHw ? '#fdfcff' : '';
+    var hwIcon = HW_CATS.includes(t.category) ? '&#128421; ' : '&#9881; ';
+    var uid = t.uid || '';
+    var tid = t.id || '';
+    var date = t.created_at ? t.created_at.slice(0,10) : '';
+    var creator = (t.creator && t.creator.full_name) ? t.creator.full_name : '';
+    var aName = (t.assignee && t.assignee.full_name) ? t.assignee.full_name : '';
+    var assigneeHtml = aName
+      ? '<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128100; ' + aName + '</span>'
+      : '<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#9888; Unassigned</span>';
+    var slaHtml = sla ? '<span style="background:' + sla.bg + ';color:' + sla.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">' + sla.icon + ' ' + sla.label + '</span>' : '';
+    var dueHtml = due ? '<span style="background:' + due.bg + ';color:' + due.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128197; ' + due.label + '</span>' : '';
+    var rowStyle = 'grid-template-columns:36px 80px 1fr 120px 80px 90px 100px;' + (rowBg ? 'background:' + rowBg : '');
+    rows += '<div class="tt-row" id="row-' + uid + '" style="' + rowStyle + '">'
+      + '<span onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" value="' + uid + '" onchange="updateBulkBar()" style="accent-color:var(--accent)"></span>'
+      + '<span class="tt-id" onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + tid + '</span>'
+      + '<div class="tt-info" onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">'
+        + '<div class="tt-title">' + hwIcon + (t.title || '') + '</div>'
+        + '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px">' + assigneeHtml + slaHtml + dueHtml
+          + '<span style="font-size:10px;color:var(--text3)">' + creator + '</span>'
+        + '</div>'
+      + '</div>'
+      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + tagBadge(t.category) + '</div>'
+      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + prioBadge(t.priority) + '</div>'
+      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + statusBadge(t.status) + '</div>'
+      + '<span onclick="openPanel(\'' + uid + '\')" style="font-size:11px;color:var(--text3);cursor:pointer">' + date + '</span>'
+      + '</div>';
+  }
+  return rows;
+})();
 }
 
 function renderMine() {
