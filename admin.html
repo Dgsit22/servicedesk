@@ -124,6 +124,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h8v2H2v-2z"/></svg>
         Task Templates
       </button>
+      <button class="nav-btn" id="nav-subcategories" onclick="show('subcategories')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2a1 1 0 011-1h4a1 1 0 011 1v1h6a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V2zm5 1H2v10h11V4H6V3z"/><path d="M3 6h8v1H3V6zm0 2h8v1H3V8zm0 2h5v1H3v-1z"/></svg>
+        Subcategories
+      </button>
       <button class="nav-btn" id="nav-hardware" onclick="show('hardware')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H2a2 2 0 01-2-2V4zm2-1a1 1 0 00-1 1v5a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H2zm6 8v2h3v1H5v-1h3v-2H8z"/></svg>
         Hardware Settings
@@ -238,6 +242,91 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="card-header"><h3>Exit / Offboarding Tasks</h3><button class="btn btn-primary btn-sm" onclick="addTask('exit')">+ Add Task</button></div>
             <div id="exit-tasks"><div class="loading">Loading…</div></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBCATEGORIES -->
+    <div class="view" id="view-subcategories">
+      <div class="topbar">
+        <div><div class="topbar-title">Subcategories</div><div class="topbar-sub">Manage items shown in the employee request form</div></div>
+        <button class="btn" onclick="loadSubcategories()">&#8635; Refresh</button>
+      </div>
+      <div class="scroll-area">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px">
+
+          <!-- Hardware Request items -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>🖥️ Hardware Request Items</h3>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Service Request → Hardware Request</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addSubcat('service_request','Hardware Request')">+ Add</button>
+            </div>
+            <div id="subcat-hardware"><div class="loading">Loading…</div></div>
+          </div>
+
+          <!-- Access Request items -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>🔑 Access Request Items</h3>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Service Request → Access Request</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addSubcat('service_request','Access Request')">+ Add</button>
+            </div>
+            <div id="subcat-access"><div class="loading">Loading…</div></div>
+          </div>
+
+          <!-- OneLogin fields info -->
+          <div class="card">
+            <div class="card-header"><h3>🔐 OneLogin Access Fields</h3></div>
+            <div style="padding:16px">
+              <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+                When an employee selects <strong>OneLogin Access</strong>, they will see these fields:
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">App Name</span>
+                  <div style="height:32px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;display:flex;align-items:center;font-size:12px;color:var(--text3)">e.g. Salesforce, Jira, Slack…</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Group Name</span>
+                  <div style="height:32px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;display:flex;align-items:center;font-size:12px;color:var(--text3)">e.g. Sales-Team, Dev-Leads…</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;font-size:11px;color:var(--text3)">These fields are always shown for OneLogin Access — no admin configuration needed.</div>
+            </div>
+          </div>
+
+          <!-- Ebridge info -->
+          <div class="card">
+            <div class="card-header"><h3>🌐 Ebridge Access</h3></div>
+            <div style="padding:16px">
+              <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+                When an employee selects <strong>Ebridge Access</strong>, they will see a description field only. No additional fields are required.
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">
+                <span style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase">Description</span>
+                <div style="margin-top:6px;height:60px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--text3)">Describe what Ebridge access you need and why…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Software Installation info -->
+          <div class="card" style="grid-column:span 2">
+            <div class="card-header">
+              <div>
+                <h3>💿 Software Installation</h3>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Service Request → Software Installation</div>
+              </div>
+            </div>
+            <div style="padding:16px;font-size:12px;color:var(--text2);line-height:1.7">
+              Software Installation does not have sub-items — employees fill in the software name and description directly in the form. No configuration needed here.
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -423,13 +512,14 @@ async function loadTickets_() {
 
 // ── Navigation ─────────────────────────────────────────────────
 function show(v) {
-  ['overview','users','tickets','templates','hardware','settings','reports'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
+  ['overview','users','tickets','templates','subcategories','hardware','settings','reports'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('view-'+v); if(el) el.style.cssText='display:flex;flex-direction:column;height:100%';
   const nb=document.getElementById('nav-'+v); if(nb) nb.classList.add('active');
   if(v==='tickets') renderTickets();
   if(v==='templates') loadTemplates();
   if(v==='hardware') loadHardwareSettings();
+  if(v==='subcategories') loadSubcategories();
   if(v==='reports') loadReports();
 }
 
@@ -605,7 +695,7 @@ function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pend
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
 
 document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
-['users','tickets','hardware','settings','reports','templates'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+['users','tickets','hardware','settings','reports','templates','subcategories'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
 
 // ── Reports ─────────────────────────────────────────────────────
 let reportCharts=[];
@@ -859,6 +949,68 @@ document.getElementById('te-overlay')?.addEventListener('click',function(e){if(e
 
 // ── Hardware Settings ─────────────────────────────────────────
 async function loadHardwareSettings(){loadHwCatList();loadApproverList();}
+
+// ── Subcategories ──────────────────────────────────────────────
+async function loadSubcategories() {
+  await Promise.all([
+    loadSubcatList('Hardware Request','subcat-hardware'),
+    loadSubcatList('Access Request','subcat-access')
+  ]);
+}
+
+async function loadSubcatList(category, elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Loading…</div>';
+  const {data, error} = await db.from('subcategories').select('*')
+    .eq('category', category).order('sort_order');
+  if (error) {
+    el.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--critical-text)">⚠ '+error.message+'<br><br>Run <strong>ADD-subcategories.sql</strong> in SQL Editor.</div>';
+    return;
+  }
+  if (!data?.length) {
+    el.innerHTML = '<div style="padding:14px 16px;font-size:12px;color:var(--text3)">No items yet. Click + Add.</div>';
+    return;
+  }
+  const rtype = 'service_request';
+  el.innerHTML = data.map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px">
+      <span style="flex:1;${!s.active?'color:var(--text3);text-decoration:line-through':''}">${s.item}</span>
+      <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${s.active?'var(--low-bg)':'var(--surface3)'};color:${s.active?'var(--low-text)':'var(--text3)'}">${s.active?'Active':'Hidden'}</span>
+      <button onclick="toggleSubcat('${s.id}',${!s.active},'${category}')" style="padding:3px 9px;font-size:11px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2)">${s.active?'Hide':'Show'}</button>
+      <button onclick="editSubcat('${s.id}','${s.item.replace(/'/g,"\'")}','${category}')" style="padding:3px 9px;font-size:11px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--surface2)">Edit</button>
+      <button onclick="deleteSubcat('${s.id}','${s.item.replace(/'/g,"\'")}','${category}')" style="padding:3px 9px;font-size:11px;border:1px solid var(--critical-border);border-radius:5px;cursor:pointer;background:var(--critical-bg);color:var(--critical-text)">Delete</button>
+    </div>`).join('');
+}
+
+async function addSubcat(rtype, category) {
+  const item = prompt('New item name for ' + category + ':');
+  if (!item?.trim()) return;
+  const {data:rows} = await db.from('subcategories').select('sort_order').eq('category',category).order('sort_order',{ascending:false}).limit(1);
+  const {error} = await db.from('subcategories').insert({request_type:rtype,category,item:item.trim(),active:true,sort_order:(rows?.[0]?.sort_order||0)+1});
+  if (error) { toast('Error: '+error.message); return; }
+  toast('✓ Item added'); loadSubcategories();
+}
+
+async function editSubcat(id, current, category) {
+  const item = prompt('Rename item:', current);
+  if (!item?.trim() || item.trim()===current) return;
+  const {error} = await db.from('subcategories').update({item:item.trim()}).eq('id',id);
+  if (error) { toast('Error: '+error.message); return; }
+  toast('✓ Renamed'); loadSubcategories();
+}
+
+async function deleteSubcat(id, name, category) {
+  if (!confirm('Delete "'+name+'"?')) return;
+  const {error} = await db.from('subcategories').delete().eq('id',id);
+  if (error) { toast('Error: '+error.message); return; }
+  toast('✓ Deleted'); loadSubcategories();
+}
+
+async function toggleSubcat(id, active, category) {
+  await db.from('subcategories').update({active}).eq('id',id);
+  toast(active?'✓ Item visible':'✓ Item hidden'); loadSubcategories();
+}
 // ── Task Templates ─────────────────────────────────────────────
 async function loadTemplates() {
   loadTaskList('onboarding');

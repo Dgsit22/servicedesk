@@ -4,52 +4,150 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ServiceDesk — My Tickets</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
-:root{--bg:#f0eeea;--surface:#fff;--surface2:#f7f6f3;--surface3:#eeedea;--border:#e2e0da;--border2:#d0cdc6;--text:#1c1b19;--text2:#6b6860;--text3:#a09e9a;--accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;--critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;--high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;--medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;--low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;--open-bg:#fff8ec;--open-text:#8a4500;--inprog-bg:#eef6ff;--inprog-text:#1e40af;--closed-bg:#f0fdf4;--closed-text:#14532d;--radius:10px;--radius-sm:6px;--shadow-lg:0 4px 24px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.06)}
+:root{
+  --bg:#f0f4ff;--surface:#fff;--surface2:#f7f8fc;--surface3:#eef1f8;
+  --border:#e2e7f0;--border2:#cdd4e8;
+  --text:#1c1b19;--text2:#4a5568;--text3:#94a3b8;
+  --accent:#1a56db;--accent-light:#e8effd;--accent-text:#1a3a8f;
+  --critical-bg:#fff1f1;--critical-border:#ffc9c9;--critical-text:#a61e1e;
+  --high-bg:#fff8ec;--high-border:#ffd89a;--high-text:#8a4500;
+  --medium-bg:#eef6ff;--medium-border:#bfdbfe;--medium-text:#1e40af;
+  --low-bg:#f0fdf4;--low-border:#bbf7d0;--low-text:#14532d;
+  --open-bg:#fff8ec;--open-text:#8a4500;
+  --inprog-bg:#eef6ff;--inprog-text:#1e40af;
+  --closed-bg:#f0fdf4;--closed-text:#14532d;
+  --radius:10px;--radius-sm:6px;
+  --shadow-lg:0 4px 24px rgba(0,0,0,.10),0 1px 4px rgba(0,0,0,.06);
+  --sb-width:230px;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* ── Shell ── */
 .shell{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.sb-brand{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
-.sb-brand-name{font-size:15px;font-weight:600;letter-spacing:-.3px}
-.sb-brand-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.sb-nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
-.sb-nav-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px 4px}
-.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s,color .12s}
-.nav-btn:hover{background:var(--surface2);color:var(--text)}
-.nav-btn.active{background:var(--accent-light);color:var(--accent-text);font-weight:500}
-.nav-badge{margin-left:auto;background:var(--accent-light);color:var(--accent-text);font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace;display:none}
-.sb-footer{padding:12px 14px;border-top:1px solid var(--border)}
+
+/* ── Sidebar — gradient like login ── */
+.sidebar{
+  width:var(--sb-width);flex-shrink:0;
+  background:linear-gradient(160deg,#1a56db 0%,#0e3fa8 55%,#00A3B4 100%);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+}
+/* Geometric shapes inside sidebar */
+.sidebar::before{
+  content:'';position:absolute;
+  width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  top:-60px;right:-60px;pointer-events:none;
+}
+.sidebar::after{
+  content:'';position:absolute;
+  width:140px;height:140px;border-radius:50%;
+  background:rgba(0,163,180,.2);
+  bottom:-40px;left:-40px;pointer-events:none;
+}
+.sb-shape{
+  position:absolute;width:70px;height:70px;
+  border:2px solid rgba(255,255,255,.1);border-radius:12px;
+  bottom:160px;right:20px;transform:rotate(15deg);pointer-events:none;
+}
+
+/* Brand */
+.sb-brand{
+  padding:22px 18px 18px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  position:relative;z-index:1;
+}
+.sb-brand-icon{
+  width:36px;height:36px;border-radius:9px;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  margin-bottom:10px;
+}
+.sb-brand-icon svg{fill:#1a56db}
+.sb-brand-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.sb-brand-sub{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px;letter-spacing:.02em}
+
+/* Nav */
+.sb-nav{padding:12px 10px;flex:1;display:flex;flex-direction:column;gap:2px;position:relative;z-index:1;overflow-y:auto}
+.sb-nav-label{
+  font-size:9px;font-weight:600;color:rgba(255,255,255,.4);
+  letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 4px;
+}
+.nav-btn{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;
+  border-radius:8px;cursor:pointer;font-size:12.5px;
+  color:rgba(255,255,255,.7);border:none;background:none;
+  width:100%;text-align:left;font-family:'Inter',sans-serif;
+  font-weight:500;transition:all .12s;
+}
+.nav-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.18);color:#fff;font-weight:600}
+.nav-btn svg{opacity:.8;flex-shrink:0}
+.nav-btn.active svg{opacity:1}
+.nav-badge{
+  margin-left:auto;background:rgba(255,255,255,.2);color:#fff;
+  font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;
+  font-family:'DM Mono',monospace;display:none;
+}
+
+/* Footer */
+.sb-footer{
+  padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);
+  position:relative;z-index:1;
+}
 .sb-user{display:flex;align-items:center;gap:10px}
-.sb-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sb-user-name{font-size:12px;font-weight:500}
-.sb-user-role{font-size:10px;color:var(--text3)}
-.signout-btn{margin-top:6px;padding:5px 10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;color:var(--text3);font-family:inherit;width:100%;text-align:left;transition:all .12s}
-.signout-btn:hover{background:var(--surface2);color:var(--text)}
+.sb-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.2);color:#fff;
+  font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border:1.5px solid rgba(255,255,255,.3);
+}
+.sb-user-name{font-size:12px;font-weight:600;color:#fff}
+.sb-user-role{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px}
+.signout-btn{
+  margin-top:8px;padding:6px 10px;font-size:11px;
+  border:1px solid rgba(255,255,255,.2);border-radius:7px;
+  cursor:pointer;background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;
+  width:100%;text-align:left;transition:all .12s;
+}
+.signout-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+
+/* ── Views ── */
 .view{display:none;flex-direction:column;height:100%;animation:fadeIn .18s ease}
 .view.active{display:flex}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.topbar-title{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
+
+/* ── Topbar ── */
+.topbar{
+  background:var(--surface);
+  border-bottom:2px solid #e8effd;
+  padding:14px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+  box-shadow:0 1px 8px rgba(26,86,219,.06);
+}
+.topbar-title{font-size:16px;font-weight:700;letter-spacing:-.4px;flex:1;color:var(--text)}
 .topbar-sub{font-size:12px;color:var(--text3);margin-top:1px;font-weight:400}
-.btn{padding:7px 15px;font-size:13px;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
+
+/* ── Buttons ── */
+.btn{padding:7px 15px;font-size:13px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap}
 .btn:hover{background:var(--surface2)}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:#1648c0;border-color:#1648c0}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(26,86,219,.25)}
+.btn-primary:hover{background:#1648c0;border-color:#1648c0;box-shadow:0 4px 12px rgba(26,86,219,.35)}
 .btn-sm{padding:5px 11px;font-size:12px}
 .btn-ghost{border-color:transparent;background:transparent;color:var(--text2)}
 .btn-ghost:hover{background:var(--surface2)}
-.scroll-area{flex:1;overflow-y:auto;padding:22px 24px}
+.scroll-area{flex:1;overflow-y:auto;padding:22px 24px;background:var(--bg)}
 /* Dashboard */
 .dash-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
-.metric-card .m-val{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace}
-.metric-card .m-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;border-left:3px solid var(--accent);box-shadow:0 2px 8px rgba(26,86,219,.06)}
+.metric-card .m-val{font-size:28px;font-weight:700;letter-spacing:-1px;line-height:1;font-family:'DM Mono',monospace}
+.metric-card .m-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 6px rgba(26,86,219,.04)}
 .card-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .card-header h3{font-size:13px;font-weight:600}
 /* Filters */
@@ -60,14 +158,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .search-input:focus{border-color:var(--accent);background:var(--surface)}
 .filter-chip{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:none;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:500;transition:all .12s}
 .filter-chip:hover{color:var(--text);border-color:var(--border2)}
-.filter-chip.on{background:var(--accent-light);color:var(--accent-text);border-color:var(--medium-border);font-weight:600}
+.filter-chip.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;box-shadow:0 2px 6px rgba(26,86,219,.25)}
 .filter-sep{width:1px;height:20px;background:var(--border)}
 /* Ticket table */
 .tt-head{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 80px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
 .tt-head span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
 .tt-row{display:grid;grid-template-columns:80px 1fr 130px 90px 100px 80px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;align-items:center;background:var(--surface)}
 .tt-row:last-child{border-bottom:none}
-.tt-row:hover{background:var(--surface2)}
+.tt-row:hover{background:#f0f4ff}
 .tt-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);font-weight:500}
 .tt-info{overflow:hidden}
 .tt-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
@@ -156,9 +254,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 <body>
 <div class="shell">
   <aside class="sidebar">
+    <div class="sb-shape"></div>
     <div class="sb-brand">
-      <div class="sb-brand-name">&#9632; ServiceDesk</div>
-      <div class="sb-brand-sub">IT Help Portal</div>
+      <div class="sb-brand-icon">
+        <svg width="18" height="18" viewBox="0 0 16 16"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>
+      </div>
+      <div class="sb-brand-name">ServiceDesk</div>
+      <div class="sb-brand-sub">IT Help Portal · Digiclarity</div>
     </div>
     <nav class="sb-nav">
       <div class="sb-nav-label">My Portal</div>
@@ -272,16 +374,85 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
               <div class="fg"><label>Phone (optional)</label><input id="f-phone" type="tel" placeholder="+91 98000 00000"></div>
             </div>
           </div>
+          <!-- STEP 1: Request Type -->
           <div class="form-section">
-            <div class="form-section-title">Issue Details</div>
-            <div class="form-grid-2">
-              <div class="fg full"><label>Subject <span>*</span></label><input id="f-title" type="text" placeholder="Short description of the issue"></div>
-              <div class="fg"><label>Category <span>*</span></label>
-                <select id="f-cat"><option>Hardware</option><option>Software</option><option>Network / VPN</option><option>Access &amp; Permissions</option><option>Email / Calendar</option><option>Printer / Scanner</option><option>Phone / Mobile</option><option>Other</option></select>
+            <div class="form-section-title">Step 1 — Request Type</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div id="rtype-incident" onclick="selectRequestType('incident')"
+                style="padding:16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:22px;margin-bottom:6px">🚨</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Incident</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">Something is broken or not working</div>
               </div>
-              <div class="fg"><label>Affected Asset (optional)</label><input id="f-asset" type="text" placeholder="e.g. LAPTOP-042"></div>
+              <div id="rtype-service" onclick="selectRequestType('service_request')"
+                style="padding:16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:22px;margin-bottom:6px">📋</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Service Request</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">Request for hardware, software or access</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Service Request sub-category (shown only for Service Request) -->
+          <div class="form-section" id="section-sr-cat" style="display:none">
+            <div class="form-section-title">Step 2 — What do you need?</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <div id="srcat-hardware" onclick="selectSRCat('Hardware Request')"
+                style="padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:20px;margin-bottom:5px">🖥️</div>
+                <div style="font-size:12px;font-weight:600">Hardware Request</div>
+              </div>
+              <div id="srcat-software" onclick="selectSRCat('Software Installation')"
+                style="padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:20px;margin-bottom:5px">💿</div>
+                <div style="font-size:12px;font-weight:600">Software Installation</div>
+              </div>
+              <div id="srcat-access" onclick="selectSRCat('Access Request')"
+                style="padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:20px;margin-bottom:5px">🔑</div>
+                <div style="font-size:12px;font-weight:600">Access Request</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3a: Hardware items -->
+          <div class="form-section" id="section-hw-items" style="display:none">
+            <div class="form-section-title">Step 3 — Select Hardware Item</div>
+            <div id="hw-items-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <div class="loading" style="grid-column:span 4">Loading items…</div>
+            </div>
+            <div class="fg full" style="margin-top:14px">
+              <label>Quantity</label>
+              <input id="f-hw-qty" type="number" min="1" value="1" style="width:100px">
+            </div>
+          </div>
+
+          <!-- STEP 3b: Access request type -->
+          <div class="form-section" id="section-access-type" style="display:none">
+            <div class="form-section-title">Step 3 — Access Type</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="access-items-grid">
+              <div class="loading" style="grid-column:span 2">Loading…</div>
+            </div>
+          </div>
+
+          <!-- STEP 4: OneLogin fields -->
+          <div class="form-section" id="section-onelogin" style="display:none">
+            <div class="form-section-title">Step 4 — OneLogin Details</div>
+            <div class="form-grid-2">
+              <div class="fg"><label>App Name <span>*</span></label><input id="f-app-name" type="text" placeholder="e.g. Salesforce, Jira, Slack"></div>
+              <div class="fg"><label>Group Name <span>*</span></label><input id="f-group-name" type="text" placeholder="e.g. Sales-Team, Dev-Leads"></div>
+            </div>
+          </div>
+
+          <!-- Subject & Description (always shown) -->
+          <div class="form-section" id="section-details">
+            <div class="form-section-title" id="details-label">Issue Details</div>
+            <div class="form-grid-2">
+              <div class="fg full"><label>Subject <span>*</span></label>
+                <input id="f-title" type="text" placeholder="Short description">
+              </div>
               <div class="fg full"><label>Description <span>*</span></label>
-                <textarea id="f-desc" rows="5" placeholder="Describe the problem in detail. Include error messages, when it started, and what you have already tried." oninput="updateCharCount(this,'desc-count',1200)"></textarea>
+                <textarea id="f-desc" rows="4" placeholder="Describe in detail…" oninput="updateCharCount(this,'desc-count',1200)"></textarea>
                 <div class="char-count" id="desc-count">0 / 1200 characters</div>
               </div>
             </div>
@@ -573,31 +744,159 @@ function selectPriority(p) {
 }
 function updateCharCount(el,cId,max){document.getElementById(cId).textContent=el.value.length+' / '+max+' characters';}
 function clearForm(){
-  ['f-title','f-desc','f-asset','f-phone'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value='';});
+  ['f-title','f-desc','f-phone','f-hw-qty','f-app-name','f-group-name'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value=id==='f-hw-qty'?'1':'';});
   selectPriority('medium');
   document.getElementById('form-err').style.display='none';
   document.getElementById('desc-count').textContent='0 / 1200 characters';
+  // Reset request type
+  selectedRequestType=''; selectedSRCat=''; selectedHwItem=''; selectedAccessItem='';
+  ['rtype-incident','rtype-service'].forEach(id=>{const e=document.getElementById(id);if(e){e.style.borderColor='var(--border)';e.style.background='';}});
+  ['section-sr-cat','section-hw-items','section-access-type','section-onelogin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+}
+
+// ── Form state ────────────────────────────────────────────────
+let selectedRequestType = '';
+let selectedSRCat = '';
+let selectedHwItem = '';
+let selectedAccessItem = '';
+
+function selectRequestType(rt) {
+  selectedRequestType = rt;
+  selectedSRCat = ''; selectedHwItem = ''; selectedAccessItem = '';
+  // Style cards
+  document.getElementById('rtype-incident').style.borderColor = rt==='incident'?'var(--accent)':'var(--border)';
+  document.getElementById('rtype-incident').style.background = rt==='incident'?'var(--accent-light)':'';
+  document.getElementById('rtype-service').style.borderColor = rt==='service_request'?'var(--accent)':'var(--border)';
+  document.getElementById('rtype-service').style.background = rt==='service_request'?'var(--accent-light)':'';
+  // Show/hide sections
+  document.getElementById('section-sr-cat').style.display = rt==='service_request'?'':'none';
+  document.getElementById('section-hw-items').style.display = 'none';
+  document.getElementById('section-access-type').style.display = 'none';
+  document.getElementById('section-onelogin').style.display = 'none';
+  document.getElementById('details-label').textContent = rt==='incident'?'Incident Details':'Request Details';
+  // Reset SR cat styles
+  ['hardware','software','access'].forEach(k=>{
+    const el=document.getElementById('srcat-'+k);
+    if(el){el.style.borderColor='var(--border)';el.style.background='';}
+  });
+}
+
+function selectSRCat(cat) {
+  selectedSRCat = cat;
+  selectedHwItem = ''; selectedAccessItem = '';
+  ['hardware','software','access'].forEach(k=>{
+    const el=document.getElementById('srcat-'+k);
+    if(el){el.style.borderColor='var(--border)';el.style.background='';}
+  });
+  const map={'Hardware Request':'hardware','Software Installation':'software','Access Request':'access'};
+  const activeEl=document.getElementById('srcat-'+map[cat]);
+  if(activeEl){activeEl.style.borderColor='var(--accent)';activeEl.style.background='var(--accent-light)';}
+  document.getElementById('section-hw-items').style.display = cat==='Hardware Request'?'':'none';
+  document.getElementById('section-access-type').style.display = cat==='Access Request'?'':'none';
+  document.getElementById('section-onelogin').style.display = 'none';
+  if(cat==='Hardware Request') loadHwItems();
+  if(cat==='Access Request') loadAccessItems();
+}
+
+async function loadHwItems() {
+  const el=document.getElementById('hw-items-grid');
+  el.innerHTML='<div class="loading" style="grid-column:span 4">Loading…</div>';
+  try {
+    const {data}=await db.from('subcategories').select('*').eq('category','Hardware Request').eq('active',true).order('sort_order');
+    if(!data?.length){el.innerHTML='<div style="grid-column:span 4;font-size:12px;color:var(--text3)">No items configured. Ask admin to add hardware items.</div>';return;}
+    el.innerHTML=data.map(s=>`
+      <div id="hw-${s.id}" onclick="selectHwItem('${s.id}','${s.item}')"
+        style="padding:12px 8px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .12s;font-size:12px;font-weight:500">
+        ${hwIcon(s.item)} <div style="margin-top:4px">${s.item}</div>
+      </div>`).join('');
+  } catch(e){el.innerHTML='<div style="grid-column:span 4;font-size:12px;color:var(--critical-text)">'+e.message+'</div>';}
+}
+
+function hwIcon(item) {
+  const map={'Mouse':'🖱️','Keyboard':'⌨️','Headset':'🎧','Monitor':'🖥️','LAN Cable':'🔌','Laptop':'💻','Desktop':'🖥️'};
+  return map[item]||'📦';
+}
+
+function selectHwItem(id, name) {
+  selectedHwItem = name;
+  document.querySelectorAll('[id^="hw-"]').forEach(el=>{el.style.borderColor='var(--border)';el.style.background='';});
+  const el=document.getElementById('hw-'+id);
+  if(el){el.style.borderColor='var(--accent)';el.style.background='var(--accent-light)';}
+  // Auto-fill title
+  document.getElementById('f-title').value='Hardware Request — '+name;
+}
+
+async function loadAccessItems() {
+  const el=document.getElementById('access-items-grid');
+  el.innerHTML='<div class="loading" style="grid-column:span 2">Loading…</div>';
+  try {
+    const {data}=await db.from('subcategories').select('*').eq('category','Access Request').eq('active',true).order('sort_order');
+    if(!data?.length){el.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--text3)">No items configured.</div>';return;}
+    el.innerHTML=data.map(s=>`
+      <div id="ac-${s.id}" onclick="selectAccessItem('${s.id}','${s.item}')"
+        style="padding:14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .12s">
+        <div style="font-size:18px;margin-bottom:5px">${s.item.includes('Ebridge')?'🌐':'🔐'}</div>
+        <div style="font-size:12px;font-weight:600">${s.item}</div>
+      </div>`).join('');
+  } catch(e){el.innerHTML='<div style="grid-column:span 2;font-size:12px;color:var(--critical-text)">'+e.message+'</div>';}
+}
+
+function selectAccessItem(id, name) {
+  selectedAccessItem = name;
+  document.querySelectorAll('[id^="ac-"]').forEach(el=>{el.style.borderColor='var(--border)';el.style.background='';});
+  const el=document.getElementById('ac-'+id);
+  if(el){el.style.borderColor='var(--accent)';el.style.background='var(--accent-light)';}
+  const isOneLogin = name.includes('OneLogin');
+  document.getElementById('section-onelogin').style.display = isOneLogin?'':'none';
+  document.getElementById('f-title').value='Access Request — '+name;
 }
 
 async function submitTicket() {
   const title = document.getElementById('f-title').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
+  const desc  = document.getElementById('f-desc').value.trim();
   const errEl = document.getElementById('form-err');
   errEl.style.display='none';
-  if (!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
-  if (!desc){errEl.textContent='Please describe the issue.';errEl.style.display='';return;}
-  const btn = document.getElementById('submit-btn');
+
+  // Validate request type selection
+  if(!selectedRequestType){errEl.textContent='Please select a Request Type (Incident or Service Request).';errEl.style.display='';return;}
+  if(selectedRequestType==='service_request'&&!selectedSRCat){errEl.textContent='Please select what you need (Hardware, Software or Access).';errEl.style.display='';return;}
+  if(selectedSRCat==='Hardware Request'&&!selectedHwItem){errEl.textContent='Please select a hardware item.';errEl.style.display='';return;}
+  if(selectedSRCat==='Access Request'&&!selectedAccessItem){errEl.textContent='Please select an access type.';errEl.style.display='';return;}
+  if(!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
+  if(!desc){errEl.textContent='Please describe the issue.';errEl.style.display='';return;}
+
+  // Build extra fields for access requests
+  const appName   = document.getElementById('f-app-name')?.value.trim()||'';
+  const groupName = document.getElementById('f-group-name')?.value.trim()||'';
+  if(selectedAccessItem==='OneLogin Access'&&(!appName||!groupName)){
+    errEl.textContent='Please enter both App Name and Group Name for OneLogin Access.';errEl.style.display='';return;
+  }
+
+  const qty = parseInt(document.getElementById('f-hw-qty')?.value)||1;
+  let fullDesc = desc;
+  if(selectedHwItem) fullDesc='Item: '+selectedHwItem+(qty>1?' (Qty: '+qty+')':'')+'\n\n'+desc;
+  if(selectedAccessItem==='OneLogin Access') fullDesc='Access Type: OneLogin\nApp Name: '+appName+'\nGroup Name: '+groupName+'\n\n'+desc;
+  if(selectedAccessItem==='Ebridge Access') fullDesc='Access Type: Ebridge\n\n'+desc;
+
+  // Determine category for ticket
+  const category = selectedSRCat || (selectedRequestType==='incident'?'Incident':'Service Request');
+
+  const btn=document.getElementById('submit-btn');
   btn.disabled=true; btn.textContent='Submitting…';
-  const { data, error } = await db.from('tickets').insert({
-    title, description: desc,
-    category: document.getElementById('f-cat').value,
+  const {data,error}=await db.from('tickets').insert({
+    title, description: fullDesc,
+    category,
     priority: selectedPriority,
     created_by: currentUser.id,
-    department: currentProfile.department || null,
-    asset_tag: document.getElementById('f-asset').value.trim()
+    department: currentProfile.department||null,
+    request_type: selectedRequestType,
+    sub_category: selectedSRCat||null,
+    sub_item: selectedHwItem||selectedAccessItem||null,
+    access_app: appName||null,
+    access_group: groupName||null
   }).select('ticket_no').single();
   btn.disabled=false; btn.textContent='↪ Submit Request';
-  if (error){errEl.textContent=error.message;errEl.style.display='';return;}
+  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
   toast('Request '+data.ticket_no+' submitted!');
   clearForm();
   await loadTickets();
