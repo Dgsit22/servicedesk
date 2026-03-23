@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ServiceDesk — Sign In</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <style>
@@ -12,215 +12,280 @@
 html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px}
 
 body{
-  display:flex;align-items:center;justify-content:center;min-height:100vh;
-  background:#e0e5ec;
-}
-
-/* ── Neumorphic helpers ── */
-.nm-flat{
-  background:#e0e5ec;
-  box-shadow:6px 6px 12px #b8bec7, -6px -6px 12px #ffffff;
-}
-.nm-inset{
-  background:#e0e5ec;
-  box-shadow:inset 4px 4px 8px #b8bec7, inset -4px -4px 8px #ffffff;
-}
-.nm-pressed{
-  background:#e0e5ec;
-  box-shadow:inset 6px 6px 12px #b8bec7, inset -6px -6px 12px #ffffff;
-}
-
-/* ── Page card ── */
-.card{
-  background:#e0e5ec;
-  box-shadow:20px 20px 40px #b8bec7, -20px -20px 40px #ffffff;
-  border-radius:28px;
-  padding:48px 44px;
-  width:100%;max-width:420px;
-}
-
-/* ── Logo area ── */
-.logo-wrap{
-  display:flex;flex-direction:column;align-items:center;
-  margin-bottom:36px;text-align:center;
-}
-.logo-icon{
-  width:72px;height:72px;border-radius:20px;
-  background:#e0e5ec;
-  box-shadow:8px 8px 16px #b8bec7, -8px -8px 16px #ffffff;
   display:flex;align-items:center;justify-content:center;
-  margin-bottom:18px;position:relative;
-}
-.logo-icon::after{
-  content:'';
-  position:absolute;inset:3px;
-  border-radius:16px;
-  background:linear-gradient(135deg,#FF1F8E 0%,#F5C800 50%,#1B4FBA 100%);
-  opacity:.9;
-}
-.logo-icon svg{position:relative;z-index:1;fill:#fff}
-.logo-title{font-size:22px;font-weight:700;color:#2d3748;letter-spacing:-.5px;margin-bottom:4px}
-.logo-sub{font-size:12px;color:#94a3b8;font-weight:400;letter-spacing:.3px}
-
-/* ── Section label ── */
-.section-label{
-  font-size:11px;font-weight:600;color:#94a3b8;
-  letter-spacing:.08em;text-transform:uppercase;
-  text-align:center;margin-bottom:20px;
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a56db 0%,#00A3B4 100%);
 }
 
-/* ── Google button ── */
+/* ── Outer card ── */
+.card{
+  display:flex;width:860px;max-width:96vw;
+  min-height:520px;border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.28);
+}
+
+/* ── LEFT PANEL ── */
+.left{
+  flex:1;position:relative;overflow:hidden;
+  background:linear-gradient(145deg,#1a56db 0%,#0e3fa8 50%,#00A3B4 100%);
+  padding:48px 44px;display:flex;flex-direction:column;justify-content:space-between;
+}
+
+/* Geometric shapes */
+.left::before{
+  content:'';position:absolute;
+  width:340px;height:340px;border-radius:50%;
+  background:rgba(255,255,255,.07);
+  top:-80px;left:-80px;
+}
+.left::after{
+  content:'';position:absolute;
+  width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,.06);
+  bottom:-60px;right:-40px;
+}
+.shape-1{
+  position:absolute;width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,.08);
+  bottom:80px;left:-50px;
+}
+.shape-2{
+  position:absolute;width:100px;height:100px;border-radius:50%;
+  background:rgba(0,163,180,.35);
+  top:60px;right:30px;
+}
+.shape-3{
+  position:absolute;width:60px;height:60px;
+  border:3px solid rgba(255,255,255,.15);border-radius:12px;
+  bottom:140px;right:50px;transform:rotate(20deg);
+}
+.shape-4{
+  position:absolute;width:40px;height:40px;
+  border:3px solid rgba(255,255,255,.12);border-radius:50%;
+  top:140px;left:160px;
+}
+.shape-5{
+  position:absolute;
+  width:0;height:0;
+  border-left:35px solid transparent;
+  border-right:35px solid transparent;
+  border-bottom:60px solid rgba(255,255,255,.06);
+  bottom:60px;right:110px;
+}
+/* Chevron dots */
+.chevrons{
+  position:absolute;top:40px;right:44px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.chev-row{display:flex;gap:6px}
+.chev{
+  width:8px;height:8px;
+  border-right:2px solid rgba(255,255,255,.3);
+  border-bottom:2px solid rgba(255,255,255,.3);
+  transform:rotate(-45deg);
+}
+
+/* Logo */
+.logo{position:relative;z-index:1;display:flex;align-items:center;gap:12px}
+.logo-circle{
+  width:42px;height:42px;border-radius:50%;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+}
+.logo-circle svg{fill:#1a56db}
+.logo-name{color:#fff;font-size:16px;font-weight:700;letter-spacing:-.3px}
+.logo-name span{color:rgba(255,255,255,.6);font-weight:400;font-size:12px;display:block;margin-top:1px}
+
+/* Welcome text */
+.welcome{position:relative;z-index:1}
+.welcome h1{
+  color:#fff;font-size:38px;font-weight:800;
+  line-height:1.15;letter-spacing:-1px;margin-bottom:14px;
+}
+.welcome p{
+  color:rgba(255,255,255,.7);font-size:13px;line-height:1.7;
+  max-width:260px;font-weight:400;
+}
+
+/* Bottom dots decoration */
+.dot-grid{
+  position:absolute;bottom:36px;left:44px;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:7px;
+  z-index:1;
+}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25)}
+
+/* ── RIGHT PANEL ── */
+.right{
+  width:360px;flex-shrink:0;
+  background:#fff;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:52px 44px;
+}
+
+.right-title{font-size:22px;font-weight:700;color:#1c1b19;letter-spacing:-.4px;margin-bottom:6px}
+.right-sub{font-size:13px;color:#94a3b8;margin-bottom:36px;font-weight:400}
+
+/* Google button */
 .btn-google{
-  width:100%;padding:16px 20px;border-radius:14px;
+  width:100%;padding:13px 18px;
   display:flex;align-items:center;justify-content:center;gap:12px;
-  background:#e0e5ec;
-  box-shadow:6px 6px 12px #b8bec7, -6px -6px 12px #ffffff;
-  border:none;cursor:pointer;
-  font-size:14px;font-weight:600;color:#2d3748;
-  font-family:'Inter',sans-serif;letter-spacing:-.1px;
-  transition:box-shadow .15s,transform .15s;
-  position:relative;overflow:hidden;
+  background:#fff;
+  border:1.5px solid #e2e0da;
+  border-radius:10px;cursor:pointer;
+  font-size:14px;font-weight:600;color:#1c1b19;
+  font-family:'Inter',sans-serif;
+  transition:all .15s;position:relative;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
 }
-.btn-google::before{
-  content:'';position:absolute;inset:0;border-radius:14px;
-  background:linear-gradient(135deg,rgba(255,31,142,.07),rgba(245,200,0,.07));
-  opacity:0;transition:opacity .2s;
-}
-.btn-google:hover{
-  box-shadow:8px 8px 16px #b8bec7,-8px -8px 16px #ffffff;
-  transform:translateY(-1px);
-}
-.btn-google:hover::before{opacity:1}
-.btn-google:active,
-.btn-google.pressed{
-  box-shadow:inset 4px 4px 8px #b8bec7,inset -4px -4px 8px #ffffff;
-  transform:translateY(0);
-}
+.btn-google:hover{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.1);transform:translateY(-1px)}
+.btn-google:active{transform:translateY(0);box-shadow:none}
 .btn-google:disabled{opacity:.55;cursor:not-allowed;transform:none}
-
-/* Spinner inside button */
 .btn-spinner{
-  display:none;width:18px;height:18px;
-  border:2px solid rgba(45,55,72,.15);
-  border-top-color:#1B4FBA;border-radius:50%;
-  animation:spin .7s linear infinite;
-  position:absolute;right:20px;
+  display:none;width:17px;height:17px;
+  border:2px solid rgba(26,86,219,.2);border-top-color:#1a56db;
+  border-radius:50%;animation:spin .7s linear infinite;
+  position:absolute;right:18px;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Divider ── */
+/* Divider */
 .divider{
   display:flex;align-items:center;gap:12px;
-  margin:28px 0 20px;
+  margin:24px 0;
 }
-.divider::before,.divider::after{
-  content:'';flex:1;height:1px;
-  background:linear-gradient(90deg,transparent,#c8cfd8,transparent);
-}
-.divider span{font-size:11px;color:#94a3b8;font-weight:500;white-space:nowrap}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#f0ede6}
+.divider span{font-size:11px;color:#c0bdb6;font-weight:500;white-space:nowrap}
 
-/* ── Info pills ── */
-.pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:28px}
-.pill{
-  padding:7px 14px;border-radius:20px;
-  background:#e0e5ec;
-  box-shadow:3px 3px 7px #b8bec7,-3px -3px 7px #ffffff;
-  font-size:11px;font-weight:500;color:#64748b;
-  display:flex;align-items:center;gap:6px;
+/* Info box */
+.info-box{
+  background:#f7f9ff;border:1px solid #e8effd;border-radius:10px;
+  padding:14px 16px;
 }
-.pill-dot{
-  width:6px;height:6px;border-radius:50%;
-  background:linear-gradient(135deg,#FF1F8E,#F5C800);
-}
+.info-box p{font-size:12px;color:#6b6860;line-height:1.6}
+.info-box strong{color:#1a56db;font-weight:600}
 
-/* ── Status message ── */
+/* Status message */
 #msg{
-  margin-top:18px;padding:12px 16px;border-radius:12px;
-  font-size:12px;font-weight:500;display:none;text-align:center;
-  box-shadow:inset 3px 3px 6px #b8bec7,inset -3px -3px 6px #ffffff;
-  color:#64748b;
+  margin-top:16px;padding:10px 14px;border-radius:8px;
+  font-size:12px;font-weight:500;display:none;
 }
-#msg.ok{color:#059669}
-#msg.err{color:#dc2626}
+#msg.ok{background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0}
+#msg.err{background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9}
 
-/* ── Footer ── */
-.card-footer{
-  margin-top:32px;
-  padding-top:20px;
-  border-top:1px solid rgba(148,163,184,.2);
-  text-align:center;
+/* Footer */
+.right-footer{
+  margin-top:32px;padding-top:20px;
+  border-top:1px solid #f0ede6;
+  display:flex;align-items:center;justify-content:space-between;
 }
-.card-footer p{font-size:11px;color:#94a3b8;font-weight:400;line-height:1.6}
-.card-footer strong{color:#FF1F8E;font-weight:600}
+.right-footer span{font-size:11px;color:#c0bdb6}
 
-/* ── Page loader ── */
+/* Page loader */
 #page-loader{
-  position:fixed;inset:0;background:#e0e5ec;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
-  z-index:100;transition:opacity .3s;
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,#1a56db,#00A3B4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;z-index:100;transition:opacity .3s;
 }
 #page-loader.hide{opacity:0;pointer-events:none}
-.loader-ring{
-  width:64px;height:64px;border-radius:50%;
-  background:#e0e5ec;
-  box-shadow:8px 8px 16px #b8bec7,-8px -8px 16px #ffffff;
-  display:flex;align-items:center;justify-content:center;
+.loader-circle{
+  width:52px;height:52px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.2);
+  border-top-color:#fff;
+  animation:spin .75s linear infinite;
 }
-.loader-ring::after{
-  content:'';width:36px;height:36px;border-radius:50%;
-  border:3px solid transparent;
-  border-top-color:#FF1F8E;border-right-color:#F5C800;
-  animation:spin .8s linear infinite;
+#page-loader p{font-size:12px;color:rgba(255,255,255,.7);letter-spacing:.05em;font-weight:500}
+
+@media(max-width:680px){
+  .card{flex-direction:column;width:95vw;min-height:auto}
+  .left{padding:36px 28px 80px;min-height:240px}
+  .welcome h1{font-size:28px}
+  .right{width:100%;padding:36px 28px}
 }
-#page-loader p{font-size:12px;color:#94a3b8;font-weight:500;letter-spacing:.05em}
 </style>
 </head>
 <body>
 
 <!-- Loader -->
 <div id="page-loader">
-  <div class="loader-ring"></div>
+  <div class="loader-circle"></div>
   <p>Checking session…</p>
 </div>
 
-<!-- Card -->
 <div class="card">
-  <div class="logo-wrap">
-    <div class="logo-icon">
-      <svg width="28" height="28" viewBox="0 0 16 16">
-        <path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/>
-      </svg>
+
+  <!-- LEFT -->
+  <div class="left">
+    <!-- Shapes -->
+    <div class="shape-1"></div>
+    <div class="shape-2"></div>
+    <div class="shape-3"></div>
+    <div class="shape-4"></div>
+    <div class="shape-5"></div>
+    <div class="chevrons">
+      <div class="chev-row"><div class="chev"></div><div class="chev"></div><div class="chev"></div></div>
+      <div class="chev-row"><div class="chev"></div><div class="chev"></div><div class="chev"></div></div>
+      <div class="chev-row"><div class="chev"></div><div class="chev"></div><div class="chev"></div></div>
     </div>
-    <div class="logo-title">ServiceDesk</div>
-    <div class="logo-sub">IT Help Portal · Digiclarity</div>
+
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-circle">
+        <svg width="20" height="20" viewBox="0 0 16 16">
+          <path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/>
+        </svg>
+      </div>
+      <div class="logo-name">
+        ServiceDesk
+        <span>Digiclarity IT Portal</span>
+      </div>
+    </div>
+
+    <!-- Welcome -->
+    <div class="welcome">
+      <h1>Hello,<br>welcome!</h1>
+      <p>Your IT Help Portal — raise tickets, track requests and get support from the IT team, all in one place.</p>
+    </div>
+
+    <!-- Dot grid -->
+    <div class="dot-grid">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
   </div>
 
-  <div class="section-label">Sign in to your account</div>
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="right-title">Sign in</div>
+    <div class="right-sub">Use your company Google account to continue</div>
 
-  <button class="btn-google" id="google-btn" onclick="googleSSO()">
-    <svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0">
-      <path fill="#EA4335" d="M24 9.5c3.2 0 5.9 1.1 8.1 3.2l6-6C34.5 3.2 29.7 1 24 1 14.9 1 7.2 6.4 3.8 14.1l7 5.4C12.5 13.2 17.8 9.5 24 9.5z"/>
-      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/>
-      <path fill="#FBBC05" d="M10.8 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7-5.4C2.5 17 1.5 20.4 1.5 24s1 7 2.3 9.9l7-5.4z"/>
-      <path fill="#34A853" d="M24 46.5c5.7 0 10.5-1.9 14-5.1l-7.4-5.7c-1.9 1.3-4.4 2.1-6.6 2.1-6.2 0-11.5-3.7-13.2-9.3l-7 5.4C7.2 41.6 14.9 46.5 24 46.5z"/>
-    </svg>
-    <span id="btn-label">Continue with Google</span>
-    <div class="btn-spinner" id="btn-spin"></div>
-  </button>
+    <button class="btn-google" id="google-btn" onclick="googleSSO()">
+      <svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0">
+        <path fill="#EA4335" d="M24 9.5c3.2 0 5.9 1.1 8.1 3.2l6-6C34.5 3.2 29.7 1 24 1 14.9 1 7.2 6.4 3.8 14.1l7 5.4C12.5 13.2 17.8 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/>
+        <path fill="#FBBC05" d="M10.8 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7-5.4C2.5 17 1.5 20.4 1.5 24s1 7 2.3 9.9l7-5.4z"/>
+        <path fill="#34A853" d="M24 46.5c5.7 0 10.5-1.9 14-5.1l-7.4-5.7c-1.9 1.3-4.4 2.1-6.6 2.1-6.2 0-11.5-3.7-13.2-9.3l-7 5.4C7.2 41.6 14.9 46.5 24 46.5z"/>
+      </svg>
+      <span id="btn-label">Continue with Google</span>
+      <div class="btn-spinner" id="btn-spin"></div>
+    </button>
 
-  <div id="msg"></div>
+    <div id="msg"></div>
 
-  <div class="divider"><span>Use your company Google account</span></div>
+    <div class="divider"><span>Secure single sign-on</span></div>
 
-  <div class="pills">
-    <div class="pill"><div class="pill-dot" style="background:#FF1F8E"></div>Role-based access</div>
-    <div class="pill"><div class="pill-dot" style="background:#F5C800"></div>Single sign-on</div>
-    <div class="pill"><div class="pill-dot" style="background:#1B4FBA"></div>Zero password</div>
+    <div class="info-box">
+      <p>Only <strong>@digiclarity.in</strong> and <strong>@clarityrcm.com</strong> accounts are allowed. Contact IT if you need access.</p>
+    </div>
+
+    <div class="right-footer">
+      <span>ServiceDesk v2.0</span>
+      <span>Powered by Supabase</span>
+    </div>
   </div>
 
-  <div class="card-footer">
-    <p>Powered by <strong>Supabase</strong> · Protected by Google OAuth 2.0</p>
-  </div>
 </div>
 
 <script>
@@ -235,8 +300,7 @@ window.addEventListener('load', async () => {
 async function googleSSO() {
   const btn = document.getElementById('google-btn');
   btn.disabled = true;
-  btn.classList.add('pressed');
-  document.getElementById('btn-label').style.opacity = '.4';
+  document.getElementById('btn-label').style.opacity = '.35';
   document.getElementById('btn-spin').style.display = 'block';
   showMsg('Redirecting to Google…', 'ok');
   try {
@@ -247,7 +311,6 @@ async function googleSSO() {
   } catch(e) {
     showMsg('Error: ' + e.message, 'err');
     btn.disabled = false;
-    btn.classList.remove('pressed');
     document.getElementById('btn-label').style.opacity = '1';
     document.getElementById('btn-spin').style.display = 'none';
   }
