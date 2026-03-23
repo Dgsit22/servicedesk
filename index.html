@@ -319,9 +319,43 @@ async function googleSSO() {
 }
 
 async function redirectByRole(uid) {
-  const profile = await getProfile(uid);
-  if (!profile) { await new Promise(r => setTimeout(r, 1000)); return redirectByRole(uid); }
-  // Technicians and admins go to their own portals; everyone else → employee portal
+  // Try to get existing profile
+  let profile = await getProfile(uid);
+
+  // New user — no profile yet. Create one from their Google account info.
+  if (!profile) {
+    const { data: { user } } = await db.auth.getUser();
+    const meta = user?.user_metadata || {};
+    const fullName = meta.full_name || meta.name || '';
+    const email = user?.email || '';
+
+    const { error } = await db.from('profiles').insert({
+      id: uid,
+      full_name: fullName,
+      email: email,
+      role: 'employee',
+      roles: []
+    });
+
+    if (error) {
+      // Profile might already exist (race condition) — try fetching again
+      profile = await getProfile(uid);
+      if (!profile) {
+        showMsg('⚠ Account setup failed: ' + error.message + '. Please contact IT.', 'err');
+        document.getElementById('page-loader').classList.add('hide');
+        return;
+      }
+    } else {
+      profile = await getProfile(uid);
+    }
+  }
+
+  if (!profile) {
+    showMsg('⚠ Could not load your account. Please try again or contact IT.', 'err');
+    document.getElementById('page-loader').classList.add('hide');
+    return;
+  }
+
   if (profile.role === 'admin')      { location.href = 'admin.html'; return; }
   if (profile.role === 'technician') { location.href = 'technician.html'; return; }
   location.href = 'employee.html';
