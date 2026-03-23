@@ -295,27 +295,36 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 let currentUser=null, currentProfile=null;
 let allTickets=[], techList=[], currentFilter='all', selectedId=null;
 const PORD={critical:0,high:1,medium:2,low:3};
+const HW_CATS=['Hardware','Onboarding','Offboarding'];
 const SLA_HOURS={critical:1,high:4,medium:8,low:24}; // SLA targets in hours
 
 function slaStatus(ticket) {
-  if(['resolved','closed'].includes(ticket.status)) return null;
-  const hrs=(Date.now()-new Date(ticket.created_at))/3600000;
-  const target=SLA_HOURS[ticket.priority]||24;
-  const pct=hrs/target;
-  if(pct>=1) return{label:'SLA Breached',color:'#a61e1e',bg:'#fff1f1',icon:'🚨'};
-  if(pct>=0.75) return{label:'SLA At Risk',color:'#8a4500',bg:'#fff8ec',icon:'⚠'};
+  try {
+    if(!ticket||!ticket.created_at) return null;
+    if(['resolved','closed'].includes(ticket.status)) return null;
+    const hrs=(Date.now()-new Date(ticket.created_at))/3600000;
+    if(isNaN(hrs)) return null;
+    const target=SLA_HOURS[ticket.priority]||24;
+    const pct=hrs/target;
+    if(pct>=1) return{label:'SLA Breached',color:'#a61e1e',bg:'#fff1f1',icon:'🚨'};
+    if(pct>=0.75) return{label:'SLA At Risk',color:'#8a4500',bg:'#fff8ec',icon:'⚠'};
+  } catch(e){}
   return null;
 }
 
 function dueStatus(ticket) {
-  if(!ticket.due_date) return null;
-  const due=new Date(ticket.due_date);
-  const now=new Date();
-  const diffDays=Math.round((due-now)/86400000);
-  if(diffDays<0) return{label:'Overdue '+Math.abs(diffDays)+'d',color:'#a61e1e',bg:'#fff1f1'};
-  if(diffDays===0) return{label:'Due today',color:'#8a4500',bg:'#fff8ec'};
-  if(diffDays<=2) return{label:'Due in '+diffDays+'d',color:'#8a4500',bg:'#fff8ec'};
-  return{label:'Due '+ticket.due_date,color:'#6b6860',bg:'#f7f6f3'};
+  try {
+    if(!ticket||!ticket.due_date) return null;
+    const due=new Date(ticket.due_date);
+    if(isNaN(due.getTime())) return null;
+    const now=new Date();
+    const diffDays=Math.round((due-now)/86400000);
+    if(diffDays<0) return{label:'Overdue '+Math.abs(diffDays)+'d',color:'#a61e1e',bg:'#fff1f1'};
+    if(diffDays===0) return{label:'Due today',color:'#8a4500',bg:'#fff8ec'};
+    if(diffDays<=2) return{label:'Due in '+diffDays+'d',color:'#8a4500',bg:'#fff8ec'};
+    return{label:'Due '+ticket.due_date,color:'#6b6860',bg:'#f7f6f3'};
+  } catch(e){}
+  return null;
 }
 
 // ── Auth ────────────────────────────────────────────────────────
@@ -338,7 +347,7 @@ window.addEventListener('load', async () => {
 // ── Load tickets ────────────────────────────────────────────────
 async function loadTickets() {
   const {data,error} = await db.from('tickets')
-    .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assigned_to,started_at,resolved_at,resolution_minutes,creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,phone),assignee:profiles!assigned_to(full_name,email),comments(id)')
+    .select('ticket_no,id,title,category,priority,status,created_at,updated_at,assigned_to,creator:profiles!created_by(id,full_name,email,employee_id,bay_number,floor,cabin,phone),assignee:profiles!assigned_to(full_name,email),comments(id)')
     .order('created_at',{ascending:false});
 
   if (error) {
@@ -472,44 +481,53 @@ function renderList() {
   else if(sort==='date-asc') list.sort((a,b)=>a.created_at?.localeCompare(b.created_at));
   else list.sort((a,b)=>b.created_at?.localeCompare(a.created_at));
   document.getElementById('ticket-count-label').textContent=list.length+' ticket'+(list.length!==1?'s':'');
-  document.getElementById('ticket-list').innerHTML = (function(){
+  try { document.getElementById('ticket-list').innerHTML = (function(){
   if (!list.length) return '<div class="empty"><div class="empty-icon">&#128194;</div><div class="empty-title">No tickets found</div><div class="empty-sub">Adjust filters</div></div>';
-  var rows = '';
+  var out = [];
   for (var i=0; i<list.length; i++) {
-    var t = list[i];
-    var sla = slaStatus(t);
-    var due = dueStatus(t);
-    var isHw = HW_CATS.includes(t.category) || t.status === 'pending_approval';
-    var rowBg = sla ? sla.bg : isHw ? '#fdfcff' : '';
-    var hwIcon = HW_CATS.includes(t.category) ? '&#128421; ' : '&#9881; ';
-    var uid = t.uid || '';
-    var tid = t.id || '';
-    var date = t.created_at ? t.created_at.slice(0,10) : '';
-    var creator = (t.creator && t.creator.full_name) ? t.creator.full_name : '';
-    var aName = (t.assignee && t.assignee.full_name) ? t.assignee.full_name : '';
-    var assigneeHtml = aName
-      ? '<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128100; ' + aName + '</span>'
-      : '<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#9888; Unassigned</span>';
-    var slaHtml = sla ? '<span style="background:' + sla.bg + ';color:' + sla.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">' + sla.icon + ' ' + sla.label + '</span>' : '';
-    var dueHtml = due ? '<span style="background:' + due.bg + ';color:' + due.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128197; ' + due.label + '</span>' : '';
-    var rowStyle = 'grid-template-columns:36px 80px 1fr 120px 80px 90px 100px;' + (rowBg ? 'background:' + rowBg : '');
-    rows += '<div class="tt-row" id="row-' + uid + '" style="' + rowStyle + '">'
-      + '<span onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" value="' + uid + '" onchange="updateBulkBar()" style="accent-color:var(--accent)"></span>'
-      + '<span class="tt-id" onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + tid + '</span>'
-      + '<div class="tt-info" onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">'
-        + '<div class="tt-title">' + hwIcon + (t.title || '') + '</div>'
-        + '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px">' + assigneeHtml + slaHtml + dueHtml
-          + '<span style="font-size:10px;color:var(--text3)">' + creator + '</span>'
+    try {
+      var t = list[i];
+      var sla = slaStatus(t);
+      var due = dueStatus(t);
+      var isHw = HW_CATS.includes(t.category) || t.status === 'pending_approval';
+      var bg = sla ? 'background:' + sla.bg : isHw ? 'background:#fdfcff' : '';
+      var hwIcon = HW_CATS.includes(t.category) ? '&#128421;' : '&#9881;';
+      var uid = t.uid || t.id || '';
+      var tid = t.id || '';
+      var date = t.created_at ? t.created_at.slice(0,10) : '';
+      var creator = (t.creator && t.creator.full_name) || '';
+      var aName = (t.assignee && t.assignee.full_name) || '';
+      var cb = '<span onclick="event.stopPropagation()"><input type="checkbox" class="row-cb" value="' + uid + '" onchange="updateBulkBar()" style="accent-color:var(--accent)"></span>';
+      var op = 'openPanel(this.dataset.uid)';
+      var aHtml = aName
+        ? '<span style="background:var(--low-bg);color:var(--low-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128100; ' + aName + '</span>'
+        : '<span style="background:var(--critical-bg);color:var(--critical-text);padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#9888; Unassigned</span>';
+      var sHtml = sla ? '<span style="background:' + sla.bg + ';color:' + sla.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">' + sla.icon + ' ' + sla.label + '</span>' : '';
+      var dHtml = due ? '<span style="background:' + due.bg + ';color:' + due.color + ';padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600">&#128197; ' + due.label + '</span>' : '';
+      var row = '<div class="tt-row" data-uid="' + uid + '" onclick="openPanel(this.dataset.uid)" style="grid-template-columns:36px 80px 1fr 120px 80px 90px 100px;' + bg + '">'
+        + cb
+        + '<span class="tt-id" onclick="event.stopPropagation();openPanel(this.parentElement.dataset.uid)" style="cursor:pointer">' + tid + '</span>'
+        + '<div class="tt-info" style="cursor:pointer">'
+          + '<div class="tt-title">' + hwIcon + ' ' + (t.title || '') + '</div>'
+          + '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px">' + aHtml + sHtml + dHtml
+            + '<span style="font-size:10px;color:var(--text3)">' + creator + '</span>'
+          + '</div>'
         + '</div>'
-      + '</div>'
-      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + tagBadge(t.category) + '</div>'
-      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + prioBadge(t.priority) + '</div>'
-      + '<div onclick="openPanel(\'' + uid + '\')" style="cursor:pointer">' + statusBadge(t.status) + '</div>'
-      + '<span onclick="openPanel(\'' + uid + '\')" style="font-size:11px;color:var(--text3);cursor:pointer">' + date + '</span>'
-      + '</div>';
+        + '<div>' + tagBadge(t.category) + '</div>'
+        + '<div>' + prioBadge(t.priority) + '</div>'
+        + '<div>' + statusBadge(t.status) + '</div>'
+        + '<span style="font-size:11px;color:var(--text3);cursor:pointer">' + date + '</span>'
+        + '</div>';
+      out.push(row);
+    } catch(e) { console.warn('Row error ticket '+i+':', e.message); }
   }
-  return rows;
+  return out.join('') || '<div class="empty"><div class="empty-icon">&#128194;</div><div class="empty-title">No tickets found</div></div>';
 })();
+  } catch(e) {
+    console.error('renderList error:', e);
+    const el=document.getElementById('ticket-list');
+    if(el) el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Render error</div><div class="empty-sub">'+e.message+'</div></div>';
+  }
 }
 
 function renderMine() {
