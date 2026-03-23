@@ -682,7 +682,7 @@ function renderTickets() {
       <td>${statusBadge(t.status)}</td>
       <td style="color:var(--text2)">${t.assignee?.full_name||'—'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${t.created_at?.slice(0,10)}</td>
-      <td><button class="btn btn-sm" style="font-size:11px;padding:3px 8px" onclick="showEditTicket('${t.uid}')">✏ Edit</button></td>
+      <td><button class="btn btn-sm" style="font-size:11px;padding:3px 8px" onclick="showEditTicket('${t.uid}')">✏ Edit</button> <button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9" onclick="deleteTicket('${t.uid}','${t.id}')">🗑</button></td>
     </tr>
   `).join('');
 }
@@ -693,6 +693,18 @@ function exportCSV() {
   const csv=[hdr.join(','),...rows].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='tickets-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
   toast('CSV exported ('+allTickets.length+' tickets)');
+}
+
+async function deleteTicket(uid, ticketNo) {
+  if (!confirm('Permanently delete ticket '+ticketNo+'?\n\nThis will also delete all comments and history for this ticket. This cannot be undone.')) return;
+  // Delete comments first (foreign key)
+  await db.from('comments').delete().eq('ticket_id', uid);
+  await db.from('ticket_history').delete().eq('ticket_id', uid);
+  const {error} = await db.from('tickets').delete().eq('id', uid);
+  if (error) { toast('Error: '+error.message); return; }
+  allTickets = allTickets.filter(t => t.uid !== uid);
+  renderTickets();
+  toast('Ticket '+ticketNo+' deleted');
 }
 
 function prioBadge(p){return`<span class="badge b-${p}">${cap(p)}</span>`;}

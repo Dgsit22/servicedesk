@@ -381,8 +381,27 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
             <div class="form-grid-2">
               <div class="fg"><label>Full Name <span>*</span></label><input id="f-name" type="text" placeholder="Your name" readonly></div>
               <div class="fg"><label>Email</label><input id="f-email" type="email" placeholder="Your email" readonly></div>
-              <div class="fg"><label>Employee ID</label><input id="f-empid-display" type="text" placeholder="Your employee ID" readonly></div>
-              <div class="fg"><label>Phone (optional)</label><input id="f-phone" type="tel" placeholder="+91 98000 00000"></div>
+              <div class="fg full">
+                <label>Employee ID <span style="font-size:10px;font-weight:400;color:var(--text3)">(enter if not pre-filled)</span></label>
+                <input id="f-empid-display" type="text" placeholder="e.g. EMP-042" style="max-width:260px">
+              </div>
+            </div>
+          </div>
+
+          <!-- RAISE ON BEHALF — optional -->
+          <div class="form-section">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div class="form-section-title" style="margin-bottom:0">Raising on behalf of someone?</div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;font-weight:500">
+                <input type="checkbox" id="behalf-toggle" onchange="toggleBehalf(this.checked)" style="accent-color:var(--accent)"> Yes, raising for another employee
+              </label>
+            </div>
+            <div id="behalf-section" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div class="form-grid-2">
+                <div class="fg"><label>Employee Email <span>*</span></label><input id="f-behalf-empid" type="email" placeholder="e.g. priya@digiclarity.in"></div>
+                <div class="fg"><label>Employee ID <span>*</span></label><input id="f-behalf-name" type="text" placeholder="e.g. EMP-042"></div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px">This ticket will be logged by you but attributed to the employee above.</div>
             </div>
           </div>
           <!-- STEP 1: Request Type -->
@@ -625,12 +644,13 @@ window.addEventListener('load', async () => {
   renderDash();
 });
 
-// ── Load tickets (RLS auto-filters to this user only) ─────────
+// ── Load tickets (always filtered to tickets raised by THIS user) ─────────
 async function loadTickets() {
   const { data, error } = await db.from('tickets')
-    .select(`ticket_no, id, title, category, priority, status, created_at, updated_at,
+    .select(`ticket_no, id, title, category, sub_category, priority, status, created_at, updated_at,
              assignee:profiles!assigned_to(full_name),
              comments(id)`)
+    .eq('created_by', currentUser.id)
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return; }
   allTickets = (data || []).map(t => ({
@@ -660,14 +680,50 @@ function show(v) {
 
 // ── Dashboard ─────────────────────────────────────────────────
 function renderDash() {
+  // Only count tickets raised by this user (allTickets is already filtered)
   const total = allTickets.length;
   const open = allTickets.filter(t=>t.status==='open').length;
   const inp = allTickets.filter(t=>t.status==='inprogress').length;
   document.getElementById('dash-metrics').innerHTML = `
-    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">Total Requests</div></div>
+    <div class="metric-card"><div class="m-val">${total}</div><div class="m-lbl">My Requests</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--open-text)">${open}</div><div class="m-lbl">Open</div></div>
     <div class="metric-card"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
   `;
+
+  // Categorize: Hardware = sub_category 'Hardware Request' OR category contains 'Hardware'
+  const hwTickets = allTickets.filter(t =>
+    t.sub_category === 'Hardware Request' ||
+    t.category === 'Hardware Request' ||
+    (t.category||'').toLowerCase().includes('hardware')
+  );
+  const genTickets = allTickets.filter(t =>
+    t.sub_category !== 'Hardware Request' &&
+    t.category !== 'Hardware Request' &&
+    !(t.category||'').toLowerCase().includes('hardware')
+  );
+
+  document.getElementById('hw-count').textContent = hwTickets.length;
+  document.getElementById('gen-count').textContent = genTickets.length;
+
+  function ticketCard(t) {
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
+      <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:${pDot(t.priority)}"></div>
+      <div style="flex:1;overflow:hidden">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace">${t.id}</div>
+      </div>
+      <div>${statusBadge(t.status)}</div>
+    </div>`;
+  }
+
+  document.getElementById('hw-cards').innerHTML = hwTickets.length
+    ? hwTickets.slice(0,5).map(ticketCard).join('')
+    : '<div class="ttc-empty">No hardware requests</div>';
+
+  document.getElementById('gen-cards').innerHTML = genTickets.length
+    ? genTickets.slice(0,5).map(ticketCard).join('')
+    : '<div class="ttc-empty">No general requests</div>';
+
   const recent = allTickets.slice(0,6);
   document.getElementById('dash-recent').innerHTML = recent.length ? recent.map(t=>`
     <div class="activity-item" style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
@@ -678,7 +734,7 @@ function renderDash() {
       </div>
       <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
     </div>
-  `).join('') : '<div class="empty"><div class="empty-icon">??</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Submit your first request</div></div>';
+  `).join('') : '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Submit your first request</div></div>';
 }
 
 // ── Ticket List ───────────────────────────────────────────────
@@ -779,9 +835,19 @@ function selectPriority(p) {
     document.getElementById('popt-'+x).className = 'p-opt'+(x===p?' sel-'+p:'');
   });
 }
+function toggleBehalf(checked) {
+  document.getElementById('behalf-section').style.display = checked ? '' : 'none';
+  if (!checked) {
+    document.getElementById('f-behalf-name').value = '';
+    document.getElementById('f-behalf-empid').value = '';
+  }
+}
 function updateCharCount(el,cId,max){document.getElementById(cId).textContent=el.value.length+' / '+max+' characters';}
 function clearForm(){
-  ['f-title','f-desc','f-phone','f-hw-qty','f-app-name','f-group-name'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.readOnly)el.value=id==='f-hw-qty'?'1':'';});
+  ['f-title','f-desc','f-hw-qty','f-app-name','f-group-name','f-behalf-name','f-behalf-empid'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=id==='f-hw-qty'?'1':'';});
+  const behalfToggle=document.getElementById('behalf-toggle');
+  if(behalfToggle){behalfToggle.checked=false;}
+  document.getElementById('behalf-section').style.display='none';
   selectPriority('medium');
   document.getElementById('form-err').style.display='none';
   document.getElementById('desc-count').textContent='0 / 1200 characters';
@@ -910,13 +976,34 @@ async function submitTicket() {
   }
 
   const qty = parseInt(document.getElementById('f-hw-qty')?.value)||1;
+
+  // Behalf-of details
+  const behalfOn = document.getElementById('behalf-toggle')?.checked;
+  const behalfName = document.getElementById('f-behalf-name')?.value.trim()||'';
+  const behalfEmpId = document.getElementById('f-behalf-empid')?.value.trim()||'';
+  if(behalfOn && !behalfEmpId){errEl.textContent='Please enter the employee email you are raising this for.';errEl.style.display='';return;}
+  if(behalfOn && !behalfName){errEl.textContent='Please enter the employee ID of the person you are raising for.';errEl.style.display='';return;}
+
   let fullDesc = desc;
   if(selectedHwItem) fullDesc='Item: '+selectedHwItem+(qty>1?' (Qty: '+qty+')':'')+'\n\n'+desc;
   if(selectedAccessItem==='OneLogin Access') fullDesc='Access Type: OneLogin\nApp Name: '+appName+'\nGroup Name: '+groupName+'\n\n'+desc;
   if(selectedAccessItem==='Ebridge Access') fullDesc='Access Type: Ebridge\n\n'+desc;
+  if(behalfOn) fullDesc='[Raised on behalf of: '+behalfEmpId+' (ID: '+behalfName+')]\n\n'+fullDesc;
 
-  // Determine category for ticket
-  const category = selectedSRCat || (selectedRequestType==='incident'?'Incident':'Service Request');
+  // Determine category — always use the most specific label
+  let category = 'Incident';
+  if(selectedRequestType==='service_request') {
+    if(selectedSRCat) category = selectedSRCat;
+    else category = 'Service Request';
+  }
+
+  // Save employee ID back to profile if it changed
+  const empIdInput = document.getElementById('f-empid-display').value.trim();
+  if(empIdInput && empIdInput !== (currentProfile.employee_id||'')) {
+    await db.from('profiles').update({employee_id: empIdInput}).eq('id', currentUser.id);
+    currentProfile.employee_id = empIdInput;
+    document.getElementById('sb-dept').textContent = 'ID: '+empIdInput;
+  }
 
   const btn=document.getElementById('submit-btn');
   btn.disabled=true; btn.textContent='Submitting…';
