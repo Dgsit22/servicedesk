@@ -321,8 +321,10 @@ async function googleSSO() {
 async function redirectByRole(uid) {
   const profile = await getProfile(uid);
   if (!profile) { await new Promise(r => setTimeout(r, 1000)); return redirectByRole(uid); }
-  const map = { admin:'admin.html', technician:'technician.html', manager:'employee.html', tl:'employee.html' };
-  location.href = map[profile.role] || 'employee.html';
+  // Technicians and admins go to their own portals; everyone else → employee portal
+  if (profile.role === 'admin')      { location.href = 'admin.html'; return; }
+  if (profile.role === 'technician') { location.href = 'technician.html'; return; }
+  location.href = 'employee.html';
 }
 
 function showMsg(text, type) {

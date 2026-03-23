@@ -179,6 +179,8 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
 .b-medium{background:var(--medium-bg);color:var(--medium-text);border:1px solid var(--medium-border)}.b-medium::before{background:var(--medium-text)}
 .b-low{background:var(--low-bg);color:var(--low-text);border:1px solid var(--low-border)}.b-low::before{background:var(--low-text)}
 .b-open{background:var(--open-bg);color:var(--open-text)}.b-inprogress{background:var(--inprog-bg);color:var(--inprog-text)}.b-closed,.b-resolved{background:var(--closed-bg);color:var(--closed-text)}
+.b-pending_approval{background:#f5f3ff;color:#5b21b6}.b-pending_approval::before{background:#5b21b6}
+.b-waiting_for_info{background:#fff8ec;color:#8a4500}.b-waiting_for_info::before{background:#8a4500}
 .b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
 /* Form */
 .form-wrap{max-width:640px}
@@ -287,6 +289,15 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
         <button class="nav-btn" id="nav-exit" onclick="show('exit')">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6 12.5a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-9a.5.5 0 00-.5-.5h-7a.5.5 0 00-.5.5v2a.5.5 0 001 0V4h6v8h-6v-1.5a.5.5 0 00-1 0v2zM.146 8.354a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L1.707 7.5H10.5a.5.5 0 010 1H1.707l2.147 2.146a.5.5 0 01-.708.708l-3-3z"/></svg>
           Exit / Offboarding
+        </button>
+      </div>
+      <!-- Approver tab -->
+      <div id="approver-nav" style="display:none">
+        <div class="sb-nav-label" style="margin-top:8px">Approver</div>
+        <button class="nav-btn" id="nav-approvals" onclick="show('approvals')">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v13.5a.5.5 0 01-.777.416L8 13.101l-5.223 2.815A.5.5 0 012 15.5V2zm2-1a1 1 0 00-1 1v12.566l4.723-2.482a.5.5 0 01.554 0L13 14.566V2a1 1 0 00-1-1H4z"/></svg>
+          Approvals
+          <span class="nav-badge" id="approval-badge" style="background:#F0177A;color:#fff">0</span>
         </button>
       </div>
     </nav>
@@ -545,6 +556,19 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
       </div>
     </div>
 
+    <!-- APPROVALS VIEW -->
+    <div class="view" id="view-approvals">
+      <div class="topbar">
+        <div><div class="topbar-title">Hardware Approvals</div><div class="topbar-sub" id="approvals-sub">Pending hardware requests awaiting your approval</div></div>
+        <button class="btn" onclick="loadApprovals()">&#8635; Refresh</button>
+      </div>
+      <div class="scroll-area" style="padding:0">
+        <div id="approvals-list" style="background:var(--surface)">
+          <div class="loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay" id="overlay" onclick="closePanel()"></div>
     <div class="detail-panel" id="detail-panel">
       <div class="dp-header">
@@ -569,13 +593,10 @@ window.addEventListener('load', async () => {
   if (!session) { location.href = 'index.html'; return; }
   currentUser = session.user;
   currentProfile = await getProfile(currentUser.id);
-  const allowedRoles = ['employee','manager','tl'];
-  if (!currentProfile || (!allowedRoles.includes(currentProfile.role) && currentProfile.role !== 'admin')) {
-    if (currentProfile?.role === 'admin') location.href = 'admin.html';
-    else if (currentProfile?.role === 'technician') location.href = 'technician.html';
-    else location.href = 'index.html';
-    return;
-  }
+  // Technicians and admins have their own portals; everyone else uses this portal
+  if (!currentProfile) { location.href = 'index.html'; return; }
+  if (currentProfile.role === 'admin') { location.href = 'admin.html'; return; }
+  if (currentProfile.role === 'technician') { location.href = 'technician.html'; return; }
   // Populate sidebar & form
   const initials = (currentProfile.full_name || 'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('sb-avatar').textContent = initials;
@@ -584,9 +605,15 @@ window.addEventListener('load', async () => {
   document.getElementById('f-name').value = currentProfile.full_name || '';
   document.getElementById('f-email').value = currentProfile.email || '';
   document.getElementById('f-empid-display').value = currentProfile.employee_id || '';
-  // Show Manager/TL nav items
-  if (['manager','tl','admin'].includes(currentProfile.role)) {
+  // Show Manager/TL nav items (role OR roles array)
+  if (['manager','tl','admin'].includes(currentProfile.role) || 
+      (currentProfile.roles||[]).some(r=>['manager','tl'].includes(r))) {
     document.getElementById('mgr-nav').style.display = '';
+  }
+  // Show Approver tab if user can approve
+  if (canApprove(currentProfile)) {
+    const an = document.getElementById('approver-nav');
+    if(an) an.style.display = '';
   }
   // Set manager field on forms
   const mgrName = currentProfile.full_name || currentProfile.email;
@@ -618,7 +645,7 @@ async function loadTickets() {
 
 // ── Navigation ────────────────────────────────────────────────
 function show(v) {
-  ['dashboard','tickets','new','onboarding','exit'].forEach(x => { const e=document.getElementById('view-'+x); if(e) e.style.display='none'; });
+  ['dashboard','tickets','new','onboarding','exit','approvals'].forEach(x => { const e=document.getElementById('view-'+x); if(e) e.style.display='none'; });
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+v).style.display='flex';
   document.getElementById('view-'+v).style.flexDirection='column';
@@ -628,6 +655,7 @@ function show(v) {
   if (v==='tickets') renderList();
   if (v==='onboarding') loadOnboardingTasks();
   if (v==='exit') loadExitTasks();
+  if (v==='approvals') loadApprovals();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -883,9 +911,13 @@ async function submitTicket() {
 
   const btn=document.getElementById('submit-btn');
   btn.disabled=true; btn.textContent='Submitting…';
+  // Hardware requests go to pending_approval automatically
+  const needsApproval = selectedSRCat === 'Hardware Request';
+  const ticketStatus = needsApproval ? 'pending_approval' : 'open';
   const {data,error}=await db.from('tickets').insert({
     title, description: fullDesc,
     category,
+    status: ticketStatus,
     priority: selectedPriority,
     created_by: currentUser.id,
     department: currentProfile.department||null,
@@ -909,12 +941,100 @@ function statusBadge(s){return`<span class="badge b-${s}" style="border:none">${
 function tagBadge(t){return`<span class="badge b-tag">${t}</span>`;}
 function pDot(p){return{critical:'#a61e1e',high:'#8a4500',medium:'#1e40af',low:'#14532d'}[p]||'#aaa';}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function statusLabel(s){return s==='inprogress'?'In Progress':cap(s);}
+function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pending Approval',waiting_for_info:'Waiting for Info'};return m[s]||cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
 // Initialise view
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','new','onboarding','exit'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+['tickets','new','onboarding','exit','approvals'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+
+// ── Approvals ─────────────────────────────────────────────────
+async function loadApprovals() {
+  const el = document.getElementById('approvals-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const {data, error} = await db.from('tickets')
+      .select('ticket_no,id,title,category,priority,status,created_at,sub_item,description,creator:profiles!created_by(full_name,email,department)')
+      .eq('status','pending_approval')
+      .order('created_at', {ascending: true});
+    if (error) throw error;
+    // Update badge
+    const badge = document.getElementById('approval-badge');
+    if (badge) { badge.textContent = data?.length||0; badge.style.display = data?.length?'':'none'; }
+    document.getElementById('approvals-sub').textContent = (data?.length||0)+' pending hardware request'+(data?.length!==1?'s':'');
+    if (!data?.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">No pending approvals</div><div class="empty-sub">All hardware requests have been reviewed</div></div>';
+      return;
+    }
+    el.innerHTML = data.map(t => `
+      <div style="border-bottom:1px solid var(--border);padding:18px 24px;background:#fff">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="width:40px;height:40px;border-radius:10px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🖥️</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)">${t.ticket_no}</span>
+              <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#f5f3ff;color:#5b21b6">Pending Approval</span>
+            </div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">${t.title}</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px">
+              Requested by <strong>${t.creator?.full_name||'—'}</strong> · ${t.creator?.department||''} · ${t.created_at?.slice(0,10)}
+            </div>
+            ${t.sub_item?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Item: <strong>${t.sub_item}</strong></div>`:''}
+            <div style="font-size:12px;color:var(--text2);background:var(--surface2);padding:10px 12px;border-radius:8px;border-left:3px solid #5b21b6;margin-bottom:12px">${t.description?.slice(0,200)||''}</div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button onclick="approveTicket('${t.id}','${t.ticket_no}')" 
+                style="padding:8px 18px;background:#1B4DB8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+                ✓ Approve
+              </button>
+              <button onclick="rejectTicket('${t.id}','${t.ticket_no}')" 
+                style="padding:8px 18px;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+                ✗ Reject
+              </button>
+              <span style="font-size:11px;color:var(--text3)">${priorityLabel(t.priority)} priority</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="padding:20px;color:var(--critical-text);font-size:12px">Error: '+e.message+'</div>';
+  }
+}
+
+function priorityLabel(p) {
+  const m = {critical:'🔴 Critical',high:'🟡 High',medium:'🔵 Medium',low:'🟢 Low'};
+  return m[p]||p;
+}
+
+async function approveTicket(uid, ticketNo) {
+  const note = prompt('Approval note (optional):') || '';
+  const {error} = await db.from('tickets').update({
+    status:'open', approval_reason:note, updated_at: new Date().toISOString()
+  }).eq('id', uid);
+  if (error) { toast('Error: '+error.message); return; }
+  try {
+    const {data:t} = await db.from('tickets').select('title,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+    await db.functions.invoke('send-notification',{body:{type:'hardware_approved',ticket_no:ticketNo,title:t?.title,requester_email:t?.creator?.email,requester_name:t?.creator?.full_name,manager_name:currentProfile.full_name,reason:note}});
+  } catch(e){}
+  toast('✅ Hardware request approved');
+  loadApprovals();
+}
+
+async function rejectTicket(uid, ticketNo) {
+  const reason = prompt('Reason for rejection:');
+  if (!reason?.trim()) { toast('Please enter a reason'); return; }
+  const {error} = await db.from('tickets').update({
+    status:'closed', approval_reason:reason, updated_at: new Date().toISOString()
+  }).eq('id', uid);
+  if (error) { toast('Error: '+error.message); return; }
+  try {
+    const {data:t} = await db.from('tickets').select('title,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+    await db.functions.invoke('send-notification',{body:{type:'hardware_rejected',ticket_no:ticketNo,title:t?.title,requester_email:t?.creator?.email,requester_name:t?.creator?.full_name,manager_name:currentProfile.full_name,reason}});
+  } catch(e){}
+  toast('❌ Request rejected');
+  loadApprovals();
+}
 
 // ── Onboarding/Exit task loading ────────────────────────────────
 async function loadOnboardingTasks() {

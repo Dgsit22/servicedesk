@@ -206,7 +206,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
       <div style="flex:1;overflow-y:auto">
         <table class="data-table" style="width:100%;background:var(--surface)">
-          <thead><tr><th>Name</th><th>Email</th><th>Emp ID</th><th>Department</th><th>Location</th><th>Role</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Emp ID</th><th>Department</th><th>Role</th><th>Extra Roles</th><th>Actions</th></tr></thead>
           <tbody id="user-list"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -396,7 +396,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Full Name</label><input id="eu-name" type="text" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Employee ID</label><input id="eu-empid" type="text" placeholder="EMP-001" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Department</label><select id="eu-dept" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"><option value="">Select…</option><option>Engineering</option><option>Marketing</option><option>Finance</option><option>HR</option><option>Operations</option><option>Management</option><option>IT</option><option>Sales</option><option>Other</option></select></div>
-          <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Role</label><select id="eu-role" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"><option value="employee">Employee</option><option value="manager">Manager</option><option value="tl">Team Lead</option><option value="technician">Technician</option><option value="admin">Admin</option></select></div>
+          <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Primary Role <span style="font-size:10px;color:var(--text3)">(determines portal access)</span></label><select id="eu-role" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"><option value="employee">Employee</option><option value="manager">Manager</option><option value="tl">Team Lead</option><option value="technician">Technician</option><option value="admin">Admin</option></select></div>
+          <div style="grid-column:span 2;display:flex;flex-direction:column;gap:8px">
+            <label style="font-size:12px;font-weight:500;color:var(--text2)">Additional Roles <span style="font-size:10px;color:var(--text3)">(extra permissions, can combine)</span></label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm)">
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="eu-role-approver" style="accent-color:var(--accent);width:15px;height:15px"> 🔐 Approver <span style="font-size:10px;color:var(--text3)">(can approve hardware requests)</span></label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="eu-role-manager" style="accent-color:var(--accent);width:15px;height:15px"> 👔 Manager <span style="font-size:10px;color:var(--text3)">(onboarding/exit forms)</span></label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer"><input type="checkbox" id="eu-role-tl" style="accent-color:var(--accent);width:15px;height:15px"> 🎯 Team Lead <span style="font-size:10px;color:var(--text3)">(onboarding/exit forms)</span></label>
+            </div>
+          </div>
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Bay Number</label><input id="eu-bay" type="text" placeholder="e.g. B-12" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Floor</label><input id="eu-floor" type="text" placeholder="e.g. 3rd Floor" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
           <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:12px;font-weight:500;color:var(--text2)">Cabin</label><input id="eu-cabin" type="text" placeholder="e.g. Cabin 5A" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"></div>
@@ -886,6 +894,10 @@ function showEditUser(u) {
   document.getElementById('eu-empid').value=u.employee_id||'';
   document.getElementById('eu-dept').value=u.department||'';
   document.getElementById('eu-role').value=u.role||'employee';
+  const roles=u.roles||[];
+  document.getElementById('eu-role-approver').checked=roles.includes('approver');
+  document.getElementById('eu-role-manager').checked=roles.includes('manager');
+  document.getElementById('eu-role-tl').checked=roles.includes('tl');
   document.getElementById('eu-bay').value=u.bay_number||'';
   document.getElementById('eu-floor').value=u.floor||'';
   document.getElementById('eu-cabin').value=u.cabin||'';
@@ -898,7 +910,14 @@ function showEditUser(u) {
 function hideEditUser(){document.getElementById('eu-overlay').style.display='none';editingUserId=null;}
 async function saveEditUser() {
   if(!editingUserId) return;
-  const updates={full_name:document.getElementById('eu-name').value.trim(),employee_id:document.getElementById('eu-empid').value.trim(),department:document.getElementById('eu-dept').value,role:document.getElementById('eu-role').value,bay_number:document.getElementById('eu-bay').value.trim(),floor:document.getElementById('eu-floor').value.trim(),cabin:document.getElementById('eu-cabin').value.trim(),open_cabin:document.getElementById('eu-open-cabin').value.trim(),phone:document.getElementById('eu-phone').value.trim()};
+  const primaryRole=document.getElementById('eu-role').value;
+  const extraRoles=[];
+  if(document.getElementById('eu-role-approver').checked) extraRoles.push('approver');
+  if(document.getElementById('eu-role-manager').checked) extraRoles.push('manager');
+  if(document.getElementById('eu-role-tl').checked) extraRoles.push('tl');
+  // Always include primary role in roles array
+  const allRoles=[...new Set([primaryRole,...extraRoles])];
+  const updates={full_name:document.getElementById('eu-name').value.trim(),employee_id:document.getElementById('eu-empid').value.trim(),department:document.getElementById('eu-dept').value,role:primaryRole,roles:allRoles,bay_number:document.getElementById('eu-bay').value.trim(),floor:document.getElementById('eu-floor').value.trim(),cabin:document.getElementById('eu-cabin').value.trim(),open_cabin:document.getElementById('eu-open-cabin').value.trim(),phone:document.getElementById('eu-phone').value.trim()};
   const errEl=document.getElementById('eu-err'),okEl=document.getElementById('eu-ok');
   errEl.style.display='none'; okEl.style.display='none';
   if(!updates.full_name){errEl.textContent='Full name is required.';errEl.style.display='';return;}

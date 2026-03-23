@@ -241,6 +241,10 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
         Onboarding / Exit
         <span class="nav-badge nb-blue" id="obex-badge">0</span>
       </button>
+      <button class="nav-btn" id="nav-create" onclick="show('create')">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
+        New Request
+      </button>
       <button class="nav-btn" id="nav-unassigned" onclick="show('unassigned')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1-1-1-2a7 7 0 0114 0c0 1-1 2-1 2H2z" opacity=".3"/><path d="M10.5 6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM12 13a4 4 0 00-8 0h8z" stroke="currentColor" stroke-width="1" fill="none"/><line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="1.5"/></svg>
         Unassigned
@@ -376,6 +380,87 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
       </div>
     </div>
 
+    <!-- NEW REQUEST VIEW (Technician submits on behalf / for self) -->
+    <div class="view" id="view-create">
+      <div class="topbar">
+        <div><div class="topbar-title">Create New Request</div><div class="topbar-sub">Submit a ticket and optionally assign it</div></div>
+        <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
+      </div>
+      <div class="scroll-area">
+        <div style="max-width:640px">
+
+          <!-- Request Type -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px">
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">Request Type</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div id="tc-rtype-incident" onclick="tcSelectType('incident')"
+                style="padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:20px;margin-bottom:5px">🚨</div>
+                <div style="font-size:13px;font-weight:600">Incident</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Something broken</div>
+              </div>
+              <div id="tc-rtype-service" onclick="tcSelectType('service_request')"
+                style="padding:14px;border:2px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:20px;margin-bottom:5px">📋</div>
+                <div style="font-size:13px;font-weight:600">Service Request</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Hardware / Software / Access</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SR Category (shown for service request) -->
+          <div id="tc-section-srcat" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px">
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">Category</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <div id="tc-srcat-hardware" onclick="tcSelectSRCat('Hardware Request')" style="padding:12px 8px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:18px;margin-bottom:4px">🖥️</div><div style="font-size:12px;font-weight:600">Hardware</div></div>
+              <div id="tc-srcat-software" onclick="tcSelectSRCat('Software Installation')" style="padding:12px 8px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:18px;margin-bottom:4px">💿</div><div style="font-size:12px;font-weight:600">Software</div></div>
+              <div id="tc-srcat-access" onclick="tcSelectSRCat('Access Request')" style="padding:12px 8px;border:2px solid var(--border);border-radius:8px;cursor:pointer;text-align:center;transition:all .12s">
+                <div style="font-size:18px;margin-bottom:4px">🔑</div><div style="font-size:12px;font-weight:600">Access</div></div>
+            </div>
+          </div>
+
+          <!-- Ticket Details -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px">
+            <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">Details</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="grid-column:span 2;display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12px;font-weight:500;color:var(--text2)">Subject <span style="color:var(--critical-text)">*</span></label>
+                <input id="tc-title" type="text" placeholder="Short description" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12px;font-weight:500;color:var(--text2)">Priority</label>
+                <select id="tc-priority" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12px;font-weight:500;color:var(--text2)">Assign To (optional)</label>
+                <select id="tc-assign" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none">
+                  <option value="">— Unassigned —</option>
+                </select>
+              </div>
+              <div style="grid-column:span 2;display:flex;flex-direction:column;gap:5px">
+                <label style="font-size:12px;font-weight:500;color:var(--text2)">Description <span style="color:var(--critical-text)">*</span></label>
+                <textarea id="tc-desc" rows="4" placeholder="Describe the issue in detail…" style="padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none;resize:vertical;line-height:1.6"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" id="tc-submit-btn" onclick="tcSubmitTicket()">&#10148; Submit Request</button>
+            <button class="btn" onclick="tcClearForm()">Clear</button>
+            <span id="tc-err" style="font-size:12px;color:var(--critical-text);display:none"></span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <div class="overlay" id="overlay" onclick="closePanel()"></div>
     <div class="detail-panel" id="detail-panel">
       <div class="dp-header">
@@ -486,7 +571,7 @@ async function loadTechList() {
 
 // ── Navigation ──────────────────────────────────────────────────
 function show(v) {
-  ['dashboard','tickets','mine','unassigned','obex'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
+  ['dashboard','tickets','mine','unassigned','obex','create'].forEach(x=>{const e=document.getElementById('view-'+x);if(e)e.style.display='none';});
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+v).style.cssText='display:flex;flex-direction:column;height:100%';
   document.getElementById('nav-'+v).classList.add('active');
@@ -496,6 +581,7 @@ function show(v) {
   if(v==='mine') renderMine();
   if(v==='unassigned') renderUnassigned();
   if(v==='obex') renderObex();
+  if(v==='create') tcInitForm();
 }
 
 // ── Dashboard ───────────────────────────────────────────────────
@@ -949,6 +1035,96 @@ async function rejectHardware(uid) {
   toast('Hardware request rejected'); await loadTickets(); openPanel(uid); renderList();
 }
 
+// ── Technician Create Ticket ──────────────────────────────────
+let tcRequestType='', tcSRCat='';
+
+function tcInitForm() {
+  // Populate assign dropdown with techList
+  const sel=document.getElementById('tc-assign');
+  if(sel&&techList.length&&sel.options.length<=1) {
+    techList.forEach(u=>{
+      const o=document.createElement('option');
+      o.value=u.id;
+      o.textContent=u.full_name+(u.id===currentUser.id?' (me)':'');
+      sel.appendChild(o);
+    });
+  }
+}
+
+function tcSelectType(rt) {
+  tcRequestType=rt; tcSRCat='';
+  ['incident','service'].forEach(k=>{
+    const el=document.getElementById('tc-rtype-'+k);
+    if(el){el.style.borderColor='var(--border)';el.style.background='';}
+  });
+  const active=document.getElementById('tc-rtype-'+(rt==='incident'?'incident':'service'));
+  if(active){active.style.borderColor='var(--accent)';active.style.background='var(--accent-light)';}
+  document.getElementById('tc-section-srcat').style.display=rt==='service_request'?'':'none';
+  ['hardware','software','access'].forEach(k=>{
+    const el=document.getElementById('tc-srcat-'+k);
+    if(el){el.style.borderColor='var(--border)';el.style.background='';}
+  });
+}
+
+function tcSelectSRCat(cat) {
+  tcSRCat=cat;
+  const map={'Hardware Request':'hardware','Software Installation':'software','Access Request':'access'};
+  ['hardware','software','access'].forEach(k=>{
+    const el=document.getElementById('tc-srcat-'+k);
+    if(el){el.style.borderColor='var(--border)';el.style.background='';}
+  });
+  const active=document.getElementById('tc-srcat-'+map[cat]);
+  if(active){active.style.borderColor='var(--accent)';active.style.background='var(--accent-light)';}
+}
+
+async function tcSubmitTicket() {
+  const title=document.getElementById('tc-title').value.trim();
+  const desc=document.getElementById('tc-desc').value.trim();
+  const priority=document.getElementById('tc-priority').value;
+  const assignId=document.getElementById('tc-assign').value||null;
+  const errEl=document.getElementById('tc-err');
+  errEl.style.display='none';
+  if(!tcRequestType){errEl.textContent='Please select a request type.';errEl.style.display='';return;}
+  if(!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
+  if(!desc){errEl.textContent='Please add a description.';errEl.style.display='';return;}
+
+  const category=tcSRCat||(tcRequestType==='incident'?'Incident':'Service Request');
+  // Hardware requests need approval; others go straight to open (or inprogress if assigned)
+  const needsApproval=tcSRCat==='Hardware Request';
+  const status=needsApproval?'pending_approval':assignId?'inprogress':'open';
+  const now=new Date().toISOString();
+
+  const btn=document.getElementById('tc-submit-btn');
+  btn.disabled=true; btn.textContent='Submitting…';
+  const {data,error}=await db.from('tickets').insert({
+    title, description:desc, category, priority,
+    status, created_by:currentUser.id,
+    assigned_to:assignId||null,
+    request_type:tcRequestType,
+    sub_category:tcSRCat||null,
+    started_at:assignId&&!needsApproval?now:null,
+    updated_at:now
+  }).select('ticket_no').single();
+  btn.disabled=false; btn.textContent='↪ Submit Request';
+  if(error){errEl.textContent=error.message;errEl.style.display='';return;}
+  toast('✓ Ticket '+data.ticket_no+' created'+(assignId?' & assigned':''));
+  tcClearForm();
+  await loadTickets();
+  show('tickets');
+}
+
+function tcClearForm() {
+  document.getElementById('tc-title').value='';
+  document.getElementById('tc-desc').value='';
+  document.getElementById('tc-priority').value='medium';
+  document.getElementById('tc-assign').value='';
+  document.getElementById('tc-err').style.display='none';
+  tcRequestType=''; tcSRCat='';
+  ['incident','service'].forEach(k=>{const e=document.getElementById('tc-rtype-'+k);if(e){e.style.borderColor='var(--border)';e.style.background='';}});
+  ['hardware','software','access'].forEach(k=>{const e=document.getElementById('tc-srcat-'+k);if(e){e.style.borderColor='var(--border)';e.style.background='';}});
+  document.getElementById('tc-section-srcat').style.display='none';
+}
+
 function closePanel(){document.getElementById('detail-panel').classList.remove('open');document.getElementById('overlay').classList.remove('show');selectedId=null;}
 
 // ── Bulk Actions ───────────────────────────────────────────────
@@ -1047,7 +1223,7 @@ function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pend
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
-['tickets','mine','unassigned','obex'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+['tickets','mine','unassigned','obex','create'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
 </script>
 </body>
 </html>
