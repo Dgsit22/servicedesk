@@ -947,6 +947,19 @@ async function submitTicket() {
   }).select('ticket_no').single();
   btn.disabled=false; btn.textContent='↪ Submit Request';
   if(error){errEl.textContent=error.message;errEl.style.display='';return;}
+  // Send confirmation email to requester
+  try {
+    await db.functions.invoke('send-notification', { body: {
+      type: 'ticket_raised',
+      ticket_no: data.ticket_no,
+      title,
+      category,
+      priority: selectedPriority,
+      description: fullDesc,
+      requester_email: currentProfile.email,
+      requester_name: currentProfile.full_name
+    }});
+  } catch(e) {}
   toast('Request '+data.ticket_no+' submitted!');
   clearForm();
   await loadTickets();

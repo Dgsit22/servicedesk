@@ -1,280 +1,401 @@
 // supabase/functions/send-notification/index.ts
-//
-// Sends all ticket notification emails using Supabase's built-in SMTP
-// (which you configure with ITalerts@digiclarity.in + App Password)
-//
-// NO Resend. NO extra API keys. Just your Gmail SMTP set in Supabase.
-//
-// DEPLOY (one time only):
-//   supabase functions new send-notification
-//   supabase functions deploy send-notification --project-ref YOUR_PROJECT_ID
-//
-// SECRETS needed (auto-available in Edge Functions — no manual setup):
-//   SUPABASE_URL                — auto-provided
-//   SUPABASE_SERVICE_ROLE_KEY   — auto-provided
-//
-// The SMTP credentials live in Supabase Auth settings — not here.
-// Supabase's sendEmail utility uses whatever SMTP you configured there.
+// Deploy: supabase functions deploy send-notification --project-ref YOUR_PROJECT_REF
+// Secrets: supabase secrets set SMTP_HOST=smtp.gmail.com SMTP_PORT=587 SMTP_USER=ITalerts@digiclarity.in SMTP_PASS=your_app_password FROM_EMAIL=ITalerts@digiclarity.in
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const FROM_NAME    = 'IT Help Desk'
-const FROM_EMAIL   = 'ITalerts@digiclarity.in'
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
-}
+const SMTP_HOST = Deno.env.get("SMTP_HOST") || "smtp.gmail.com";
+const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "587");
+const SMTP_USER = Deno.env.get("SMTP_USER") || "italerts@digiclarity.in";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") || "mevoqnhknsjyuimk";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || SMTP_USER;
+const APP_URL = Deno.env.get("APP_URL") || "https://dgsit22.github.io/servicedesk/";
 
-// ── Send email via Supabase Admin API (uses your configured SMTP) ──
+// ── Simple SMTP sender using Deno SMTP ──────────────────────────
 async function sendEmail(to: string, subject: string, html: string) {
-  const admin = createClient(SUPABASE_URL, SERVICE_KEY)
-
-  // Supabase admin.auth has no direct sendEmail,
-  // so we use the Supabase internal mail endpoint
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/email`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SERVICE_KEY,
-      'Authorization': `Bearer ${SERVICE_KEY}`
-    },
-    body: JSON.stringify({
-      email: to,
-      subject,
-      html,
-      from_name: FROM_NAME,
-      from_email: FROM_EMAIL
-    })
-  })
-
-  // If the above endpoint is not available on your plan,
-  // fallback: use nodemailer-style SMTP fetch via smtp.gmail.com
-  if (!res.ok) {
-    const errText = await res.text()
-    console.error('Supabase mail error:', errText)
-    // Fallback: log and continue — email notifications are non-critical
-    console.log(`[EMAIL LOG] To: ${to} | Subject: ${subject}`)
-  } else {
-    console.log(`Email sent to ${to}: ${subject}`)
+  // Use Resend if RESEND_KEY is set — preferred
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  if (resendKey) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: `ServiceDesk <${FROM_EMAIL}>`, to, subject, html }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return;
   }
+
+  // Fallback: raw SMTP via smtp.deno.dev wrapper
+  const smtpRes = await fetch("https://smtp.deno.dev/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      host: SMTP_HOST, port: SMTP_PORT,
+      username: SMTP_USER, password: SMTP_PASS,
+      from: FROM_EMAIL, to, subject, html,
+    }),
+  });
+  if (!smtpRes.ok) throw new Error(await smtpRes.text());
 }
 
-// ── Email HTML wrapper ─────────────────────────────────────────
-function wrap(body: string) {
-  return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:20px;background:#f0eeea;font-family:Arial,sans-serif">
-  <div style="max-width:540px;margin:0 auto;background:#fff;border-radius:10px;border:1px solid #e2e0da;overflow:hidden">
-    <div style="background:#1a56db;padding:16px 24px;display:flex;align-items:center;gap:10px">
-      <span style="color:#fff;font-size:14px;font-weight:600">&#9632; ServiceDesk &mdash; IT Help Portal</span>
-    </div>
-    <div style="padding:24px 28px">${body}</div>
-    <div style="padding:12px 24px;border-top:1px solid #e2e0da;background:#f7f6f3;font-size:11px;color:#a09e9a">
-      Automated notification &middot; IT Help Desk &middot; ITalerts@digiclarity.in &middot; Do not reply
+// ── Email templates ─────────────────────────────────────────────
+function baseTemplate(title: string, body: string) {
+  return `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;padding:32px 16px;margin:0">
+<div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">
+  <div style="background:#1a56db;padding:20px 28px">
+    <div style="color:#fff;font-size:18px;font-weight:700">&#9632; ServiceDesk</div>
+    <div style="color:#93c5fd;font-size:12px;margin-top:2px">IT Help Portal · Digiclarity</div>
+  </div>
+  <div style="padding:28px">
+    <div style="font-size:16px;font-weight:600;color:#1c1b19;margin-bottom:16px">${title}</div>
+    ${body}
+    <div style="margin-top:24px">
+      <a href="${APP_URL}" style="display:inline-block;background:#1a56db;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Open ServiceDesk →</a>
     </div>
   </div>
-</body></html>`
+  <div style="padding:16px 28px;background:#f7f6f3;border-top:1px solid #e2e0da;font-size:11px;color:#a09e9a">
+    This is an automated message from ServiceDesk. Do not reply to this email.
+  </div>
+</div></body></html>`;
 }
 
-function h2(t: string) { return `<h2 style="font-size:17px;font-weight:600;color:#1c1b19;margin:0 0 6px">${t}</h2>` }
-function muted(t: string) { return `<p style="font-size:13px;color:#6b6860;margin:0 0 18px">${t}</p>` }
-function card(inner: string) { return `<div style="background:#f7f6f3;border:1px solid #e2e0da;border-radius:8px;padding:14px;margin-bottom:16px">${inner}</div>` }
-function mono(t: string) { return `<span style="font-family:monospace;font-size:12px;color:#1a56db">${t}</span>` }
-function bold(t: string) { return `<strong>${t}</strong>` }
-function note(t: string, color='#6b6860') { return `<p style="font-size:12px;color:${color};margin:0">${t}</p>` }
-function statusBadge(s: string) {
-  const bg: Record<string,string> = {open:'#fff8ec',inprogress:'#eef6ff',resolved:'#f0fdf4',closed:'#f0fdf4',pending_approval:'#f5f3ff'}
-  const fg: Record<string,string> = {open:'#8a4500',inprogress:'#1e40af',resolved:'#14532d',closed:'#14532d',pending_approval:'#5b21b6'}
-  const labels: Record<string,string> = {inprogress:'In Progress',pending_approval:'Pending Approval'}
-  const label = labels[s] || s.charAt(0).toUpperCase()+s.slice(1)
-  return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${bg[s]||'#f1f0eb'};color:${fg[s]||'#57534e'}">${label}</span>`
+function row(label: string, value: string) {
+  return `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f0ede6;font-size:13px">
+    <span style="color:#6b6860;min-width:110px">${label}</span>
+    <span style="font-weight:500;color:#1c1b19">${value}</span>
+  </div>`;
 }
 
-// ── Main ───────────────────────────────────────────────────────
+function priorityColor(p: string) {
+  return { critical: "#a61e1e", high: "#8a4500", medium: "#1e40af", low: "#14532d" }[p] || "#333";
+}
+
+function statusLabel(s: string) {
+  return { inprogress: "In Progress", pending_approval: "Pending Approval", waiting_for_info: "Waiting for Info" }[s] || s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ── Main handler ────────────────────────────────────────────────
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
-
-  let payload: Record<string, any>
-  try { payload = await req.json() }
-  catch { return new Response('Bad request', { status: 400 }) }
-
-  const { type } = payload
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    switch (type) {
+    const payload = await req.json();
+    const { type } = payload;
+    let emailsSent = 0;
 
-      // ── 1. New ticket submitted → confirm to requester ────────
-      case 'ticket_created': {
-        const { ticket_no, title, requester_email, requester_name } = payload
+    // ── Ticket raised — confirmation to requester ────────────────
+    if (type === "ticket_raised") {
+      const { ticket_no, title, category, priority, description, requester_email, requester_name } = payload;
+      if (requester_email) {
         await sendEmail(
           requester_email,
           `[${ticket_no}] Your IT request has been received`,
-          wrap(`
-            ${h2('Request received &#10003;')}
-            ${muted(`Hi ${requester_name}, your IT request has been logged. Our team will review it shortly.`)}
-            ${card(`
-              <div style="font-size:11px;color:#a09e9a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Ticket Details</div>
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">${title}</div>
-              ${mono(ticket_no)}
-            `)}
-            ${note('You will receive an email each time your ticket is updated. Track progress in the ServiceDesk portal.')}
+          baseTemplate(`✅ Request Received — ${ticket_no}`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name || "there"},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">
+              Your IT request has been successfully submitted. Our team will review it shortly.
+            </p>
+            <div style="background:#f0f4ff;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #1a56db">
+              ${row("Ticket ID", `<strong style="font-family:monospace;font-size:14px;color:#1a56db">${ticket_no}</strong>`)}
+              ${row("Subject", title)}
+              ${row("Category", category || "—")}
+              ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${(priority || "medium").toUpperCase()}</span>`)}
+            </div>
+            ${description ? `<div style="margin-bottom:16px;padding:12px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#6b6860;border-left:3px solid #e2e0da"><strong style="display:block;margin-bottom:4px;color:#1c1b19">Your description:</strong>${description.slice(0, 400)}${description.length > 400 ? '…' : ''}</div>` : ''}
+            <p style="font-size:12px;color:#a09e9a">You will receive updates when the status changes or IT adds a comment. Use your Ticket ID to track progress.</p>
           `)
-        )
-        break
+        );
+        emailsSent++;
       }
+    }
 
-      // ── 2. Hardware request → requester + manager ─────────────
-      case 'hardware_submitted': {
-        const { ticket_no, hw_type, qty, justification, requester_email, requester_name, manager_email, dept, approve_url } = payload
-        // To requester
-        await sendEmail(
-          requester_email,
-          `[${ticket_no}] Hardware request submitted — awaiting approval`,
-          wrap(`
-            ${h2('Hardware request submitted &#10003;')}
-            ${muted(`Hi ${requester_name}, your request has been sent to your manager for approval.`)}
-            ${card(`
-              <div style="font-weight:600;margin-bottom:4px">${hw_type} &times; ${qty}</div>
-              <div style="margin-bottom:8px">${mono(ticket_no)}</div>
-              Status: ${statusBadge('pending_approval')}
-            `)}
-            ${note('You will be notified once your manager approves or rejects this request.')}
-          `)
-        )
-        // To manager
-        await sendEmail(
-          manager_email,
-          `[${ticket_no}] Approval required — hardware request from ${requester_name}`,
-          wrap(`
-            ${h2('Approval required &#128274;')}
-            ${muted(`A hardware request from your team requires your approval before IT can proceed.`)}
-            ${card(`
-              <table style="width:100%;font-size:12px;border-collapse:collapse">
-                <tr><td style="color:#a09e9a;padding:3px 0;width:110px">Requested by</td><td>${bold(requester_name)} &mdash; ${dept}</td></tr>
-                <tr><td style="color:#a09e9a;padding:3px 0">Hardware</td><td>${bold(hw_type + ' \xd7 ' + qty)}</td></tr>
-                <tr><td style="color:#a09e9a;padding:3px 0">Ticket</td><td>${mono(ticket_no)}</td></tr>
-                <tr><td style="color:#a09e9a;padding:3px 0;vertical-align:top">Reason</td><td>${justification}</td></tr>
-              </table>
-            `)}
-            <p style="font-size:12px;color:#6b6860;margin:0 0 14px">Log in to the ServiceDesk Admin Panel to approve or reject this request:</p>
-            <a href="${approve_url}" style="display:inline-block;background:#1a56db;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600">Review in Admin Panel &rarr;</a>
-          `)
-        )
-        break
-      }
-
-      // ── 3. Status changed → notify requester ──────────────────
-      case 'status_changed': {
-        const { ticket_no, title, new_status, requester_email, requester_name, technician_name, comment } = payload
-        const resolved = new_status === 'resolved' || new_status === 'closed'
-        await sendEmail(
-          requester_email,
-          `[${ticket_no}] Update: ${new_status === 'inprogress' ? 'In Progress' : new_status === 'resolved' ? 'Resolved' : new_status.charAt(0).toUpperCase()+new_status.slice(1)}`,
-          wrap(`
-            ${h2('Your ticket has been updated')}
-            ${muted(`Hi ${requester_name}, there is a status update on your IT request.`)}
-            ${card(`
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">${title}</div>
-              <div style="margin-bottom:10px">${mono(ticket_no)}</div>
-              New status: ${statusBadge(new_status)}
-              ${technician_name ? `<div style="font-size:12px;color:#6b6860;margin-top:8px">Updated by: ${bold(technician_name)}</div>` : ''}
-              ${comment ? `<div style="margin-top:10px;padding:10px;background:#fff;border-radius:6px;border-left:3px solid #1a56db;font-size:12px">&ldquo;${comment}&rdquo;</div>` : ''}
-            `)}
-            ${resolved
-              ? `<p style="font-size:12px;color:#14532d;background:#f0fdf4;padding:10px;border-radius:6px;margin:0">&#10003; Your request has been completed. Submit a new ticket if you need further assistance.</p>`
-              : note('You will receive further updates as this ticket progresses.')}
-          `)
-        )
-        break
-      }
-
-      // ── 4. Ticket assigned → notify technician ─────────────────
-      case 'assigned': {
-        const { ticket_no, title, technician_email, technician_name, requester_name, category, priority } = payload
-        const prioColor: Record<string,string> = { critical:'#a61e1e', high:'#8a4500', medium:'#1e40af', low:'#14532d' }
+    // ── Ticket assigned ─────────────────────────────────────────
+    if (type === "assigned") {
+      const { ticket_no, title, category, priority, technician_email, technician_name, requester_name, description } = payload;
+      if (technician_email) {
         await sendEmail(
           technician_email,
-          `[${ticket_no}] Assigned to you — please action`,
-          wrap(`
-            ${h2('Ticket assigned to you')}
-            ${muted(`Hi ${technician_name}, a ticket has been assigned to you for action.`)}
-            ${card(`
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px">${title}</div>
-              <div style="margin-bottom:10px">${mono(ticket_no)}</div>
-              <table style="font-size:12px;width:100%;border-collapse:collapse">
-                <tr><td style="color:#a09e9a;padding:3px 0;width:100px">Requested by</td><td>${requester_name}</td></tr>
-                <tr><td style="color:#a09e9a;padding:3px 0">Category</td><td>${category}</td></tr>
-                <tr><td style="color:#a09e9a;padding:3px 0">Priority</td><td style="font-weight:600;color:${prioColor[priority]||'#1c1b19'}">${priority.toUpperCase()}</td></tr>
-              </table>
-            `)}
-            ${note('Log in to the Technician Portal to review and action this ticket.')}
+          `[${ticket_no}] Ticket assigned to you`,
+          baseTemplate(`📋 New Ticket Assigned to You`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${technician_name},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">A ticket has been assigned to you. Please review and take action.</p>
+            <div style="background:#f0f4ff;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #1a56db">
+              ${row("Ticket", `<strong style="font-family:monospace;color:#1a56db">${ticket_no}</strong>`)}
+              ${row("Title", title)}
+              ${row("Category", category || "—")}
+              ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${(priority || "medium").toUpperCase()}</span>`)}
+              ${row("Requested by", requester_name || "—")}
+            </div>
+            ${description ? `<div style="margin-bottom:16px;padding:12px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#6b6860;border-left:3px solid #e2e0da"><strong style="display:block;margin-bottom:4px;color:#1c1b19">Description:</strong>${description.slice(0, 400)}${description.length > 400 ? '…' : ''}</div>` : ''}
           `)
-        )
-        break
+        );
+        emailsSent++;
       }
-
-      // ── 5. Hardware approved or rejected ──────────────────────
-      case 'hardware_approved':
-      case 'hardware_rejected': {
-        const { ticket_no, title, requester_email, requester_name, manager_name, reason } = payload
-        const approved = type === 'hardware_approved'
-        await sendEmail(
-          requester_email,
-          `[${ticket_no}] Hardware request ${approved ? 'approved ✓' : 'rejected'}`,
-          wrap(`
-            ${h2(approved ? '&#10003; Hardware request approved' : '&#10007; Hardware request rejected')}
-            ${muted(`Hi ${requester_name}, your manager has ${approved ? 'approved' : 'rejected'} your hardware request.`)}
-            ${card(`
-              <div style="font-weight:600;margin-bottom:4px">${title}</div>
-              <div style="margin-bottom:8px">${mono(ticket_no)}</div>
-              Decision by: ${bold(manager_name)}
-              ${reason ? `<div style="margin-top:10px;padding:10px;background:#fff;border-radius:6px;font-size:12px;border-left:3px solid ${approved?'#14532d':'#a61e1e'}">${reason}</div>` : ''}
-            `)}
-            ${approved
-              ? `<p style="font-size:12px;color:#14532d;background:#f0fdf4;padding:10px;border-radius:6px;margin:0">IT will now process your request and will contact you to arrange delivery.</p>`
-              : note('Please speak with your manager or submit a new request with additional justification.')}
-          `)
-        )
-        break
-      }
-
-      // ── 6. Comment added → notify requester ───────────────────
-      case 'comment_added': {
-        const { ticket_no, title, requester_email, requester_name, commenter_name, comment } = payload
-        await sendEmail(
-          requester_email,
-          `[${ticket_no}] New update on your request`,
-          wrap(`
-            ${h2('New comment on your ticket')}
-            ${muted(`Hi ${requester_name}, ${commenter_name} has added an update to your ticket.`)}
-            ${card(`
-              <div style="font-size:12px;font-weight:600;color:#6b6860;margin-bottom:8px">${mono(ticket_no)} &mdash; ${title}</div>
-              <div style="padding:12px;background:#fff;border-radius:6px;border-left:3px solid #1a56db;font-size:13px">&ldquo;${comment}&rdquo;</div>
-              <div style="font-size:11px;color:#a09e9a;margin-top:8px">From: ${commenter_name}</div>
-            `)}
-            ${note('Log in to the ServiceDesk portal to view the full ticket and reply.')}
-          `)
-        )
-        break
-      }
-
-      default:
-        console.log('Unknown notification type:', type)
     }
-  } catch (err) {
-    console.error('Notification error:', err)
-    return new Response(
-      JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
-    )
-  }
 
-  return new Response(
-    JSON.stringify({ ok: true }),
-    { headers: { ...cors, 'Content-Type': 'application/json' } }
-  )
-})
+    // ── Ticket transferred ──────────────────────────────────────
+    if (type === "transferred") {
+      const { ticket_no, title, category, priority, technician_email, technician_name, from_name, requester_name, handover_note, description } = payload;
+      if (technician_email) {
+        await sendEmail(
+          technician_email,
+          `[${ticket_no}] Ticket transferred to you`,
+          baseTemplate(`🔀 Ticket Transferred to You`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${technician_name},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">
+              <strong>${from_name || "A colleague"}</strong> has transferred a ticket to you.
+            </p>
+            <div style="background:#f5f3ff;border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid #5b21b6">
+              ${row("Ticket", `<strong style="font-family:monospace;color:#5b21b6">${ticket_no}</strong>`)}
+              ${row("Title", title)}
+              ${row("Category", category || "—")}
+              ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${(priority || "medium").toUpperCase()}</span>`)}
+              ${row("Requested by", requester_name || "—")}
+              ${row("Transferred from", from_name || "—")}
+            </div>
+            ${handover_note ? `<div style="margin-bottom:16px;padding:14px;background:#fefce8;border-radius:8px;border-left:3px solid #f59e0b;font-size:13px;color:#1c1b19"><strong style="display:block;margin-bottom:6px;color:#92400e">📝 Handover note from ${from_name}:</strong>${handover_note}</div>` : ''}
+            ${description ? `<div style="margin-bottom:16px;padding:12px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#6b6860;border-left:3px solid #e2e0da"><strong style="display:block;margin-bottom:4px;color:#1c1b19">Ticket description:</strong>${description.slice(0, 400)}${description.length > 400 ? '…' : ''}</div>` : ''}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── Status changed ──────────────────────────────────────────
+    if (type === "status_changed") {
+      const { ticket_no, title, new_status, old_status, requester_email, requester_name, technician_name, note } = payload;
+      if (requester_email) {
+        const statusConfig: Record<string, {emoji:string, label:string, color:string, bg:string, message:string}> = {
+          inprogress:        { emoji:"🔵", label:"In Progress",       color:"#1e40af", bg:"#eef6ff", message:"Your request is now being worked on by our IT team." },
+          waiting_for_info:  { emoji:"⏳", label:"Waiting for Info",  color:"#8a4500", bg:"#fff8ec", message:"IT needs more information from you. Please open the ticket and add a comment with the requested details." },
+          resolved:          { emoji:"✅", label:"Resolved",          color:"#14532d", bg:"#f0fdf4", message:"Your issue has been resolved. If the problem persists, please reply in the ticket or raise a new request." },
+          closed:            { emoji:"🔒", label:"Closed",            color:"#374151", bg:"#f3f4f6", message:"This ticket has been closed. Thank you for using ServiceDesk. If you need further assistance, please raise a new request." },
+          open:              { emoji:"🔄", label:"Reopened",          color:"#8a4500", bg:"#fff8ec", message:`Your ticket has been reopened${old_status === 'closed' || old_status === 'resolved' ? ' from resolved/closed status' : ''}. Our team will pick it up shortly.` },
+          pending_approval:  { emoji:"🔐", label:"Pending Approval",  color:"#5b21b6", bg:"#f5f3ff", message:"Your hardware request is awaiting manager approval. You will be notified once a decision is made." },
+        };
+        const cfg = statusConfig[new_status];
+        if (cfg) {
+          await sendEmail(
+            requester_email,
+            `[${ticket_no}] ${cfg.emoji} Status updated: ${cfg.label}`,
+            baseTemplate(`Ticket Update — ${cfg.label}`, `
+              <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name || "there"},</p>
+              <div style="background:${cfg.bg};border-radius:10px;padding:14px 16px;margin-bottom:16px;border-left:4px solid ${cfg.color}">
+                <div style="font-size:15px;font-weight:700;color:${cfg.color};margin-bottom:8px">${cfg.emoji} ${cfg.label}</div>
+                <p style="font-size:13px;color:${cfg.color};margin:0">${cfg.message}</p>
+              </div>
+              ${row("Ticket", `<strong style="font-family:monospace;color:#1a56db">${ticket_no}</strong>`)}
+              ${row("Subject", title)}
+              ${row("Updated by", technician_name || "IT Team")}
+              ${note ? `<div style="margin-top:14px;padding:12px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#1c1b19;border-left:3px solid #e2e0da"><strong style="display:block;margin-bottom:4px">Note from IT:</strong>${note}</div>` : ""}
+            `)
+          );
+          emailsSent++;
+        }
+      }
+    }
+
+    // ── Comment added ───────────────────────────────────────────
+    if (type === "comment_added") {
+      const { ticket_no, title, requester_email, requester_name, commenter_name, comment } = payload;
+      if (requester_email) {
+        await sendEmail(
+          requester_email,
+          `[${ticket_no}] New update from IT`,
+          baseTemplate(`💬 New Comment on Your Ticket`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name || "there"},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">IT has added a comment to your ticket.</p>
+            ${row("Ticket", `<strong style="font-family:monospace;color:#1a56db">${ticket_no}</strong>`)}
+            ${row("Subject", title)}
+            ${row("From", commenter_name || "IT Team")}
+            <div style="margin-top:16px;padding:14px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#1c1b19;border-left:3px solid #1a56db;line-height:1.6">
+              ${comment}
+            </div>
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── SLA breach ──────────────────────────────────────────────
+    if (type === "sla_breach") {
+      const { ticket_no, title, priority, requester_name, admin_email, hours_open } = payload;
+      if (admin_email) {
+        await sendEmail(
+          admin_email,
+          `🚨 SLA Breach: [${ticket_no}] ${title}`,
+          baseTemplate(`SLA Breach Alert`, `
+            <div style="padding:12px;background:#fff1f1;border-radius:8px;margin-bottom:16px;font-size:13px;color:#a61e1e;font-weight:600">
+              🚨 This ticket has exceeded its SLA target
+            </div>
+            ${row("Ticket", ticket_no)}
+            ${row("Title", title)}
+            ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${priority?.toUpperCase()}</span>`)}
+            ${row("Requester", requester_name || "—")}
+            ${row("Hours Open", hours_open + "h")}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── Hardware approved / rejected ────────────────────────────
+    if (type === "hardware_approved" || type === "hardware_rejected") {
+      const { ticket_no, title, requester_email, requester_name, manager_name, reason, serial_number } = payload;
+      const approved = type === "hardware_approved";
+      if (requester_email) {
+        await sendEmail(
+          requester_email,
+          `[${ticket_no}] Hardware request ${approved ? "approved ✅" : "rejected ❌"}`,
+          baseTemplate(`Hardware Request ${approved ? "Approved ✅" : "Rejected ❌"}`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name || "there"},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Your hardware request has been <strong>${approved ? "approved" : "rejected"}</strong>.</p>
+            <div style="background:${approved?'#f0fdf4':'#fff1f1'};border-radius:10px;padding:16px;margin-bottom:16px;border-left:4px solid ${approved?'#16a34a':'#a61e1e'}">
+              ${row("Ticket", `<strong style="font-family:monospace">${ticket_no}</strong>`)}
+              ${row("Request", title)}
+              ${row("Decision by", manager_name || "Manager")}
+              ${serial_number && approved ? row("Asset Serial No.", `<strong style="font-family:monospace;color:#1a56db">${serial_number}</strong>`) : ""}
+              ${reason ? row("Note", reason) : ""}
+            </div>
+            ${approved ? `<p style="font-size:13px;color:#14532d">Your request is now being processed by the IT team. They will contact you to arrange delivery or setup.</p>` : `<p style="font-size:13px;color:#a61e1e">If you have questions about this decision, please contact your manager or raise a new request.</p>`}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, emailsSent }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (err) {
+    console.error("send-notification error:", err);
+    return new Response(JSON.stringify({ ok: false, error: String(err) }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
+      const { ticket_no, title, category, priority, technician_email, technician_name, requester_name } = payload;
+      if (technician_email) {
+        await sendEmail(
+          technician_email,
+          `[${ticket_no}] Ticket assigned to you`,
+          baseTemplate(`You have been assigned a ticket`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${technician_name},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">A ticket has been assigned to you. Please review and action it.</p>
+            ${row("Ticket", ticket_no)}
+            ${row("Title", title)}
+            ${row("Category", category)}
+            ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${priority?.toUpperCase()}</span>`)}
+            ${row("Requested by", requester_name || "—")}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── Status changed ──────────────────────────────────────────
+    if (type === "status_changed") {
+      const { ticket_no, title, new_status, requester_email, requester_name, technician_name } = payload;
+      if (requester_email && new_status !== "open") {
+        const statusEmoji: Record<string,string> = { inprogress: "🔵", resolved: "✅", closed: "✅", waiting_for_info: "⏳", pending_approval: "🔐" };
+        await sendEmail(
+          requester_email,
+          `[${ticket_no}] Status updated: ${statusLabel(new_status)}`,
+          baseTemplate(`Your ticket status has changed`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Your IT request has been updated.</p>
+            ${row("Ticket", ticket_no)}
+            ${row("Title", title)}
+            ${row("New Status", `${statusEmoji[new_status] || "•"} <strong>${statusLabel(new_status)}</strong>`)}
+            ${row("Updated by", technician_name || "IT Team")}
+            ${new_status === "waiting_for_info" ? `<div style="margin-top:16px;padding:12px;background:#fff8ec;border-radius:8px;font-size:13px;color:#8a4500">⏳ <strong>Action needed:</strong> IT needs more information. Please open the ticket and add a comment.</div>` : ""}
+            ${new_status === "resolved" ? `<div style="margin-top:16px;padding:12px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#14532d">✅ Your issue has been resolved. If the problem persists, please reply in the ticket.</div>` : ""}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── Comment added ───────────────────────────────────────────
+    if (type === "comment_added") {
+      const { ticket_no, title, requester_email, requester_name, commenter_name, comment } = payload;
+      if (requester_email) {
+        await sendEmail(
+          requester_email,
+          `[${ticket_no}] New update from IT`,
+          baseTemplate(`IT has added an update to your ticket`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name},</p>
+            ${row("Ticket", ticket_no)}
+            ${row("Title", title)}
+            ${row("From", commenter_name || "IT Team")}
+            <div style="margin-top:16px;padding:14px;background:#f7f6f3;border-radius:8px;font-size:13px;color:#1c1b19;border-left:3px solid #1a56db">
+              ${comment}
+            </div>
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── SLA breach ──────────────────────────────────────────────
+    if (type === "sla_breach") {
+      const { ticket_no, title, priority, requester_name, admin_email, hours_open } = payload;
+      if (admin_email) {
+        await sendEmail(
+          admin_email,
+          `🚨 SLA Breach: [${ticket_no}] ${title}`,
+          baseTemplate(`SLA Breach Alert`, `
+            <div style="padding:12px;background:#fff1f1;border-radius:8px;margin-bottom:16px;font-size:13px;color:#a61e1e;font-weight:600">
+              🚨 This ticket has exceeded its SLA target
+            </div>
+            ${row("Ticket", ticket_no)}
+            ${row("Title", title)}
+            ${row("Priority", `<span style="color:${priorityColor(priority)};font-weight:700">${priority?.toUpperCase()}</span>`)}
+            ${row("Requester", requester_name || "—")}
+            ${row("Hours Open", hours_open + "h")}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    // ── Hardware approved / rejected ────────────────────────────
+    if (type === "hardware_approved" || type === "hardware_rejected") {
+      const { ticket_no, title, requester_email, requester_name, manager_name, reason } = payload;
+      const approved = type === "hardware_approved";
+      if (requester_email) {
+        await sendEmail(
+          requester_email,
+          `[${ticket_no}] Hardware request ${approved ? "approved" : "rejected"}`,
+          baseTemplate(`Hardware Request ${approved ? "Approved ✅" : "Rejected ❌"}`, `
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Hi ${requester_name},</p>
+            <p style="font-size:13px;color:#6b6860;margin-bottom:16px">Your hardware request has been <strong>${approved ? "approved" : "rejected"}</strong>.</p>
+            ${row("Ticket", ticket_no)}
+            ${row("Request", title)}
+            ${row("Decision by", manager_name || "Manager")}
+            ${reason ? row("Note", reason) : ""}
+          `)
+        );
+        emailsSent++;
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, emailsSent }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (err) {
+    console.error("send-notification error:", err);
+    return new Response(JSON.stringify({ ok: false, error: String(err) }), {
+      status: 200, // Return 200 so frontend doesn't block on notification failures
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

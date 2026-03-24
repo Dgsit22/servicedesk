@@ -1302,7 +1302,7 @@ async function quickStatus(s) {
     updates.resolved_at=null; updates.resolution_minutes=null;
   }
   await db.from('tickets').update(updates).eq('id',selectedId);
-  try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
+  try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,old_status:t.status,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
   toast('Status → '+statusLabel(s));
   await loadTickets(); openPanel(selectedId); renderList(); renderMine();
 }
@@ -1367,9 +1367,9 @@ async function saveUpdate() {
   if (assignedTo) {
     try {
       const {data:tech} = await db.from('profiles').select('full_name,email').eq('id',assignedTo).single();
-      const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
+      const {data:tkt} = await db.from('tickets').select('ticket_no,title,category,priority,description,creator:profiles!created_by(full_name)').eq('id',selectedId).single();
       if (tech && tech.email !== currentProfile.email) {
-        await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt?.ticket_no,title:tkt?.title,category:tkt?.category,priority:tkt?.priority,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt?.creator?.full_name}});
+        await db.functions.invoke('send-notification',{body:{type:'assigned',ticket_no:tkt?.ticket_no,title:tkt?.title,category:tkt?.category,priority:tkt?.priority,description:tkt?.description,technician_email:tech.email,technician_name:tech.full_name,requester_name:tkt?.creator?.full_name}});
       }
     } catch(e) {}
   }
@@ -1777,8 +1777,20 @@ async function confirmTransfer() {
   });
 
   try {
-    const { data: tkt } = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id', transferTargetId).single();
-    await db.functions.invoke('send-notification', { body: { type: 'assigned', ticket_no: tkt?.ticket_no, title: tkt?.title, technician_email: toTech?.email, technician_name: toTech?.full_name, requester_name: tkt?.creator?.full_name } });
+    const { data: tkt } = await db.from('tickets').select('ticket_no,title,category,priority,description,creator:profiles!created_by(full_name)').eq('id', transferTargetId).single();
+    await db.functions.invoke('send-notification', { body: {
+      type: 'transferred',
+      ticket_no: tkt?.ticket_no,
+      title: tkt?.title,
+      category: tkt?.category,
+      priority: tkt?.priority,
+      description: tkt?.description,
+      technician_email: toTech?.email,
+      technician_name: toTech?.full_name,
+      from_name: currentProfile.full_name,
+      requester_name: tkt?.creator?.full_name,
+      handover_note: note
+    }});
   } catch(e) {}
 
   toast('✓ Ticket transferred to ' + (toTech?.full_name || 'technician'));
