@@ -174,27 +174,28 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
 .b-pending_approval{background:var(--pending-bg);color:var(--pending-text)}.b-pending_approval::before{background:var(--pending-text)}
 .b-waiting_for_info{background:#fff8ec;color:#8a4500}.b-waiting_for_info::before{background:#8a4500}
 .b-tag{background:var(--surface3);color:var(--text2);border:1px solid var(--border);font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}.b-tag::before{display:none}
-.detail-panel{position:absolute;right:0;top:0;height:100%;width:500px;background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:20}
+.detail-panel{position:absolute;right:0;top:0;height:100%;width:520px;background:#fff;border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(0,0,0,.1);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);z-index:20}
 .detail-panel.open{transform:translateX(0)}
-.dp-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
+.dp-header{padding:18px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;flex-shrink:0;background:#fff}
 .dp-header-info{flex:1;overflow:hidden}
-.dp-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px}
-.dp-title{font-size:14px;font-weight:600;line-height:1.3}
-.dp-body{flex:1;overflow-y:auto}
-.dp-section{padding:14px 18px;border-bottom:1px solid var(--border)}
-.dp-section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
-.dp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.dp-row:last-child{border:none}.dp-row-label{color:var(--text3)}.dp-row-val{font-weight:500;text-align:right}
-.dp-desc{font-size:12px;color:var(--text2);line-height:1.7}
-.comment-item{padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;border-left:2px solid var(--accent)}
-.comment-item.internal{border-left-color:#f59e0b;background:#fffbeb}
+.dp-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:500;letter-spacing:.04em}
+.dp-title{font-size:17px;font-weight:700;line-height:1.3;color:var(--text);letter-spacing:-.3px}
+.dp-body{flex:1;overflow-y:auto;background:#f7f6f3}
+.dp-section{padding:16px 20px;border-bottom:1px solid var(--border);background:#fff;margin-bottom:6px}
+.dp-section:first-child{margin-top:0}
+.dp-section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.dp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.dp-row:last-child{border:none}.dp-row-label{color:var(--text3);font-size:12px}.dp-row-val{font-weight:500;text-align:right;font-size:12px}
+.dp-desc{font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.comment-item{padding:12px 14px;background:#f7f6f3;border-radius:10px;margin-bottom:8px;border:1px solid var(--border);border-left:3px solid var(--accent)}
+.comment-item.internal{border-left-color:#f59e0b;background:#fffbeb;border-color:#fde68a}
 .comment-item:last-child{margin-bottom:0}
-.comment-meta{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:'DM Mono',monospace}
-.comment-text{font-size:12px;color:var(--text);line-height:1.6}
-.dp-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);flex-shrink:0}
-.dp-footer textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;transition:border .12s}
-.dp-footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
-.dp-footer-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.comment-meta{font-size:10px;color:var(--text3);margin-bottom:5px;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px}
+.comment-text{font-size:12px;color:var(--text);line-height:1.65}
+.dp-footer{padding:16px 20px;border-top:1px solid var(--border);background:#fff;flex-shrink:0}
+.dp-footer textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:#f7f6f3;color:var(--text);font-family:'Inter',sans-serif;outline:none;resize:none;line-height:1.55;transition:border .12s,background .12s}
+.dp-footer textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.07)}
+.dp-footer-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
 .overlay{position:absolute;inset:0;background:rgba(28,27,25,.25);z-index:15;display:none}
 .overlay.show{display:block}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:#1c1b19;color:#fff;padding:9px 20px;border-radius:8px;font-size:12px;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.2)}
@@ -1089,74 +1090,99 @@ async function openPanel(uid) {
     :t.started_at?calcElapsed(t.started_at)+' (ongoing)':'—';
 
   const statusBtns=[
-    {v:'open',l:'Open',bg:'var(--open-bg)',color:'var(--open-text)',border:'var(--high-border)'},
-    {v:'inprogress',l:'Working',bg:'var(--inprog-bg)',color:'var(--inprog-text)',border:'var(--medium-border)'},
-    {v:'waiting_for_info',l:'Waiting for Info',bg:'#fff8ec',color:'#8a4500',border:'#ffd89a'},
-    {v:'resolved',l:'Resolved',bg:'var(--closed-bg)',color:'var(--closed-text)',border:'var(--low-border)'},
-    {v:'closed',l:'Closed',bg:'var(--surface3)',color:'var(--text2)',border:'var(--border2)'},
+    {v:'open',      l:'Open',            icon:'○', bg:'var(--open-bg)',    color:'var(--open-text)',   border:'var(--high-border)'},
+    {v:'inprogress',l:'Working',         icon:'◉', bg:'var(--inprog-bg)', color:'var(--inprog-text)', border:'var(--medium-border)'},
+    {v:'waiting_for_info',l:'Waiting',   icon:'◷', bg:'#fff8ec',          color:'#8a4500',             border:'#ffd89a'},
+    {v:'resolved',  l:'Resolved',        icon:'✓', bg:'var(--closed-bg)', color:'var(--closed-text)', border:'var(--low-border)'},
+    {v:'closed',    l:'Closed',          icon:'×', bg:'var(--surface3)',   color:'var(--text2)',        border:'var(--border2)'},
   ].map(s=>{
     const active=t.status===s.v;
-    return `<button onclick="quickStatus('${s.v}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:${active?'600':'400'};background:${active?s.bg:'var(--surface2)'};color:${active?s.color:'var(--text2)'};border:1px solid ${active?s.border:'var(--border2)'};">${s.l}</button>`;
+    return `<button onclick="quickStatus('${s.v}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:${active?'700':'500'};background:${active?s.bg:'#fff'};color:${active?s.color:'var(--text3)'};border:1.5px solid ${active?s.border:'var(--border)'};transition:all .12s;box-shadow:${active?'0 1px 4px rgba(0,0,0,.08)':'none'}">${active?`<span style="width:6px;height:6px;border-radius:50%;background:${s.color};display:inline-block"></span>`:''}${s.l}</button>`;
   }).join('');
 
   document.getElementById('dp-id').textContent=t.ticket_no;
   document.getElementById('dp-title').textContent=t.title;
 
-  // Pre-fill due date if set
   const dueDateEl=document.getElementById('due-date-input');
   if(dueDateEl) dueDateEl.value=t.due_date||'';
 
-  // Load requester history in background
   if(t.creator?.id) loadRequesterHistory(t.creator.id, t.id, t.creator.full_name);
 
   document.getElementById('dp-body').innerHTML=`
+    <!-- Status -->
     <div class="dp-section">
-      <div class="dp-section-title">Status — click to change</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${statusBtns}
+      <div class="dp-section-title">Status</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${statusBtns}
         ${t.status==='pending_approval'?`
-          <button onclick="approveHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0">✓ Approve</button>
-          <button onclick="rejectHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9">✗ Reject</button>`:''}
+          <button onclick="approveHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#f0fdf4;color:#14532d;border:1.5px solid #bbf7d0">✓ Approve</button>
+          <button onclick="rejectHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#fff1f1;color:#a61e1e;border:1.5px solid #ffc9c9">✗ Reject</button>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${prioBadge(t.priority)} ${tagBadge(t.category)}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        ${prioBadge(t.priority)} ${tagBadge(t.category)}
         ${!['resolved','closed'].includes(t.status)?`<span class="sla-timer" id="sla-live-timer" data-created="${t.created_at}" data-priority="${t.priority}">⏱ —</span>`:''}
       </div>
     </div>
+
+    <!-- Requester -->
     <div class="dp-section">
       <div class="dp-section-title">Requester</div>
-      <div class="dp-row"><span class="dp-row-label">Name</span><span class="dp-row-val">${t.creator?.full_name||'—'}</span></div>
-      <div class="dp-row"><span class="dp-row-label">Email</span><span class="dp-row-val">${t.creator?.email||'—'}</span></div>
-      ${t.creator?.employee_id?`<div class="dp-row"><span class="dp-row-label">Emp ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.creator.employee_id}</span></div>`:''}
-      ${t.creator?.phone?`<div class="dp-row"><span class="dp-row-label">Phone</span><span class="dp-row-val">${t.creator.phone}</span></div>`:''}
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(26,86,219,.15)">
+          ${(t.creator?.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">${t.creator?.full_name||'—'}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:1px">${t.creator?.email||''}</div>
+        </div>
+      </div>
+      ${t.creator?.employee_id?`<div class="dp-row"><span class="dp-row-label">Employee ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace">${t.creator.employee_id}</span></div>`:''}
       ${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).length?`<div class="dp-row"><span class="dp-row-label">Location</span><span class="dp-row-val">${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).join(' · ')}</span></div>`:''}
-      ${t.serial_number?`<div class="dp-row"><span class="dp-row-label" style="color:#14532d;font-weight:600">📦 Serial No.</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:#1B4DB8">${t.serial_number}</span></div>`:''}
-      ${t.asset_tag&&t.asset_tag!==t.serial_number?`<div class="dp-row"><span class="dp-row-label">Asset Tag</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.asset_tag}</span></div>`:''}
-      ${t.approved_by_name?`<div class="dp-row"><span class="dp-row-label">Approved by</span><span class="dp-row-val"><span style="background:#f0fdf4;color:#14532d;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">✓ ${t.approved_by_name}</span></span></div>`:''}
-      <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-size:11px">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
+      <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
+      ${t.serial_number?`<div class="dp-row"><span class="dp-row-label" style="color:#14532d;font-weight:600">📦 Serial No.</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-weight:700;color:#1B4DB8">${t.serial_number}</span></div>`:''}
+      ${t.approved_by_name?`<div class="dp-row"><span class="dp-row-label">Approved by</span><span class="dp-row-val"><span style="background:#f0fdf4;color:#14532d;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">✓ ${t.approved_by_name}</span></span></div>`:''}
     </div>
+
+    <!-- Resolution -->
     <div class="dp-section">
       <div class="dp-section-title">Resolution Time</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap">
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Started</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.started_at?t.started_at.slice(0,16).replace('T',' '):'Not started'}</div></div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Resolved</div><div style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace">${t.resolved_at?t.resolved_at.slice(0,16).replace('T',' '):'—'}</div></div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:2px">Total</div><div style="font-size:14px;font-weight:600;color:var(--accent)">${resTime}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div style="background:#f7f6f3;border-radius:10px;padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Started</div>
+          <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)">${t.started_at?t.started_at.slice(0,16).replace('T',' '):'—'}</div>
+        </div>
+        <div style="background:#f7f6f3;border-radius:10px;padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Resolved</div>
+          <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)">${t.resolved_at?t.resolved_at.slice(0,16).replace('T',' '):'—'}</div>
+        </div>
+        <div style="background:var(--accent-light);border-radius:10px;padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--accent-text);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total</div>
+          <div style="font-size:16px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${resTime}</div>
+        </div>
       </div>
     </div>
-    <div class="dp-section"><div class="dp-section-title">Description</div><div class="dp-desc">${t.description}</div></div>
+
+    <!-- Description -->
+    <div class="dp-section">
+      <div class="dp-section-title">Description</div>
+      <div class="dp-desc" style="background:#f7f6f3;border-radius:10px;padding:12px 14px;font-size:13px">${t.description?.replace(/\n/g,'<br>')||'—'}</div>
+    </div>
+
+    <!-- Approval details -->
     ${t.approved_by_name?`
-    <div class="dp-section" style="background:#f0fdf4">
+    <div class="dp-section" style="background:#f0fdf4;border-color:#bbf7d0">
       <div class="dp-section-title" style="color:#14532d">✓ Approval Details</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:3px 10px;border-radius:10px">APPROVED</span>
-          <span style="font-size:13px;font-weight:600;color:#14532d">${t.approved_by_name}</span>
-        </div>
-        ${t.serial_number?`<div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">
-          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Asset Serial Number</div>
-          <div style="font-size:16px;font-weight:700;color:#1B4DB8;font-family:'DM Mono',monospace">${t.serial_number}</div>
-        </div>`:''}
-        ${t.approval_reason?`<div style="font-size:12px;color:#166534;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid #bbf7d0">${t.approval_reason}</div>`:''}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:3px 12px;border-radius:20px">APPROVED</span>
+        <span style="font-size:13px;font-weight:600;color:#14532d">${t.approved_by_name}</span>
       </div>
+      ${t.serial_number?`<div style="background:#fff;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Asset Serial Number</div>
+        <div style="font-size:18px;font-weight:800;color:#1B4DB8;font-family:'DM Mono',monospace;letter-spacing:.02em">${t.serial_number}</div>
+      </div>`:''}
+      ${t.approval_reason?`<div style="font-size:12px;color:#166534;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #bbf7d0;line-height:1.6">${t.approval_reason}</div>`:''}
     </div>`:''}
+
+    <!-- Comments -->
     <div class="dp-section">
       <div class="dp-section-title">Comments &amp; Attachments</div>
       ${t.comments?.length?t.comments.map(c=>{
@@ -1164,52 +1190,88 @@ async function openPanel(uid) {
         const imgUrl = isImg ? c.body.split('Screenshot: ').slice(-1)[0].split(' ')[0] : null;
         const textPart = isImg ? c.body.split(' | Screenshot:')[0] : c.body;
         return `<div class="comment-item${c.is_internal?' internal':''}">
-          <div class="comment-meta">${c.author?.full_name||'Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}${c.is_internal?' <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px">Internal</span>':''}</div>
+          <div class="comment-meta">
+            <span style="font-weight:600;color:var(--text2)">${c.author?.full_name||'Staff'}</span>
+            <span>·</span>
+            <span>${c.created_at?.slice(0,16).replace('T',' ')}</span>
+            ${c.is_internal?'<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:10px;font-weight:600">Internal</span>':''}
+          </div>
           ${textPart?`<div class="comment-text">${textPart}</div>`:''}
           ${imgUrl?`<div class="attach-thumb" onclick="openLightbox('${imgUrl}')"><img src="${imgUrl}" alt="Screenshot" loading="lazy"></div>`:''}
         </div>`;
-      }).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
+      }).join(''):'<div style="font-size:13px;color:var(--text3);padding:8px 0;text-align:center">No comments yet</div>'}
     </div>
+
+    <!-- Requester History -->
     <div class="dp-section" id="requester-history">
       <div class="dp-section-title">Requester History</div>
       <div style="font-size:12px;color:var(--text3)">Loading…</div>
     </div>
   `;
-  // Start live SLA countdown
   startSlaTimer();
 
   document.getElementById('dp-footer').innerHTML=`
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Assign to</div>
-      <div style="display:flex;gap:8px">
-        <select id="assign-sel" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
+    <!-- Assign To -->
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Assign To</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="assign-sel" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:#f7f6f3;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border .12s;cursor:pointer" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           <option value="">— Unassigned —</option>${techOptions}
         </select>
-        <button class="btn btn-sm" onclick="assignToSelf()" style="flex-shrink:0;font-size:11px">👤 Take It</button>
-        <button class="btn btn-sm" onclick="showTransferModal('${t.id}')" style="flex-shrink:0;font-size:11px;background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe">🔀 Transfer</button>
+        <button onclick="assignToSelf()" style="padding:9px 14px;background:#fff;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text2);white-space:nowrap;transition:all .12s;display:flex;align-items:center;gap:5px" onmouseover="this.style.borderColor='#1B4DB8';this.style.color='#1B4DB8'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14a6 6 0 1112 0H2z"/></svg> Take It
+        </button>
+        <button onclick="showTransferModal('${t.id}')" style="padding:9px 14px;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#5b21b6;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:all .12s" onmouseover="this.style.background='#ede9fe'" onmouseout="this.style.background='#f5f3ff'">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1 4.5A1.5 1.5 0 012.5 3h11A1.5 1.5 0 0115 4.5v7a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 11.5v-7z" opacity=".3"/><path d="M6 8H3l3-3-3-3h3l3 3-3 3zm4 0h3l-3-3 3-3h-3l-3 3 3 3z"/></svg> Transfer
+        </button>
       </div>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center">
-      <div style="flex:1">
-        <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:4px">📅 Due Date (optional)</div>
-        <input type="date" id="due-date-input" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none">
-      </div>
+
+    <!-- Due Date -->
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Due Date <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input type="date" id="due-date-input" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:#f7f6f3;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border .12s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
     </div>
-    <textarea id="dp-comment" rows="2" placeholder="Add a work comment (visible to requester)…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5;margin-bottom:6px"></textarea>
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-      <input type="checkbox" id="is-internal" style="accent-color:var(--accent)">
-      <label for="is-internal" style="font-size:11px;color:var(--text3);cursor:pointer">🔒 Internal note (hidden from requester)</label>
-    </div>
+
+    <!-- Comment -->
     <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">📎 Attach screenshot (optional)</div>
-      <input type="file" id="screenshot-upload" accept="image/*" style="font-size:11px;color:var(--text2);width:100%">
-      <div id="upload-status" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Work Note</div>
+      <textarea id="dp-comment" rows="2" placeholder="Add a comment visible to the requester…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:#f7f6f3;color:var(--text);font-family:'Inter',sans-serif;outline:none;resize:none;line-height:1.55;transition:border .12s,background .12s" onfocus="this.style.borderColor='var(--accent)';this.style.background='#fff'" onblur="this.style.borderColor='var(--border)';this.style.background='#f7f6f3'"></textarea>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+        <input type="checkbox" id="is-internal" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+        <label for="is-internal" style="font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px">
+          <span style="background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700">Internal</span>
+          Hidden from requester
+        </label>
+      </div>
     </div>
+
+    <!-- Screenshot upload -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Attachment <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:1.5px dashed var(--border2);border-radius:10px;cursor:pointer;background:#f7f6f3;transition:border .12s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color:var(--text3);flex-shrink:0"><path d="M2 12V4a1 1 0 011-1h10a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1z"/><path d="M5 7l3-3 3 3M8 4v6"/></svg>
+        <input type="file" id="screenshot-upload" accept="image/*" style="display:none">
+        <span id="upload-label" style="font-size:12px;color:var(--text3)">Click to attach a screenshot</span>
+      </label>
+      <div id="upload-status" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+    </div>
+
+    <!-- Actions -->
     <div class="dp-footer-row">
-      <button class="btn btn-primary btn-sm" onclick="saveUpdate()">💾 Save Update</button>
-      <button class="btn btn-sm" onclick="closePanel()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUpdate()" style="flex:1;padding:10px;font-size:13px;font-weight:600;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2a2 2 0 012-2h8l2 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm6 10a2 2 0 100-4 2 2 0 000 4zm1-9H5v3h4V3z"/></svg>
+        Save Update
+      </button>
+      <button class="btn" onclick="closePanel()" style="padding:10px 18px;font-size:13px;border-radius:10px">Cancel</button>
     </div>
   `;
+  // Wire up file input label
+  const fi=document.getElementById('screenshot-upload');
+  if(fi) fi.addEventListener('change',()=>{
+    const lbl=document.getElementById('upload-label');
+    if(lbl) lbl.textContent=fi.files[0]?fi.files[0].name:'Click to attach a screenshot';
+  });
   document.getElementById('detail-panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
 }
