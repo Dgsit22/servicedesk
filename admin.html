@@ -219,9 +219,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <input class="search-input" id="ticket-search" placeholder="Search tickets…" oninput="renderTickets()">
         <button class="btn btn-sm" onclick="exportCSV()">Export CSV</button>
       </div>
+      <!-- Bulk action bar — shown when rows are selected -->
+      <div id="bulk-bar" style="display:none;padding:10px 20px;background:#fff1f1;border-bottom:2px solid #ffc9c9;align-items:center;gap:12px;flex-shrink:0">
+        <span style="font-size:12px;font-weight:600;color:#a61e1e" id="bulk-count">0 selected</span>
+        <button class="btn btn-sm" style="background:#a61e1e;color:#fff;border-color:#a61e1e;font-size:12px" onclick="bulkDeleteTickets()">🗑 Delete Selected</button>
+        <button class="btn btn-sm btn-ghost" style="font-size:12px" onclick="clearBulkSelection()">✕ Cancel</button>
+        <span style="font-size:11px;color:#a61e1e;margin-left:4px">⚠ This permanently deletes all selected tickets and their comments.</span>
+      </div>
       <div style="flex:1;overflow-y:auto">
         <table class="data-table" style="width:100%;background:var(--surface)" id="ticket-full-table">
-          <thead><tr><th>ID</th><th>Title</th><th>Requester</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th><th></th></tr></thead>
+          <thead><tr>
+            <th style="width:36px;padding:8px 12px"><input type="checkbox" id="select-all-tickets" onclick="toggleSelectAllTickets()" style="accent-color:#1B4DB8;cursor:pointer"></th>
+            <th>ID</th><th>Title</th><th>Requester</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th><th></th>
+          </tr></thead>
           <tbody id="ticket-list"></tbody>
         </table>
       </div>
@@ -672,8 +682,13 @@ function renderTickets() {
   const list=allTickets.filter(t=>!q||t.title?.toLowerCase().includes(q)||t.id?.toLowerCase().includes(q)||t.creator?.full_name?.toLowerCase().includes(q)||t.category?.toLowerCase().includes(q));
   document.getElementById('ticket-count-label').textContent=list.length+' tickets';
   const hwC=['Hardware','Onboarding','Offboarding'];
+  // Reset select-all on re-render
+  const sa=document.getElementById('select-all-tickets');
+  if(sa) sa.checked=false;
+  clearBulkSelection(true); // silent clear
   document.getElementById('ticket-list').innerHTML=list.map(t=>`
-    <tr style="${hwC.includes(t.category)||t.status==='pending_approval'?'background:#fdfcff':''}">
+    <tr id="trow-${t.uid}" style="${hwC.includes(t.category)||t.status==='pending_approval'?'background:#fdfcff':''}">
+      <td style="padding:8px 12px;text-align:center"><input type="checkbox" class="ticket-cb" value="${t.uid}" onchange="updateBulkBar()" style="accent-color:#1B4DB8;cursor:pointer"></td>
       <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${t.id}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${hwC.includes(t.category)?'🖥️ ':'⚙️ '}${t.title}</td>
       <td>${t.creator?.full_name||'—'}</td>
@@ -695,7 +710,79 @@ function exportCSV() {
   toast('CSV exported ('+allTickets.length+' tickets)');
 }
 
-async function deleteTicket(uid, ticketNo) {
+// ── Bulk Selection & Delete ────────────────────────────────────
+function toggleSelectAllTickets() {
+  const checked = document.getElementById('select-all-tickets').checked;
+  document.querySelectorAll('.ticket-cb').forEach(cb => { cb.checked = checked; });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const selected = [...document.querySelectorAll('.ticket-cb:checked')];
+  const bar = document.getElementById('bulk-bar');
+  const countEl = document.getElementById('bulk-count');
+  if (selected.length > 0) {
+    bar.style.display = 'flex';
+    bar.style.alignItems = 'center';
+    countEl.textContent = selected.length + ' ticket' + (selected.length !== 1 ? 's' : '') + ' selected';
+    // Highlight selected rows
+    document.querySelectorAll('.ticket-cb').forEach(cb => {
+      const row = document.getElementById('trow-' + cb.value);
+      if (row) row.style.background = cb.checked ? '#fff1f1' : '';
+    });
+  } else {
+    bar.style.display = 'none';
+    document.querySelectorAll('.ticket-cb').forEach(cb => {
+      const row = document.getElementById('trow-' + cb.value);
+      if (row) row.style.removeProperty('background');
+    });
+  }
+  // Sync select-all state
+  const all = document.querySelectorAll('.ticket-cb');
+  const sa = document.getElementById('select-all-tickets');
+  if (sa) sa.checked = all.length > 0 && selected.length === all.length;
+}
+
+function clearBulkSelection(silent = false) {
+  document.querySelectorAll('.ticket-cb').forEach(cb => { cb.checked = false; });
+  const sa = document.getElementById('select-all-tickets');
+  if (sa) sa.checked = false;
+  if (!silent) {
+    document.getElementById('bulk-bar').style.display = 'none';
+    document.querySelectorAll('.ticket-cb').forEach(cb => {
+      const row = document.getElementById('trow-' + cb.value);
+      if (row) row.style.removeProperty('background');
+    });
+  }
+}
+
+async function bulkDeleteTickets() {
+  const selected = [...document.querySelectorAll('.ticket-cb:checked')].map(cb => cb.value);
+  if (!selected.length) return;
+  const count = selected.length;
+  if (!confirm(`Permanently delete ${count} ticket${count !== 1 ? 's' : ''}?\n\nAll comments and history for these tickets will also be deleted. This cannot be undone.`)) return;
+
+  const btn = document.querySelector('#bulk-bar button');
+  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+
+  let deleted = 0, failed = 0;
+  for (const uid of selected) {
+    try {
+      await db.from('comments').delete().eq('ticket_id', uid);
+      await db.from('ticket_history').delete().eq('ticket_id', uid);
+      const { error } = await db.from('tickets').delete().eq('id', uid);
+      if (error) { failed++; } else { deleted++; }
+    } catch (e) { failed++; }
+  }
+
+  allTickets = allTickets.filter(t => !selected.includes(t.uid));
+  clearBulkSelection();
+  renderTickets();
+  if (failed > 0) toast(`✓ ${deleted} deleted · ⚠ ${failed} failed`);
+  else toast(`✓ ${deleted} ticket${deleted !== 1 ? 's' : ''} deleted`);
+}
+
+
   if (!confirm('Permanently delete ticket '+ticketNo+'?\n\nThis will also delete all comments and history for this ticket. This cannot be undone.')) return;
   // Delete comments first (foreign key)
   await db.from('comments').delete().eq('ticket_id', uid);
