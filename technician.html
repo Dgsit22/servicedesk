@@ -206,6 +206,109 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
 .sbar{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid transparent;transition:all .12s}
 .sbar:hover{opacity:.8}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
+
+/* ── Updated nav icon pill style ── */
+.nav-btn{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;
+  border-radius:12px;cursor:pointer;font-size:13px;
+  color:rgba(255,255,255,.75);border:none;background:none;
+  width:100%;text-align:left;font-family:'Inter',sans-serif;
+  font-weight:500;transition:all .15s;
+}
+.nav-btn:hover{background:rgba(255,255,255,.14);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.22);color:#fff;font-weight:600;box-shadow:none}
+.nav-icon-pill{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s;
+}
+.nav-btn.active .nav-icon-pill{background:rgba(255,255,255,.3)}
+.nav-btn:hover .nav-icon-pill{background:rgba(255,255,255,.22)}
+
+/* ── Notification Bell ── */
+.notif-btn{
+  position:relative;width:36px;height:36px;border-radius:10px;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:all .15s;
+}
+.notif-btn:hover{background:var(--surface3);border-color:var(--border2)}
+.notif-badge{
+  position:absolute;top:-5px;right:-5px;
+  min-width:17px;height:17px;border-radius:10px;
+  background:#F0177A;color:#fff;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;border:2px solid var(--surface);
+  display:none;padding:0 3px;
+}
+.notif-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;width:320px;
+  background:#fff;border:1px solid var(--border);border-radius:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:100;overflow:hidden;
+  display:none;
+}
+.notif-dropdown.open{display:block;animation:fadeIn .15s ease}
+.notif-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-header span{font-size:13px;font-weight:600}
+.notif-list{max-height:340px;overflow-y:auto}
+.notif-item{
+  padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;
+  transition:background .1s;display:flex;gap:10px;align-items:flex-start;
+}
+.notif-item:hover{background:var(--surface2)}
+.notif-item.unread{background:#f0f4ff}
+.notif-item:last-child{border-bottom:none}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#1B4DB8;flex-shrink:0;margin-top:4px}
+.notif-dot.read{background:var(--border2)}
+.notif-text{font-size:12px;font-weight:500;line-height:1.4}
+.notif-time{font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace}
+.notif-empty{padding:28px 16px;text-align:center;font-size:12px;color:var(--text3)}
+
+/* ── Live SLA Timer ── */
+.sla-timer{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;
+  font-family:'DM Mono',monospace;
+}
+.sla-timer.ok{background:#f0fdf4;color:#14532d}
+.sla-timer.risk{background:#fff8ec;color:#8a4500}
+.sla-timer.breached{background:#fff1f1;color:#a61e1e;animation:pulse-red 1.5s ease-in-out infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── Transfer Modal ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-box{
+  background:#fff;border-radius:16px;width:100%;max-width:440px;
+  overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.modal-head{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head span{font-size:15px;font-weight:700}
+.modal-body{padding:20px}
+
+/* ── Inline Image Viewer ── */
+.attach-thumb{
+  margin-top:8px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);cursor:pointer;
+  display:inline-block;position:relative;
+}
+.attach-thumb img{display:block;max-width:100%;max-height:200px;object-fit:cover}
+.attach-thumb:hover::after{
+  content:'🔍 View full size';position:absolute;inset:0;
+  background:rgba(0,0,0,.45);color:#fff;font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.lightbox{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;
+  display:flex;align-items:center;justify-content:center;cursor:zoom-out;
+}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -223,30 +326,30 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
     <nav class="sb-nav">
       <div class="sb-nav-label">Technician</div>
       <button class="nav-btn active" id="nav-dashboard" onclick="show('dashboard')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm6-6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V3zm0 6a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1V9z"/></svg></span>
         Dashboard
       </button>
       <button class="nav-btn" id="nav-tickets" onclick="show('tickets')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h10a1 1 0 110 2H3a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H3a1 1 0 01-1-1z"/></svg></span>
         All Tickets
         <span class="nav-badge nb-red" id="open-badge">0</span>
       </button>
       <button class="nav-btn" id="nav-mine" onclick="show('mine')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14a6 6 0 1112 0H2z"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14a6 6 0 1112 0H2z"/></svg></span>
         My Assigned
         <span class="nav-badge nb-blue" id="mine-badge">0</span>
       </button>
       <button class="nav-btn" id="nav-obex" onclick="show('obex')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h8v2H2v-2z"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h8v2H2v-2z"/></svg></span>
         Onboarding / Exit
         <span class="nav-badge nb-blue" id="obex-badge">0</span>
       </button>
       <button class="nav-btn" id="nav-create" onclick="show('create')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a1 1 0 011 1v4h4a1 1 0 110 2H9v4a1 1 0 11-2 0V9H3a1 1 0 110-2h4V3a1 1 0 011-1z"/></svg></span>
         New Request
       </button>
       <button class="nav-btn" id="nav-unassigned" onclick="show('unassigned')">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zM2 14s-1-1-1-2a7 7 0 0114 0c0 1-1 2-1 2H2z" opacity=".3"/><path d="M10.5 6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM12 13a4 4 0 00-8 0h8z" stroke="currentColor" stroke-width="1" fill="none"/><line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="nav-icon-pill"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-4 6s-1-1-1-2a5 5 0 0110 0c0 1-1 2-1 2H4z" opacity=".4"/><line x1="13" y1="2" x2="3" y2="12" stroke="currentColor" stroke-width="1.5"/></svg></span>
         Unassigned
         <span class="nav-badge nb-red" id="unassigned-badge">0</span>
       </button>
@@ -268,18 +371,33 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
     <div class="view active" id="view-dashboard">
       <div class="topbar">
         <div><div class="topbar-title">Technician Dashboard</div><div class="topbar-sub">All open IT service requests</div></div>
-        <button class="btn" onclick="loadTickets().then(()=>{renderDash();renderList();})">&#8635; Refresh</button>
+        <div style="display:flex;gap:8px;align-items:center;position:relative">
+          <!-- Notification Bell -->
+          <div class="notif-btn" id="notif-btn" onclick="toggleNotifications()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="notif-badge" id="notif-badge">0</span>
+          </div>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">
+              <span>Notifications</span>
+              <button onclick="markAllRead()" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:inherit">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notif-list"><div class="notif-empty">No notifications yet</div></div>
+          </div>
+          <button class="btn" onclick="loadTickets().then(()=>{renderDash();renderList();})">&#8635; Refresh</button>
+        </div>
       </div>
       <div class="scroll-area">
         <div class="dash-metrics" id="dash-metrics"><div class="loading">Loading…</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="dash-request-types"></div>
         <div class="dash-grid">
-          <div class="card">
-            <div class="card-header"><h3>Recent Activity</h3><button class="btn btn-ghost btn-sm" onclick="show('tickets')">All tickets &rarr;</button></div>
-            <div id="dash-recent"><div class="loading">Loading…</div></div>
-          </div>
-          <div class="card">
+          <div class="card" id="dash-workload-card">
             <div class="card-header"><h3>Technician Workload</h3><button class="btn btn-ghost btn-sm" onclick="show('unassigned')">Unassigned →</button></div>
             <div id="dash-cats"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tickets by Priority</h3></div>
+            <div id="dash-priority"></div>
           </div>
         </div>
       </div>
@@ -383,11 +501,42 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
     <!-- NEW REQUEST VIEW (Technician submits on behalf / for self) -->
     <div class="view" id="view-create">
       <div class="topbar">
-        <div><div class="topbar-title">Create New Request</div><div class="topbar-sub">Submit a ticket and optionally assign it</div></div>
+        <div><div class="topbar-title">Create New Request</div><div class="topbar-sub">Submit a ticket for yourself or on behalf of an employee</div></div>
         <button class="btn btn-ghost" onclick="show('dashboard')">&larr; Back</button>
       </div>
       <div class="scroll-area">
         <div style="max-width:640px">
+
+          <!-- Raise on Behalf -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em">Raise on Behalf of Employee</div>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+                <input type="checkbox" id="tc-behalf-toggle" onchange="tcToggleBehalf(this.checked)" style="accent-color:var(--accent);width:14px;height:14px">
+                Raising for someone else
+              </label>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:12px">By default the ticket is logged under your account. Toggle to raise for another employee.</div>
+            <div id="tc-behalf-fields" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">Employee Email <span style="color:var(--critical-text)">*</span></label>
+                  <input id="tc-behalf-email" type="email" placeholder="e.g. priya@digiclarity.in"
+                    style="padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border .12s"
+                    onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">Employee ID <span style="color:var(--critical-text)">*</span></label>
+                  <input id="tc-behalf-empid" type="text" placeholder="e.g. EMP-042"
+                    style="padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border .12s"
+                    onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+              </div>
+              <div style="margin-top:8px;padding:8px 10px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:6px;font-size:11px;color:#1e40af">
+                ℹ️ Ticket will be created under your account but will show the employee's email and ID in the description.
+              </div>
+            </div>
+          </div>
 
           <!-- Request Type -->
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px">
@@ -474,6 +623,38 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- Transfer Ticket Modal -->
+<div class="modal-overlay" id="transfer-modal" style="display:none" onclick="if(event.target===this)closeTransferModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span>🔀 Transfer Ticket</span>
+      <button onclick="closeTransferModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Transfer to <span style="color:var(--critical-text)">*</span></label>
+        <select id="transfer-to-sel" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;color:var(--text);background:var(--surface2)">
+          <option value="">Select technician…</option>
+        </select>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Handover Note <span style="color:var(--critical-text)">*</span></label>
+        <textarea id="transfer-note" rows="3" placeholder="Brief note for the new assignee — what's been done, what's pending…" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;resize:none;line-height:1.6;color:var(--text);background:var(--surface2)"></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="confirmTransfer()" style="flex:1">🔀 Transfer</button>
+        <button class="btn" onclick="closeTransferModal()">Cancel</button>
+      </div>
+      <div id="transfer-err" style="margin-top:8px;font-size:12px;color:var(--critical-text);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox for full-size image -->
+<div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="Screenshot">
+</div>
+
 <script>
 let currentUser=null, currentProfile=null;
 let allTickets=[], techList=[], currentFilter='all', selectedId=null;
@@ -525,6 +706,7 @@ window.addEventListener('load', async () => {
   await loadTickets();
   await loadTechList();
   renderDash();
+  subscribeToNotifications();
 });
 
 // ── Load tickets ────────────────────────────────────────────────
@@ -586,38 +768,110 @@ function show(v) {
 
 // ── Dashboard ───────────────────────────────────────────────────
 function renderDash() {
-  const total=allTickets.filter(t=>!['resolved','closed'].includes(t.status)).length;
-  const open=allTickets.filter(t=>t.status==='open').length;
-  const inp=allTickets.filter(t=>t.status==='inprogress').length;
-  const unassigned=allTickets.filter(t=>!t.assigned_to&&!['resolved','closed'].includes(t.status)).length;
+  const active = allTickets.filter(t=>!['resolved','closed'].includes(t.status));
+  const total   = active.length;
+  const open    = active.filter(t=>t.status==='open').length;
+  const inp     = active.filter(t=>t.status==='inprogress').length;
+  const unassigned = active.filter(t=>!t.assigned_to).length;
+  const closed  = allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
+  const crit    = active.filter(t=>t.priority==='critical').length;
+  const mine    = active.filter(t=>t.assigned_to===currentUser.id).length;
+
+  // Sidebar badges
   const obexCount=allTickets.filter(t=>['Onboarding','Offboarding'].includes(t.category)&&!['resolved','closed'].includes(t.status)).length;
   const obexBadge=document.getElementById('obex-badge');
   if(obexBadge){obexBadge.textContent=obexCount;obexBadge.style.display=obexCount?'':'none';}
-  const crit=allTickets.filter(t=>t.priority==='critical'&&!['resolved','closed'].includes(t.status)).length;
-  const closed=allTickets.filter(t=>t.status==='resolved'||t.status==='closed').length;
+  const ob=document.getElementById('open-badge'), mb=document.getElementById('mine-badge'), ub=document.getElementById('unassigned-badge');
+  if(ob){ob.textContent=total;ob.style.display=total?'':'none';}
+  if(mb){mb.textContent=mine;mb.style.display=mine?'':'none';}
+  if(ub){ub.textContent=unassigned;ub.style.display=unassigned?'':'none';}
+
+  // ── Top metric cards ──
   document.getElementById('dash-metrics').innerHTML=`
-    <div class="metric-card" style="cursor:pointer" onclick="show('tickets')"><div class="m-val">${total}</div><div class="m-lbl">Active Tickets</div></div>
-    <div class="metric-card" style="cursor:pointer" onclick="show('unassigned')"><div class="m-val" style="color:var(--critical-text)">${unassigned}</div><div class="m-lbl">⚠ Unassigned</div></div>
-    <div class="metric-card" style="cursor:pointer" onclick="show('mine')"><div class="m-val" style="color:var(--inprog-text)">${inp}</div><div class="m-lbl">In Progress</div></div>
-    <div class="metric-card"><div class="m-val" style="color:var(--closed-text)">${closed}</div><div class="m-lbl">Closed / Resolved</div></div>
-  `;
-  const recent=allTickets.slice(0,8);
-  document.getElementById('dash-recent').innerHTML=recent.length?recent.map(t=>`
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="openPanel('${t.uid}')">
-      <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${pDot(t.priority)}"></div>
-      <div style="flex:1;overflow:hidden">
-        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${HW_CATS.includes(t.category)?'🖥️ ':'⚙️ '}${t.id} — ${t.title}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap">${tagBadge(t.category)} ${statusBadge(t.status)} ${t.assignee?.full_name?`<span style="background:var(--low-bg);color:var(--low-text);padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">👤 ${t.assignee.full_name}</span>`:'<span style="color:var(--text3);font-size:10px">Unassigned</span>'}</div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0">${t.created_at?.slice(0,10)}</div>
+    <div class="metric-card" style="cursor:pointer;border-left-color:#1B4DB8" onclick="show('tickets')">
+      <div class="m-val">${total}</div><div class="m-lbl">Active Tickets</div>
     </div>
-  `).join(''):'<div class="empty"><div class="empty-icon">📂</div><div class="empty-title">No tickets yet</div><div class="empty-sub">Run SETUP-run-first.sql to add sample data</div></div>';
-  // Technician workload — active tickets per person
+    <div class="metric-card" style="cursor:pointer;border-left-color:#F0177A" onclick="show('unassigned')">
+      <div class="m-val" style="color:var(--critical-text)">${unassigned}</div><div class="m-lbl">⚠ Unassigned</div>
+    </div>
+    <div class="metric-card" style="cursor:pointer;border-left-color:#00A8B4" onclick="show('mine')">
+      <div class="m-val" style="color:var(--inprog-text)">${mine}</div><div class="m-lbl">My Tickets</div>
+    </div>
+    <div class="metric-card" style="border-left-color:#4ade80">
+      <div class="m-val" style="color:var(--closed-text)">${closed}</div><div class="m-lbl">Resolved / Closed</div>
+    </div>
+  `;
+
+  // ── Request type summary cards ──
+  const hw     = active.filter(t=>t.sub_category==='Hardware Request'||t.category==='Hardware Request'||(t.category||'').toLowerCase().includes('hardware'));
+  const access = active.filter(t=>t.sub_category==='Access Request'||t.category==='Access Request');
+  const software = active.filter(t=>t.sub_category==='Software Installation'||t.category==='Software Installation');
+  const incident = active.filter(t=>t.request_type==='incident'||t.category==='Incident');
+
+  document.getElementById('dash-request-types').innerHTML=`
+    <div class="card" style="cursor:pointer" onclick="setFilter('hardware','fc');show('tickets')">
+      <div style="padding:18px 20px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:14px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🖥️</div>
+        <div style="flex:1">
+          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;font-family:'DM Mono',monospace;color:#5b21b6">${hw.length}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Hardware Requests</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            ${hw.filter(t=>t.status==='pending_approval').length?`<span style="font-size:10px;background:#f5f3ff;color:#5b21b6;padding:2px 8px;border-radius:8px;font-weight:600">🔐 ${hw.filter(t=>t.status==='pending_approval').length} pending approval</span>`:''}
+            ${hw.filter(t=>t.status==='open').length?`<span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:2px 8px;border-radius:8px;font-weight:600">${hw.filter(t=>t.status==='open').length} open</span>`:''}
+            ${hw.filter(t=>t.status==='inprogress').length?`<span style="font-size:10px;background:var(--inprog-bg);color:var(--inprog-text);padding:2px 8px;border-radius:8px;font-weight:600">${hw.filter(t=>t.status==='inprogress').length} in progress</span>`:''}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="setFilter('all','fc');show('tickets')">
+      <div style="padding:18px 20px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:14px;background:#ecfeff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔑</div>
+        <div style="flex:1">
+          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;font-family:'DM Mono',monospace;color:#00A8B4">${access.length}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Access Requests</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            ${access.filter(t=>t.status==='open').length?`<span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:2px 8px;border-radius:8px;font-weight:600">${access.filter(t=>t.status==='open').length} open</span>`:''}
+            ${access.filter(t=>t.status==='inprogress').length?`<span style="font-size:10px;background:var(--inprog-bg);color:var(--inprog-text);padding:2px 8px;border-radius:8px;font-weight:600">${access.filter(t=>t.status==='inprogress').length} in progress</span>`:''}
+            ${!access.length?`<span style="font-size:10px;color:var(--text3)">None active</span>`:''}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="show('tickets')">
+      <div style="padding:18px 20px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:14px;background:#fff9f0;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💿</div>
+        <div style="flex:1">
+          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;font-family:'DM Mono',monospace;color:#8a4500">${software.length}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Software Installs</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            ${software.filter(t=>t.status==='open').length?`<span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:2px 8px;border-radius:8px;font-weight:600">${software.filter(t=>t.status==='open').length} open</span>`:''}
+            ${!software.length?`<span style="font-size:10px;color:var(--text3)">None active</span>`:''}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="setFilter('open','fc');show('tickets')">
+      <div style="padding:18px 20px;display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:14px;background:#fff1f1;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚨</div>
+        <div style="flex:1">
+          <div style="font-size:28px;font-weight:800;letter-spacing:-1px;font-family:'DM Mono',monospace;color:var(--critical-text)">${incident.length}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Incidents</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            ${crit?`<span style="font-size:10px;background:var(--critical-bg);color:var(--critical-text);padding:2px 8px;border-radius:8px;font-weight:600">🔴 ${crit} critical</span>`:''}
+            ${incident.filter(t=>t.status==='open').length?`<span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:2px 8px;border-radius:8px;font-weight:600">${incident.filter(t=>t.status==='open').length} open</span>`:''}
+            ${!incident.length?`<span style="font-size:10px;color:var(--text3)">None active</span>`:''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ── Technician workload ──
   const workload={};
-  allTickets.filter(t=>!['resolved','closed'].includes(t.status)).forEach(t=>{
-    if(t.assigned_to) {
+  active.forEach(t=>{
+    if(t.assigned_to){
       const name=t.assignee?.full_name||'Unknown';
-      if(!workload[name]) workload[name]={open:0,inprog:0,total:0};
+      if(!workload[name]) workload[name]={open:0,inprog:0,total:0,id:t.assigned_to};
       workload[name].total++;
       if(t.status==='inprogress') workload[name].inprog++;
       else workload[name].open++;
@@ -626,17 +880,39 @@ function renderDash() {
   const maxW=Math.max(...Object.values(workload).map(w=>w.total),1);
   const wEntries=Object.entries(workload).sort((a,b)=>b[1].total-a[1].total);
   document.getElementById('dash-cats').innerHTML=wEntries.length?wEntries.map(([name,w])=>`
-    <div class="cat-item" style="padding:10px 18px;border-bottom:1px solid var(--border)">
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+      </div>
       <div style="flex:1">
-        <div style="font-size:12px;font-weight:500;margin-bottom:3px">${name}</div>
-        <div style="display:flex;gap:6px">
-          <span style="font-size:10px;background:var(--open-bg);color:var(--open-text);padding:1px 6px;border-radius:8px">${w.open} open</span>
-          <span style="font-size:10px;background:var(--inprog-bg);color:var(--inprog-text);padding:1px 6px;border-radius:8px">${w.inprog} working</span>
+        <div style="font-size:12px;font-weight:600;margin-bottom:4px">${name}</div>
+        <div style="height:5px;background:var(--surface3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(w.total/maxW*100)}%;background:var(--accent);border-radius:4px;transition:width .4s"></div>
         </div>
       </div>
-      <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);min-width:28px;text-align:right">${w.total}</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--text2)">${w.total}</div>
+        <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:2px">
+          ${w.open?`<span style="font-size:9px;background:var(--open-bg);color:var(--open-text);padding:1px 5px;border-radius:6px;font-weight:600">${w.open} open</span>`:''}
+          ${w.inprog?`<span style="font-size:9px;background:var(--inprog-bg);color:var(--inprog-text);padding:1px 5px;border-radius:6px;font-weight:600">${w.inprog} working</span>`:''}
+        </div>
+      </div>
     </div>
-  `).join(''):'<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">No active assignments</div>';
+  `).join(''):'<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">No active assignments</div>';
+
+  // ── Priority breakdown ──
+  const prioMap={critical:{label:'Critical',color:'var(--critical-text)',bg:'var(--critical-bg)'},high:{label:'High',color:'var(--high-text)',bg:'var(--high-bg)'},medium:{label:'Medium',color:'var(--medium-text)',bg:'var(--medium-bg)'},low:{label:'Low',color:'var(--low-text)',bg:'var(--low-bg)'}};
+  document.getElementById('dash-priority').innerHTML=Object.entries(prioMap).map(([p,meta])=>{
+    const count=active.filter(t=>t.priority===p).length;
+    const pct=total?Math.round(count/total*100):0;
+    return `<div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;font-weight:600;color:${meta.color};background:${meta.bg};padding:2px 10px;border-radius:8px;min-width:68px;text-align:center">${meta.label}</span>
+      <div style="flex:1;height:5px;background:var(--surface3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${meta.color};border-radius:4px;transition:width .4s"></div>
+      </div>
+      <span style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);min-width:24px;text-align:right">${count}</span>
+    </div>`;
+  }).join('');
 }
 
 // ── Filter & List ───────────────────────────────────────────────
@@ -841,7 +1117,9 @@ async function openPanel(uid) {
           <button onclick="approveHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0">✓ Approve</button>
           <button onclick="rejectHardware('${t.id}')" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;background:#fff1f1;color:#a61e1e;border:1px solid #ffc9c9">✗ Reject</button>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${prioBadge(t.priority)} ${tagBadge(t.category)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${prioBadge(t.priority)} ${tagBadge(t.category)}
+        ${!['resolved','closed'].includes(t.status)?`<span class="sla-timer" id="sla-live-timer" data-created="${t.created_at}" data-priority="${t.priority}">⏱ —</span>`:''}
+      </div>
     </div>
     <div class="dp-section">
       <div class="dp-section-title">Requester</div>
@@ -880,19 +1158,26 @@ async function openPanel(uid) {
       </div>
     </div>`:''}
     <div class="dp-section">
-      <div class="dp-section-title">Comments</div>
-      ${t.comments?.length?t.comments.map(c=>`
-        <div class="comment-item${c.is_internal?' internal':''}">
+      <div class="dp-section-title">Comments &amp; Attachments</div>
+      ${t.comments?.length?t.comments.map(c=>{
+        const isImg = c.body && c.body.includes('Screenshot: ');
+        const imgUrl = isImg ? c.body.split('Screenshot: ').slice(-1)[0].split(' ')[0] : null;
+        const textPart = isImg ? c.body.split(' | Screenshot:')[0] : c.body;
+        return `<div class="comment-item${c.is_internal?' internal':''}">
           <div class="comment-meta">${c.author?.full_name||'Staff'} · ${c.created_at?.slice(0,16).replace('T',' ')}${c.is_internal?' <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:4px">Internal</span>':''}</div>
-          <div class="comment-text">${c.body}</div>
-        </div>
-      `).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
+          ${textPart?`<div class="comment-text">${textPart}</div>`:''}
+          ${imgUrl?`<div class="attach-thumb" onclick="openLightbox('${imgUrl}')"><img src="${imgUrl}" alt="Screenshot" loading="lazy"></div>`:''}
+        </div>`;
+      }).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No comments yet.</div>'}
     </div>
     <div class="dp-section" id="requester-history">
       <div class="dp-section-title">Requester History</div>
       <div style="font-size:12px;color:var(--text3)">Loading…</div>
     </div>
   `;
+  // Start live SLA countdown
+  startSlaTimer();
+
   document.getElementById('dp-footer').innerHTML=`
     <div style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Assign to</div>
@@ -901,6 +1186,7 @@ async function openPanel(uid) {
           <option value="">— Unassigned —</option>${techOptions}
         </select>
         <button class="btn btn-sm" onclick="assignToSelf()" style="flex-shrink:0;font-size:11px">👤 Take It</button>
+        <button class="btn btn-sm" onclick="showTransferModal('${t.id}')" style="flex-shrink:0;font-size:11px;background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe">🔀 Transfer</button>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center">
@@ -1105,16 +1391,26 @@ async function tcSubmitTicket() {
   if(!title){errEl.textContent='Please enter a subject.';errEl.style.display='';return;}
   if(!desc){errEl.textContent='Please add a description.';errEl.style.display='';return;}
 
+  // Behalf fields
+  const behalfOn = document.getElementById('tc-behalf-toggle')?.checked;
+  const behalfEmail = document.getElementById('tc-behalf-email')?.value.trim()||'';
+  const behalfEmpId = document.getElementById('tc-behalf-empid')?.value.trim()||'';
+  if(behalfOn && !behalfEmail){errEl.textContent='Please enter the employee email.';errEl.style.display='';return;}
+  if(behalfOn && !behalfEmpId){errEl.textContent='Please enter the employee ID.';errEl.style.display='';return;}
+
   const category=tcSRCat||(tcRequestType==='incident'?'Incident':'Service Request');
-  // Hardware requests need approval; others go straight to open (or inprogress if assigned)
   const needsApproval=tcSRCat==='Hardware Request';
   const status=needsApproval?'pending_approval':assignId?'inprogress':'open';
   const now=new Date().toISOString();
 
+  // Prepend behalf header to description
+  let fullDesc = desc;
+  if(behalfOn) fullDesc = '[Raised on behalf of: '+behalfEmail+' (ID: '+behalfEmpId+')]\nRaised by: '+currentProfile.full_name+'\n\n'+desc;
+
   const btn=document.getElementById('tc-submit-btn');
   btn.disabled=true; btn.textContent='Submitting…';
   const {data,error}=await db.from('tickets').insert({
-    title, description:desc, category, priority,
+    title, description:fullDesc, category, priority,
     status, created_by:currentUser.id,
     assigned_to:assignId||null,
     request_type:tcRequestType,
@@ -1124,10 +1420,18 @@ async function tcSubmitTicket() {
   }).select('ticket_no').single();
   btn.disabled=false; btn.textContent='↪ Submit Request';
   if(error){errEl.textContent=error.message;errEl.style.display='';return;}
-  toast('✓ Ticket '+data.ticket_no+' created'+(assignId?' & assigned':''));
+  toast('✓ Ticket '+data.ticket_no+' created'+(behalfOn?' on behalf of '+behalfEmail:'')+(assignId?' & assigned':''));
   tcClearForm();
   await loadTickets();
   show('tickets');
+}
+
+function tcToggleBehalf(checked) {
+  document.getElementById('tc-behalf-fields').style.display = checked ? '' : 'none';
+  if(!checked){
+    document.getElementById('tc-behalf-email').value='';
+    document.getElementById('tc-behalf-empid').value='';
+  }
 }
 
 function tcClearForm() {
@@ -1136,6 +1440,9 @@ function tcClearForm() {
   document.getElementById('tc-priority').value='medium';
   document.getElementById('tc-assign').value='';
   document.getElementById('tc-err').style.display='none';
+  const tog=document.getElementById('tc-behalf-toggle');
+  if(tog){tog.checked=false;}
+  tcToggleBehalf(false);
   tcRequestType=''; tcSRCat='';
   ['incident','service'].forEach(k=>{const e=document.getElementById('tc-rtype-'+k);if(e){e.style.borderColor='var(--border)';e.style.background='';}});
   ['hardware','software','access'].forEach(k=>{const e=document.getElementById('tc-srcat-'+k);if(e){e.style.borderColor='var(--border)';e.style.background='';}});
@@ -1239,8 +1546,202 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pending Approval',waiting_for_info:'Waiting for Info'};return m[s]||cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
 
+// ── Live SLA Countdown Timer ────────────────────────────────────
+let slaTimerInterval = null;
+function startSlaTimer() {
+  if (slaTimerInterval) clearInterval(slaTimerInterval);
+  function tick() {
+    const el = document.getElementById('sla-live-timer');
+    if (!el) { clearInterval(slaTimerInterval); return; }
+    const created = el.dataset.created;
+    const priority = el.dataset.priority;
+    if (!created) return;
+    const targetHrs = SLA_HOURS[priority] || 24;
+    const elapsedMs = Date.now() - new Date(created);
+    const remainMs = (targetHrs * 3600000) - elapsedMs;
+    el.className = 'sla-timer';
+    if (remainMs <= 0) {
+      const over = Math.abs(remainMs);
+      const h = Math.floor(over / 3600000);
+      const m = Math.floor((over % 3600000) / 60000);
+      el.textContent = '🚨 Breached ' + (h > 0 ? h + 'h ' : '') + m + 'm ago';
+      el.classList.add('breached');
+    } else {
+      const h = Math.floor(remainMs / 3600000);
+      const m = Math.floor((remainMs % 3600000) / 60000);
+      const s = Math.floor((remainMs % 60000) / 1000);
+      const pct = elapsedMs / (targetHrs * 3600000);
+      el.textContent = '⏱ ' + (h > 0 ? h + 'h ' : '') + m + 'm ' + s + 's left';
+      el.classList.add(pct >= 0.75 ? 'risk' : 'ok');
+    }
+  }
+  tick();
+  slaTimerInterval = setInterval(tick, 1000);
+}
+
+// ── Notification Bell ───────────────────────────────────────────
+let notifications = [];
+let notifOpen = false;
+
+function addNotification(msg, ticketId, type) {
+  notifications.unshift({ msg, ticketId, type, time: new Date(), read: false, id: Date.now() });
+  if (notifications.length > 30) notifications.pop();
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const unread = notifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  if (badge) { badge.textContent = unread; badge.style.display = unread ? '' : 'none'; }
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!notifications.length) { list.innerHTML = '<div class="notif-empty">No notifications yet</div>'; return; }
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="handleNotifClick('${n.id}','${n.ticketId||''}')">
+      <div class="notif-dot ${n.read ? 'read' : ''}"></div>
+      <div>
+        <div class="notif-text">${n.msg}</div>
+        <div class="notif-time">${timeAgo(n.time)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function handleNotifClick(nid, ticketId) {
+  const n = notifications.find(n => n.id == nid);
+  if (n) n.read = true;
+  renderNotifications();
+  if (ticketId) { closeNotifications(); openPanel(ticketId); }
+}
+
+function toggleNotifications() {
+  notifOpen = !notifOpen;
+  document.getElementById('notif-dropdown').classList.toggle('open', notifOpen);
+  if (notifOpen) {
+    setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+  }
+}
+function closeNotifications() {
+  notifOpen = false;
+  document.getElementById('notif-dropdown')?.classList.remove('open');
+}
+function closeOnOutside(e) {
+  if (!document.getElementById('notif-btn')?.contains(e.target)) {
+    closeNotifications();
+    document.removeEventListener('click', closeOnOutside);
+  }
+}
+function markAllRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifications();
+}
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (s < 60) return 'Just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+// Supabase Realtime — watch for tickets assigned to me
+function subscribeToNotifications() {
+  try {
+    db.channel('my-assignments')
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'tickets',
+        filter: 'assigned_to=eq.' + currentUser.id
+      }, payload => {
+        const t = payload.new;
+        if (payload.old.assigned_to !== currentUser.id && t.assigned_to === currentUser.id) {
+          addNotification('📌 New ticket assigned: ' + (t.title || t.ticket_no), t.id, 'assigned');
+        } else if (payload.old.status !== t.status) {
+          addNotification('🔄 ' + (t.ticket_no || 'Ticket') + ' → ' + statusLabel(t.status), t.id, 'status');
+        }
+      })
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'comments',
+      }, async payload => {
+        const c = payload.new;
+        if (c.author_id === currentUser.id) return;
+        const { data: tkt } = await db.from('tickets').select('ticket_no,title,assigned_to').eq('id', c.ticket_id).single();
+        if (tkt && tkt.assigned_to === currentUser.id) {
+          addNotification('💬 New comment on ' + (tkt.ticket_no || 'ticket') + ': ' + (c.body||'').slice(0,60), c.ticket_id, 'comment');
+        }
+      })
+      .subscribe();
+  } catch(e) { console.warn('Realtime not available:', e.message); }
+}
+
+// ── Transfer Ticket ─────────────────────────────────────────────
+let transferTargetId = null;
+
+function showTransferModal(uid) {
+  transferTargetId = uid;
+  const sel = document.getElementById('transfer-to-sel');
+  if (sel) {
+    sel.innerHTML = '<option value="">Select technician…</option>';
+    techList.filter(u => u.id !== currentUser.id).forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id; o.textContent = u.full_name;
+      sel.appendChild(o);
+    });
+  }
+  document.getElementById('transfer-note').value = '';
+  document.getElementById('transfer-err').style.display = 'none';
+  document.getElementById('transfer-modal').style.display = 'flex';
+}
+
+function closeTransferModal() {
+  document.getElementById('transfer-modal').style.display = 'none';
+  transferTargetId = null;
+}
+
+async function confirmTransfer() {
+  const toId = document.getElementById('transfer-to-sel').value;
+  const note = document.getElementById('transfer-note').value.trim();
+  const errEl = document.getElementById('transfer-err');
+  errEl.style.display = 'none';
+  if (!toId) { errEl.textContent = 'Please select a technician.'; errEl.style.display = ''; return; }
+  if (!note) { errEl.textContent = 'Please add a handover note.'; errEl.style.display = ''; return; }
+
+  const toTech = techList.find(u => u.id === toId);
+  const now = new Date().toISOString();
+
+  await db.from('tickets').update({ assigned_to: toId, updated_at: now }).eq('id', transferTargetId);
+  await db.from('comments').insert({
+    ticket_id: transferTargetId,
+    author_id: currentUser.id,
+    body: '🔀 Transferred to ' + (toTech?.full_name || 'technician') + ' by ' + currentProfile.full_name + '\n\nHandover note: ' + note,
+    is_internal: true
+  });
+
+  try {
+    const { data: tkt } = await db.from('tickets').select('ticket_no,title,category,priority,creator:profiles!created_by(full_name)').eq('id', transferTargetId).single();
+    await db.functions.invoke('send-notification', { body: { type: 'assigned', ticket_no: tkt?.ticket_no, title: tkt?.title, technician_email: toTech?.email, technician_name: toTech?.full_name, requester_name: tkt?.creator?.full_name } });
+  } catch(e) {}
+
+  toast('✓ Ticket transferred to ' + (toTech?.full_name || 'technician'));
+  closeTransferModal();
+  closePanel();
+  await loadTickets(); renderList(); renderMine();
+}
+
+// ── Lightbox ────────────────────────────────────────────────────
+function openLightbox(url) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+}
+
 document.getElementById('view-dashboard').style.cssText='display:flex;flex-direction:column;height:100%';
 ['tickets','mine','unassigned','obex','create'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
+
+// Start realtime notifications after auth loads
+window.addEventListener('load', () => {
+  // subscribeToNotifications is called after currentUser is set
+});
+
 </script>
 </body>
 </html>
