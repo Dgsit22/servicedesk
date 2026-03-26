@@ -1286,10 +1286,9 @@ function assignToSelf() {
 async function quickStatus(s) {
   const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
 
-  // If closing/resolving a hardware ticket, prompt for serial numbers first
-  const isHardware = HW_CATS.includes(t.category) || t.sub_category==='Hardware Request' || (t.category||'').toLowerCase().includes('hardware');
-  if((s==='resolved'||s==='closed') && isHardware && !t.serial_number) {
-    showHwCloseModal(t, s);
+  // For resolved/closed — always show a resolution note popup
+  if(s==='resolved'||s==='closed') {
+    showCloseModal(t, s);
     return;
   }
 
@@ -1311,6 +1310,100 @@ async function doQuickStatus(t, s) {
   try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,old_status:t.status,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
   toast('Status → '+statusLabel(s));
   await loadTickets(); openPanel(selectedId); renderList(); renderMine();
+}
+
+function showCloseModal(t, targetStatus) {
+  const existing = document.getElementById('close-modal');
+  if(existing) existing.remove();
+
+  const isHardware = HW_CATS.includes(t.category) || t.sub_category==='Hardware Request' || (t.category||'').toLowerCase().includes('hardware');
+  const needsSerial = isHardware && !t.serial_number;
+  const icon = targetStatus === 'resolved' ? '✅' : '🔒';
+  const label = targetStatus === 'resolved' ? 'Resolve' : 'Close';
+
+  const modal = document.createElement('div');
+  modal.id = 'close-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
+      <div style="padding:18px 22px;border-bottom:1px solid #e2e0da;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1c1b19">${icon} ${label} Ticket</div>
+          <div style="font-size:12px;color:#a09e9a;margin-top:2px;font-family:'DM Mono',monospace">${t.ticket_no} — ${t.title?.slice(0,40)}${t.title?.length>40?'…':''}</div>
+        </div>
+        <button onclick="document.getElementById('close-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#a09e9a;line-height:1">×</button>
+      </div>
+      <div style="padding:20px 22px">
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:6px">
+            How was this ticket resolved? <span style="color:#a61e1e">*</span>
+            <span style="font-size:10px;font-weight:400;color:#a09e9a;margin-left:4px">This will be sent to the requester</span>
+          </label>
+          <textarea id="cm-resolution-note" rows="4" placeholder="e.g. Restarted the network adapter and updated the driver. Issue confirmed resolved by user.&#10;&#10;Describe what was done to fix the issue…"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e2e0da;border-radius:10px;font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.6;color:#1c1b19;background:#f7f6f3;transition:border .12s"
+            onfocus="this.style.borderColor='#1a56db';this.style.background='#fff'"
+            onblur="this.style.borderColor='#e2e0da';this.style.background='#f7f6f3'"
+          ></textarea>
+        </div>
+
+        ${needsSerial ? `
+        <div style="background:#f0f4ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#1e40af">
+          🖥️ <strong>Hardware ticket</strong> — serial number capture follows on the next step.
+        </div>` : ''}
+
+        <div id="cm-err" style="display:none;font-size:12px;color:#a61e1e;margin-bottom:10px;padding:8px 12px;background:#fff1f1;border-radius:8px;border:1px solid #ffc9c9"></div>
+
+        <div style="display:flex;gap:10px">
+          <button onclick="confirmClose('${t.id}','${targetStatus}','${needsSerial}')"
+            style="flex:1;padding:11px;background:#1B4DB8;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s"
+            onmouseover="this.style.background='#163fa0'" onmouseout="this.style.background='#1B4DB8'">
+            ${icon} ${label} Ticket
+          </button>
+          <button onclick="document.getElementById('close-modal').remove()"
+            style="padding:11px 20px;background:#f7f6f3;color:#6b6860;border:1px solid #e2e0da;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('cm-resolution-note')?.focus(),100);
+}
+
+async function confirmClose(uid, targetStatus, needsSerial) {
+  const note = document.getElementById('cm-resolution-note')?.value.trim();
+  const errEl = document.getElementById('cm-err');
+  errEl.style.display='none';
+
+  if(!note) {
+    errEl.textContent='Please describe how the ticket was resolved.';
+    errEl.style.display='';
+    return;
+  }
+
+  // Save resolution note as a regular comment (visible to requester)
+  try {
+    await db.from('comments').insert({
+      ticket_id: uid,
+      author_id: currentUser.id,
+      body: '📝 Resolution note: ' + note,
+      is_internal: false
+    });
+  } catch(e){}
+
+  document.getElementById('close-modal').remove();
+
+  // If hardware ticket needs serial number, show that modal next
+  if(needsSerial === 'true') {
+    const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+    showHwCloseModal(t, targetStatus);
+    return;
+  }
+
+  // Otherwise proceed to close
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await doQuickStatus(t, targetStatus);
 }
 
 function showHwCloseModal(t, targetStatus) {
