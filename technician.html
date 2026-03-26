@@ -268,8 +268,8 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:
 
 /* ── Live SLA Timer ── */
 .sla-timer{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
   font-family:'DM Mono',monospace;
 }
 .sla-timer.ok{background:#f0fdf4;color:#14532d}
@@ -1109,102 +1109,96 @@ async function openPanel(uid) {
   if(t.creator?.id) loadRequesterHistory(t.creator.id, t.id, t.creator.full_name);
 
   document.getElementById('dp-body').innerHTML=`
-    <!-- Status -->
-    <div class="dp-section">
-      <div class="dp-section-title">Status</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${statusBtns}
+    <!-- Status + meta row -->
+    <div class="dp-section" style="padding:12px 20px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${statusBtns}
         ${t.status==='pending_approval'?`
-          <button onclick="approveHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#f0fdf4;color:#14532d;border:1.5px solid #bbf7d0">✓ Approve</button>
-          <button onclick="rejectHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#fff1f1;color:#a61e1e;border:1.5px solid #ffc9c9">✗ Reject</button>`:''}
+          <button onclick="approveHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#f0fdf4;color:#14532d;border:1.5px solid #bbf7d0">✓ Approve</button>
+          <button onclick="rejectHardware('${t.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;background:#fff1f1;color:#a61e1e;border:1.5px solid #ffc9c9">✗ Reject</button>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${prioBadge(t.priority)} ${tagBadge(t.category)}
-        ${!['resolved','closed'].includes(t.status)?`<span class="sla-timer" id="sla-live-timer" data-created="${t.created_at}" data-priority="${t.priority}">⏱ —</span>`:''}
+        ${!['resolved','closed'].includes(t.status)?`<span class="sla-timer" id="sla-live-timer" data-created="${t.created_at}" data-priority="${t.priority}" style="font-size:11px;padding:2px 8px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:600">⏱ —</span>`:''}
       </div>
     </div>
 
-    <!-- Requester -->
-    <div class="dp-section">
-      <div class="dp-section-title">Requester</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(26,86,219,.15)">
+    <!-- Requester + ticket meta (compact) -->
+    <div class="dp-section" style="padding:12px 20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${(t.creator?.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
         </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">${t.creator?.full_name||'—'}</div>
-          <div style="font-size:12px;color:var(--text3);margin-top:1px">${t.creator?.email||''}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${t.creator?.full_name||'—'}</div>
+          <div style="font-size:11px;color:var(--text3)">${t.creator?.email||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:1px">Submitted</div>
+          <div style="font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text2)">${t.created_at?.slice(0,16).replace('T',' ')}</div>
         </div>
       </div>
-      ${t.creator?.employee_id?`<div class="dp-row"><span class="dp-row-label">Employee ID</span><span class="dp-row-val" style="font-family:'DM Mono',monospace">${t.creator.employee_id}</span></div>`:''}
-      ${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).length?`<div class="dp-row"><span class="dp-row-label">Location</span><span class="dp-row-val">${[t.creator?.bay_number,t.creator?.floor,t.creator?.cabin].filter(Boolean).join(' · ')}</span></div>`:''}
-      <div class="dp-row"><span class="dp-row-label">Submitted</span><span class="dp-row-val" style="font-family:'DM Mono',monospace">${t.created_at?.slice(0,16).replace('T',' ')}</span></div>
-      ${t.serial_number?`<div class="dp-row"><span class="dp-row-label" style="color:#14532d;font-weight:600">📦 Serial No.</span><span class="dp-row-val" style="font-family:'DM Mono',monospace;font-weight:700;color:#1B4DB8">${t.serial_number}</span></div>`:''}
-      ${t.approved_by_name?`<div class="dp-row"><span class="dp-row-label">Approved by</span><span class="dp-row-val"><span style="background:#f0fdf4;color:#14532d;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">✓ ${t.approved_by_name}</span></span></div>`:''}
-    </div>
-
-    <!-- Resolution -->
-    <div class="dp-section">
-      <div class="dp-section-title">Resolution Time</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <div style="background:#f7f6f3;border-radius:10px;padding:10px 12px">
-          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Started</div>
-          <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)">${t.started_at?t.started_at.slice(0,16).replace('T',' '):'—'}</div>
-        </div>
-        <div style="background:#f7f6f3;border-radius:10px;padding:10px 12px">
-          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Resolved</div>
-          <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)">${t.resolved_at?t.resolved_at.slice(0,16).replace('T',' '):'—'}</div>
-        </div>
-        <div style="background:var(--accent-light);border-radius:10px;padding:10px 12px">
-          <div style="font-size:10px;font-weight:600;color:var(--accent-text);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total</div>
-          <div style="font-size:16px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${resTime}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        ${t.creator?.employee_id?`<div style="background:#f7f6f3;border-radius:8px;padding:7px 10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Emp ID</div><div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace">${t.creator.employee_id}</div></div>`:''}
+        ${[t.creator?.bay_number,t.creator?.floor].filter(Boolean).length?`<div style="background:#f7f6f3;border-radius:8px;padding:7px 10px"><div style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Location</div><div style="font-size:12px;font-weight:600">${[t.creator?.bay_number,t.creator?.floor].filter(Boolean).join(' · ')}</div></div>`:''}
+        <div style="background:${t.started_at?'var(--accent-light)':'#f7f6f3'};border-radius:8px;padding:7px 10px">
+          <div style="font-size:9px;font-weight:600;color:${t.started_at?'var(--accent-text)':'var(--text3)'};text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">
+            ${t.resolved_at?'Total Time':'Started'}
+          </div>
+          <div style="font-size:12px;font-weight:700;color:${t.started_at?'var(--accent)':'var(--text3)'};font-family:'DM Mono',monospace">
+            ${t.resolved_at?resTime:t.started_at?t.started_at.slice(11,16):'Not started'}
+          </div>
         </div>
       </div>
+      <!-- Resolution time inline -->
+      ${t.started_at?`<div style="display:flex;gap:12px;margin-top:8px;padding:6px 10px;background:#f7f6f3;border-radius:8px;font-size:11px;color:var(--text3)">
+        <span>⏱ <strong style="color:var(--text2)">Started:</strong> ${t.started_at.slice(0,16).replace('T',' ')}</span>
+        ${t.resolved_at?`<span>·</span><span>✓ <strong style="color:var(--text2)">Resolved:</strong> ${t.resolved_at.slice(0,16).replace('T',' ')}</span>`:''}
+      </div>`:''}
     </div>
 
-    <!-- Description -->
-    <div class="dp-section">
-      <div class="dp-section-title">Description</div>
-      <div class="dp-desc" style="background:#f7f6f3;border-radius:10px;padding:12px 14px;font-size:13px">${t.description?.replace(/\n/g,'<br>')||'—'}</div>
+    <!-- Description (compact) -->
+    <div class="dp-section" style="padding:12px 20px">
+      <div class="dp-section-title" style="margin-bottom:8px">Description</div>
+      <div style="background:#f7f6f3;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-word">${t.description?.replace(/\n/g,'<br>')||'—'}</div>
     </div>
 
-    <!-- Approval details -->
+    <!-- Approval details (compact) -->
     ${t.approved_by_name?`
-    <div class="dp-section" style="background:#f0fdf4;border-color:#bbf7d0">
-      <div class="dp-section-title" style="color:#14532d">✓ Approval Details</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span style="font-size:11px;font-weight:700;background:#16a34a;color:#fff;padding:3px 12px;border-radius:20px">APPROVED</span>
+    <div class="dp-section" style="padding:12px 20px;background:#f0fdf4;border-color:#bbf7d0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:10px;font-weight:700;background:#16a34a;color:#fff;padding:2px 10px;border-radius:20px">APPROVED</span>
         <span style="font-size:13px;font-weight:600;color:#14532d">${t.approved_by_name}</span>
       </div>
-      ${t.serial_number?`<div style="background:#fff;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:8px">
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Asset Serial Number</div>
-        <div style="font-size:18px;font-weight:800;color:#1B4DB8;font-family:'DM Mono',monospace;letter-spacing:.02em">${t.serial_number}</div>
+      ${t.serial_number?`<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px">
+        <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0">Serial</div>
+        <div style="font-size:14px;font-weight:800;color:#1B4DB8;font-family:'DM Mono',monospace">${t.serial_number}</div>
       </div>`:''}
-      ${t.approval_reason?`<div style="font-size:12px;color:#166534;padding:10px 12px;background:#fff;border-radius:8px;border:1px solid #bbf7d0;line-height:1.6">${t.approval_reason}</div>`:''}
+      ${t.approval_reason?`<div style="font-size:12px;color:#166534;margin-top:6px;padding:7px 10px;background:#fff;border-radius:8px;border:1px solid #bbf7d0">${t.approval_reason}</div>`:''}
     </div>`:''}
 
-    <!-- Comments -->
-    <div class="dp-section">
-      <div class="dp-section-title">Comments &amp; Attachments</div>
+    <!-- Comments (compact) -->
+    <div class="dp-section" style="padding:12px 20px">
+      <div class="dp-section-title" style="margin-bottom:8px">Comments &amp; Attachments</div>
       ${t.comments?.length?t.comments.map(c=>{
         const isImg = c.body && c.body.includes('Screenshot: ');
         const imgUrl = isImg ? c.body.split('Screenshot: ').slice(-1)[0].split(' ')[0] : null;
         const textPart = isImg ? c.body.split(' | Screenshot:')[0] : c.body;
-        return `<div class="comment-item${c.is_internal?' internal':''}">
-          <div class="comment-meta">
-            <span style="font-weight:600;color:var(--text2)">${c.author?.full_name||'Staff'}</span>
-            <span>·</span>
-            <span>${c.created_at?.slice(0,16).replace('T',' ')}</span>
-            ${c.is_internal?'<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 7px;border-radius:10px;font-weight:600">Internal</span>':''}
+        return `<div class="comment-item${c.is_internal?' internal':''}" style="padding:9px 12px;margin-bottom:6px">
+          <div class="comment-meta" style="margin-bottom:4px">
+            <span style="font-weight:600;color:var(--text2);font-size:11px">${c.author?.full_name||'Staff'}</span>
+            <span style="color:var(--text3)">·</span>
+            <span style="font-size:10px">${c.created_at?.slice(0,16).replace('T',' ')}</span>
+            ${c.is_internal?'<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:10px;font-weight:600">Internal</span>':''}
           </div>
-          ${textPart?`<div class="comment-text">${textPart}</div>`:''}
+          ${textPart?`<div class="comment-text" style="font-size:12px">${textPart}</div>`:''}
           ${imgUrl?`<div class="attach-thumb" onclick="openLightbox('${imgUrl}')"><img src="${imgUrl}" alt="Screenshot" loading="lazy"></div>`:''}
         </div>`;
-      }).join(''):'<div style="font-size:13px;color:var(--text3);padding:8px 0;text-align:center">No comments yet</div>'}
+      }).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0;text-align:center">No comments yet</div>'}
     </div>
 
-    <!-- Requester History -->
-    <div class="dp-section" id="requester-history">
-      <div class="dp-section-title">Requester History</div>
+    <!-- Requester History (compact) -->
+    <div class="dp-section" id="requester-history" style="padding:12px 20px">
+      <div class="dp-section-title" style="margin-bottom:8px">Requester History</div>
       <div style="font-size:12px;color:var(--text3)">Loading…</div>
     </div>
   `;
