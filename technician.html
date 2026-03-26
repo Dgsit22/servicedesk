@@ -1291,6 +1291,18 @@ function assignToSelf() {
 // ── Quick Status ────────────────────────────────────────────────
 async function quickStatus(s) {
   const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',selectedId).single();
+
+  // If closing/resolving a hardware ticket, prompt for serial numbers first
+  const isHardware = HW_CATS.includes(t.category) || t.sub_category==='Hardware Request' || (t.category||'').toLowerCase().includes('hardware');
+  if((s==='resolved'||s==='closed') && isHardware && !t.serial_number) {
+    showHwCloseModal(t, s);
+    return;
+  }
+
+  await doQuickStatus(t, s);
+}
+
+async function doQuickStatus(t, s) {
   const now=new Date().toISOString();
   const updates={status:s,updated_at:now};
   if(s==='inprogress'&&!t.started_at) updates.started_at=now;
@@ -1305,6 +1317,89 @@ async function quickStatus(s) {
   try{ await db.functions.invoke('send-notification',{body:{type:'status_changed',ticket_no:t.ticket_no,title:t.title,new_status:s,old_status:t.status,requester_email:t.creator?.email,requester_name:t.creator?.full_name,technician_name:currentProfile.full_name}}); }catch(e){}
   toast('Status → '+statusLabel(s));
   await loadTickets(); openPanel(selectedId); renderList(); renderMine();
+}
+
+function showHwCloseModal(t, targetStatus) {
+  const existing = document.getElementById('hw-close-modal');
+  if(existing) existing.remove();
+
+  // Detect if replacement from description
+  const isReplacement = t.description && t.description.includes('Type: Replacement');
+  const oldSerialMatch = t.description && t.description.match(/Asset Being Replaced \(Serial\): ([^\n]+)/);
+  const oldSerialFromDesc = oldSerialMatch ? oldSerialMatch[1].trim() : '';
+
+  const modal = document.createElement('div');
+  modal.id = 'hw-close-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">
+      <div style="padding:18px 22px;border-bottom:1px solid #e2e0da;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1c1b19">📦 Asset Details</div>
+          <div style="font-size:12px;color:#a09e9a;margin-top:2px">Required before ${targetStatus === 'resolved' ? 'resolving' : 'closing'} this hardware ticket</div>
+        </div>
+        <button onclick="document.getElementById('hw-close-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#a09e9a;line-height:1">×</button>
+      </div>
+      <div style="padding:22px">
+        ${isReplacement ? `
+          <div style="background:#fff8ec;border:1px solid #ffd89a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#8a4500">
+            🔄 <strong>Replacement request</strong> — please confirm both serial numbers below.
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px">Old Asset Serial Number <span style="color:#a61e1e">*</span> <span style="font-size:10px;font-weight:400;color:#a09e9a">(device being replaced)</span></label>
+            <input id="hc-old-serial" type="text" value="${oldSerialFromDesc}" placeholder="e.g. SN-DELL-2021-00142"
+              style="width:100%;padding:10px 12px;border:1.5px solid #e2e0da;border-radius:10px;font-size:13px;font-family:inherit;outline:none"
+              onfocus="this.style.borderColor='#1a56db'" onblur="this.style.borderColor='#e2e0da'">
+          </div>
+        ` : ''}
+        <div style="margin-bottom:20px">
+          <label style="font-size:12px;font-weight:600;color:#4a5568;display:block;margin-bottom:5px">New Asset Serial Number <span style="color:#a61e1e">*</span> <span style="font-size:10px;font-weight:400;color:#a09e9a">(device being assigned)</span></label>
+          <input id="hc-new-serial" type="text" placeholder="e.g. SN-DELL-2024-00891"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e2e0da;border-radius:10px;font-size:13px;font-family:inherit;outline:none"
+            onfocus="this.style.borderColor='#1a56db'" onblur="this.style.borderColor='#e2e0da'">
+        </div>
+        <div id="hc-err" style="display:none;font-size:12px;color:#a61e1e;margin-bottom:10px"></div>
+        <div style="display:flex;gap:10px">
+          <button onclick="confirmHwClose('${t.id}','${targetStatus}','${isReplacement}')"
+            style="flex:1;padding:10px;background:#1B4DB8;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+            Confirm &amp; ${targetStatus === 'resolved' ? 'Resolve' : 'Close'}
+          </button>
+          <button onclick="document.getElementById('hw-close-modal').remove()"
+            style="padding:10px 18px;background:#f7f6f3;color:#6b6860;border:1px solid #e2e0da;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('hc-new-serial')?.focus(),100);
+}
+
+async function confirmHwClose(uid, targetStatus, isReplacement) {
+  const newSerial = document.getElementById('hc-new-serial')?.value.trim();
+  const oldSerial = document.getElementById('hc-old-serial')?.value.trim()||'';
+  const errEl = document.getElementById('hc-err');
+
+  if(!newSerial){errEl.textContent='Please enter the new asset serial number.';errEl.style.display='';return;}
+  if(isReplacement==='true'&&!oldSerial){errEl.textContent='Please enter the old asset serial number.';errEl.style.display='';return;}
+
+  // Save serial numbers
+  const updates = { serial_number: newSerial, asset_tag: newSerial };
+  if(oldSerial) updates.asset_tag = 'OLD:'+oldSerial+' → NEW:'+newSerial;
+  await db.from('tickets').update(updates).eq('id', uid);
+
+  // Add internal comment with serial info
+  const commentBody = isReplacement==='true'
+    ? `📦 Asset serial numbers recorded on ${targetStatus}:\n• Replaced asset: ${oldSerial}\n• New asset assigned: ${newSerial}`
+    : `📦 Asset serial number recorded on ${targetStatus}:\n• Asset assigned: ${newSerial}`;
+  try { await db.from('comments').insert({ticket_id:uid,author_id:currentUser.id,body:commentBody,is_internal:true}); } catch(e){}
+
+  document.getElementById('hw-close-modal').remove();
+
+  // Proceed with status change
+  const {data:t}=await db.from('tickets').select('*,creator:profiles!created_by(full_name,email)').eq('id',uid).single();
+  await doQuickStatus(t, targetStatus);
+  toast('✓ Serial numbers saved & ticket '+targetStatus);
 }
 
 // ── Save Update ─────────────────────────────────────────────────
