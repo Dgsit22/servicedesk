@@ -24,6 +24,7 @@ jobs:
       - name: Deploy send-notification function
         run: |
           supabase functions deploy send-notification \
-            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} \
+            --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
