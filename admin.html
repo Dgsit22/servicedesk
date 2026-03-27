@@ -374,22 +374,197 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     <!-- SETTINGS -->
     <div class="view" id="view-settings">
       <div class="topbar">
-        <div><div class="topbar-title">Settings</div><div class="topbar-sub">Notification and system preferences</div></div>
+        <div><div class="topbar-title">Notification Center</div><div class="topbar-sub">Configure email delivery and notification rules</div></div>
+        <button class="btn btn-primary btn-sm" onclick="saveNotifSettings()">💾 Save Settings</button>
       </div>
       <div class="scroll-area">
-        <div style="max-width:560px">
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-header"><h3>Notifications</h3></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>Email on new critical ticket</div><div class="toggle-sub">Instantly alert IT team when critical tickets arrive</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>Email when ticket is assigned</div><div class="toggle-sub">Notify technician and requester on assignment</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>SLA breach alerts</div><div class="toggle-sub">Notify admin when a ticket misses SLA</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>CSAT survey on close</div><div class="toggle-sub">Send 1-question satisfaction survey to requester</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-          </div>
+        <div style="max-width:680px;display:flex;flex-direction:column;gap:16px">
+
+          <!-- SMTP Configuration -->
           <div class="card">
-            <div class="card-header"><h3>Assignment</h3></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>Auto-assign by category</div><div class="toggle-sub">Round-robin assignment to available technicians</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-            <div class="toggle-wrap"><div class="toggle-label"><div>Allow employees to reassign</div><div class="toggle-sub">Let employees request a different technician</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+            <div class="card-header">
+              <h3>📧 Email Configuration</h3>
+              <span id="smtp-status" style="font-size:11px;padding:3px 10px;border-radius:10px;background:var(--surface3);color:var(--text3);font-weight:600">Not tested</span>
+            </div>
+            <div style="padding:18px 20px">
+              <div style="background:#fff8ec;border:1px solid #ffd89a;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#8a4500;line-height:1.6">
+                <strong>Using Gmail?</strong> Go to your Google Account → Security → 2-Step Verification → App passwords. Generate one for "Mail". Use that 16-character password below — not your regular Gmail password.
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">SMTP Host</label>
+                  <input id="cfg-smtp-host" type="text" value="smtp.gmail.com" placeholder="smtp.gmail.com" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">SMTP Port</label>
+                  <input id="cfg-smtp-port" type="text" value="587" placeholder="587" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">Gmail / SMTP Username</label>
+                  <input id="cfg-smtp-user" type="email" placeholder="ITalerts@digiclarity.in" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">App Password <span style="font-size:10px;font-weight:400;color:var(--text3)">(16 chars from Google)</span></label>
+                  <div style="position:relative">
+                    <input id="cfg-smtp-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" style="width:100%;padding:9px 40px 9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                    <button onclick="togglePassVis()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px" title="Show/hide">👁</button>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">From Email <span style="font-size:10px;font-weight:400;color:var(--text3)">(shown as sender)</span></label>
+                  <input id="cfg-from-email" type="email" placeholder="ITalerts@digiclarity.in" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">OR Resend API Key <span style="font-size:10px;font-weight:400;color:var(--text3)">(simpler — resend.com)</span></label>
+                  <input id="cfg-resend-key" type="password" placeholder="re_xxxxxxxxxxxxxxxxxxxx" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+              </div>
+              <div style="padding:10px 14px;background:#f0f4ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1e40af;margin-bottom:14px">
+                ℹ️ These settings must be saved as <strong>Supabase Edge Function Secrets</strong>. Click <strong>Save Settings</strong> to get the exact CLI commands to run.
+              </div>
+            </div>
           </div>
+
+          <!-- Test Email -->
+          <div class="card">
+            <div class="card-header"><h3>🧪 Test Email</h3></div>
+            <div style="padding:18px 20px">
+              <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Send a test email to verify your configuration is working before relying on it for live tickets.</p>
+              <div style="display:flex;gap:10px;align-items:flex-end">
+                <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+                  <label style="font-size:12px;font-weight:600;color:var(--text2)">Send test to</label>
+                  <input id="test-email-addr" type="email" placeholder="your@email.com" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);font-family:inherit;outline:none" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <button onclick="sendTestEmail()" id="test-btn" style="padding:9px 20px;background:#1B4DB8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .12s" onmouseover="this.style.background='#163fa0'" onmouseout="this.style.background='#1B4DB8'">
+                  ✉ Send Test
+                </button>
+              </div>
+              <div id="test-result" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:500"></div>
+            </div>
+          </div>
+
+          <!-- Notification Types -->
+          <div class="card">
+            <div class="card-header"><h3>🔔 Notification Rules</h3></div>
+            <div style="padding:6px 0">
+
+              <!-- New Ticket -->
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">New Ticket Submitted</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-new-requester" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">📨 Confirmation to requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Send ticket ID, category and description back to the person who raised it</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Assigned / Transferred -->
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Ticket Assigned or Transferred</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-assigned-tech" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">👤 Notify assigned technician</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email technician when a ticket is assigned or transferred to them (includes ticket details and description)</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Status Changes -->
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Ticket Status Changes</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-status-inprogress" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">🔵 In Progress — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester when IT starts working on their ticket</div>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-status-waiting" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">⏳ Waiting for Info — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester that IT needs more information from them</div>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-status-comment" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">💬 New comment — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester when IT adds a non-internal comment to their ticket</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Ticket Closure & Reopened -->
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Ticket Closure &amp; Reopen</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-resolved" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">✅ Resolved — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester when their issue is marked resolved</div>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-closed" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">🔒 Closed — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester when ticket is fully closed</div>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-reopened" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">🔄 Reopened — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester when a closed/resolved ticket is reopened</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Hardware Approval -->
+              <div style="padding:14px 20px">
+                <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Hardware Approval</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-hw-approved" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">✅ Approved — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester with approval decision and serial number</div>
+                    </div>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+                    <input type="checkbox" id="notif-hw-rejected" checked style="accent-color:#1B4DB8;width:15px;height:15px;cursor:pointer">
+                    <div>
+                      <div style="font-size:13px;font-weight:500">❌ Rejected — notify requester</div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:1px">Email requester with rejection reason from approver</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLI Commands output -->
+          <div class="card" id="cli-card" style="display:none">
+            <div class="card-header"><h3>⚡ Deploy Commands</h3></div>
+            <div style="padding:18px 20px">
+              <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Run these commands in your terminal to apply the SMTP/Resend settings to your Supabase Edge Function:</p>
+              <div id="cli-output" style="background:#1c1b19;color:#e2e0da;border-radius:10px;padding:16px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-x:auto"></div>
+              <button onclick="copyCliCommands()" style="margin-top:10px;padding:7px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text2)">📋 Copy Commands</button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -776,7 +951,101 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function statusLabel(s){const m={inprogress:'In Progress',pending_approval:'Pending Approval',waiting_for_info:'Waiting for Info'};return m[s]||cap(s);}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
 
-document.getElementById('view-overview').style.cssText='display:flex;flex-direction:column;height:100%';
+// ── Notification Center ────────────────────────────────────────
+
+function togglePassVis() {
+  const el = document.getElementById('cfg-smtp-pass');
+  if (el) el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function saveNotifSettings() {
+  const host  = document.getElementById('cfg-smtp-host')?.value.trim();
+  const port  = document.getElementById('cfg-smtp-port')?.value.trim() || '587';
+  const user  = document.getElementById('cfg-smtp-user')?.value.trim();
+  const pass  = document.getElementById('cfg-smtp-pass')?.value.trim();
+  const from  = document.getElementById('cfg-from-email')?.value.trim();
+  const resend = document.getElementById('cfg-resend-key')?.value.trim();
+
+  if (!user && !resend) { toast('Enter SMTP username or Resend API key'); return; }
+  if (user && !pass)    { toast('Enter the Gmail App Password'); return; }
+  if (!from && user)    { document.getElementById('cfg-from-email').value = user; }
+
+  const ref = 'rxuofhrgrwefslbnuaka';
+  let lines = [`supabase secrets set --project-ref ${ref} \\`];
+
+  if (resend) {
+    lines.push(`  RESEND_API_KEY="${resend}" \\`);
+    lines.push(`  FROM_EMAIL="${from || user}" \\`);
+  } else {
+    lines.push(`  SMTP_HOST="${host || 'smtp.gmail.com'}" \\`);
+    lines.push(`  SMTP_PORT="${port}" \\`);
+    lines.push(`  SMTP_USER="${user}" \\`);
+    lines.push(`  SMTP_PASS="${pass}" \\`);
+    lines.push(`  FROM_EMAIL="${from || user}" \\`);
+  }
+  lines.push(`  APP_URL="https://dgsit22.github.io/servicedesk/"`);
+  lines.push('');
+  lines.push('# Then redeploy the function:');
+  lines.push(`supabase functions deploy send-notification --project-ref ${ref}`);
+
+  document.getElementById('cli-output').textContent = lines.join('\n');
+  document.getElementById('cli-card').style.display = '';
+  document.getElementById('cli-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('✓ Commands generated — copy and run in your terminal');
+}
+
+function copyCliCommands() {
+  const txt = document.getElementById('cli-output')?.textContent || '';
+  navigator.clipboard.writeText(txt).then(()=>toast('✓ Copied to clipboard')).catch(()=>toast('Select and copy manually'));
+}
+
+async function sendTestEmail() {
+  const to = document.getElementById('test-email-addr')?.value.trim();
+  if (!to) { toast('Enter an email address to send the test to'); return; }
+
+  const btn = document.getElementById('test-btn');
+  const resultEl = document.getElementById('test-result');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  resultEl.style.display = 'none';
+
+  try {
+    const { data, error } = await db.functions.invoke('send-notification', {
+      body: {
+        type: 'test',
+        test_email: to,
+        admin_name: 'Admin'
+      }
+    });
+
+    if (error) throw new Error(error.message);
+
+    resultEl.style.display = '';
+    if (data?.ok) {
+      resultEl.style.background = '#f0fdf4';
+      resultEl.style.border = '1px solid #bbf7d0';
+      resultEl.style.color = '#14532d';
+      resultEl.textContent = '✅ Test email sent successfully to ' + to + '. Check your inbox (and spam folder).';
+      document.getElementById('smtp-status').textContent = '✓ Working';
+      document.getElementById('smtp-status').style.background = '#f0fdf4';
+      document.getElementById('smtp-status').style.color = '#14532d';
+    } else {
+      throw new Error(data?.error || 'Unknown error');
+    }
+  } catch (e) {
+    resultEl.style.display = '';
+    resultEl.style.background = '#fff1f1';
+    resultEl.style.border = '1px solid #ffc9c9';
+    resultEl.style.color = '#a61e1e';
+    resultEl.textContent = '❌ Failed: ' + e.message + '. Check your SMTP settings and make sure the edge function is deployed.';
+    document.getElementById('smtp-status').textContent = '✗ Failed';
+    document.getElementById('smtp-status').style.background = '#fff1f1';
+    document.getElementById('smtp-status').style.color = '#a61e1e';
+  } finally {
+    btn.disabled = false; btn.textContent = '✉ Send Test';
+  }
+}
+
+
 ['users','tickets','hardware','settings','reports','templates','subcategories'].forEach(v=>{const e=document.getElementById('view-'+v);if(e)e.style.display='none';});
 
 // ── Reports ─────────────────────────────────────────────────────
