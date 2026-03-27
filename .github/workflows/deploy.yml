@@ -1,4 +1,4 @@
-name: Deploy Supabase Edge Functions
+name: Deploy Supabase Edge Function
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'supabase/functions/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
